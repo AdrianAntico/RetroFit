@@ -5,13 +5,9 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RemixAutoML.svg?style=social)](https://github.com/AdrianAntico/RetroFit.FeatureEngineering)
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/NewPackageLogo.png" align="center" width="1000" />
+<img src="https://github.com/AdrianAntico/RetroFit.FeatureEngineering/blob/master/images/PackageLogo.png" align="center" width="1000" />
 
 ## Background
-
-![RemixAutoML Reference Manual](https://github.com/AdrianAntico/RemixAutoML/tree/master/vignette)
-
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/ML_Models_Menu.PNG" align="center" width="800" />
 
 <details><summary>Expand to view content</summary>
 <p>
