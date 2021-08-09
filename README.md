@@ -3,9 +3,9 @@
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
-[![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RemixAutoML.svg?style=social)](https://github.com/AdrianAntico/RetroFit.FeatureEngineering)
+[![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.FeatureEngineering.svg?style=social)](https://github.com/AdrianAntico/RetroFit.FeatureEngineering)
 
-<img src="https://github.com/AdrianAntico/RetroFit.FeatureEngineering/blob/master/images/PackageLogo.PNG" align="center" width="1000" />
+<img src="https://github.com/AdrianAntico/RetroFit.FeatureEngineering/blob/main/images/PackageLogo.PNG" align="center" width="1000" />
 
 ## Background
 
