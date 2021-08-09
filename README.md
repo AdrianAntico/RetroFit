@@ -5,7 +5,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RemixAutoML.svg?style=social)](https://github.com/AdrianAntico/RetroFit.FeatureEngineering)
 
-<img src="https://github.com/AdrianAntico/RetroFit.FeatureEngineering/blob/master/images/PackageLogo.png" align="center" width="1000" />
+<img src="https://github.com/AdrianAntico/RetroFit.FeatureEngineering/blob/master/images/PackageLogo.PNG" align="center" width="1000" />
 
 ## Background
 
