@@ -9,7 +9,7 @@
 
 ## Feature Engineering
 
-> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of polars for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
+> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of datatable for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
 
 ## Installation
 ```
