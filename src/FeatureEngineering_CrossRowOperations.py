@@ -5,10 +5,14 @@
 # Last modified : 2021-08-11
 
 # Lags on datatable by group variables if requested
+# Environment setup
 def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariables = None, N = 1, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
     """
+    # Goal:
+    Automatically generate lags for multiple periods for multiple variables and by variables
+    
     # Output
-    Return data with additional lag columns, by ByVariables
+    Return datatable with new lag columns
     
     # Parameters
     data:           is your source datatable
@@ -25,9 +29,30 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     import datatable as dt
     from datatable import *
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, N=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
     
-    # QA: Step through function
+    ## Group Example:
+    data = AutoLags(data=data, N=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+    print(data.names)
+    
+    ## Group and Multiple Periods and LagColumnNames:
+    data = AutoLags(data=data, N=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
+    print(data.names)
+
+    ## No Group Example:
+    data = AutoLags(data=data, N=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+    print(data.names)
+    
+    # QA: No Group Case: Step through function
+    N = 1
+    LagColumnNames = 'Leads'
+    scns = 'Leads'
+    DateColumnName = 'CalendarDateColumn'
+    ByVariables = None
+    ns = 1
+    ImputeValue = -1
+    Sort = True
+    
+    # QA: Group Case: Step through function
     N = 1
     LagColumnNames = 'Leads'
     scns = 'Leads'
@@ -39,9 +64,9 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     
     """
     
-    # Environment setup
+    # Load minimal dependencies
     import datatable as dt
-    from datatable import *
+    from datatable import sort, f
     
     # Convert to datatable
     if InputFrame == 'pandas': 
@@ -57,10 +82,12 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
         data = data[:, :, sort(DateColumnName)]
     
     # Prepare column and value references
-    LagColumnNames = [LagColumnNames]
-    N = [N]
+    if not isinstance(LagColumnNames, list):
+      LagColumnNames = [LagColumnNames]
+    if not isinstance(N, list):
+      N = [N]
     Cols = data.names
-    
+
     # Build lags
     for lcn in LagColumnNames:
       colnum = Cols.index(lcn)
@@ -70,6 +97,8 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
         else:
           data = data[:, f[:].extend({"Lag_" + str(ns) + "_" + lcn: dt.shift(f[colnum], n = ns)})]
 
-    # Done
+    # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
+    
+    # Return data
     return data
