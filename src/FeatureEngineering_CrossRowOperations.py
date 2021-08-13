@@ -108,7 +108,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
 
 
 # Inner function for AutoRollStats
-def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal):
+def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_, MovingSD_Periods_, MovingMin_Periods_, MovingMax_Periods_):
 
   # Metadata for column number identifiers
   Cols = data.names
@@ -125,19 +125,19 @@ def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal):
   colnumtemp = [data.names.index(MA_Cols[gg-1]) for gg in range(1,len(MA_Cols)+1)]
 
   # Rolling Mean
-  if ns in MovingAvg_Periods:
+  if ns in MovingAvg_Periods_:
     data = data[:, f[:].extend({"RollMean_" + str(ns) + "_" + rcn: dt.rowmean(f[colnumtemp])})]
     
   # Rolling SD
-  if ns in MovingSD_Periods:
+  if ns in MovingSD_Periods_:
     data = data[:, f[:].extend({"RollSD_" + str(ns) + "_" + rcn: dt.rowsd(f[colnumtemp])})]
     
   # Rolling Min
-  if ns in MovingMin_Periods:
+  if ns in MovingMin_Periods_:
     data = data[:, f[:].extend({"RollMin_" + str(ns) + "_" + rcn: dt.rowmin(f[colnumtemp])})]
     
   # Rolling Max
-  if ns in MovingMax_Periods:
+  if ns in MovingMax_Periods_:
     data = data[:, f[:].extend({"RollMax_" + str(ns) + "_" + rcn: dt.rowmax(f[colnumtemp])})]
     
   # Return
@@ -169,15 +169,15 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     
     ## Group Example:
-    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingDS_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
     ## Group and Multiple Periods and RollColumnNames:
-    data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingDS_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
-    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingDS_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -257,7 +257,7 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     MaxVal = max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)[0]
     for rcn in RollColumnNames:
       for ns in range(1, MaxVal+1):
-        data = RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal)
+        data = RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_=MovingAvg_Periods, MovingSD_Periods_=MovingSD_Periods, MovingMin_Periods_=MovingMin_Periods, MovingMax_Periods_=MovingMax_Periods)
 
       # Remove Temporary Lagged Columns
       del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
@@ -300,3 +300,12 @@ ns = 1
 ImputeValue = -1
 Sort = True
 rcn = 'Leads'
+
+import datatable as dt
+from datatable import sort, f, by
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+
+print(data.names)
+    
