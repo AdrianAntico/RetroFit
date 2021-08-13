@@ -219,10 +219,11 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     if InputFrame == 'pandas': 
       data = dt.Frame(data)
 
-    # Sort data if requested
+    # Ensure ByVariables is a list
     if not ByVariables is None and not isinstance(ByVariables, list):
       ByVariables = [ByVariables]
 
+    # Sort data if requested
     if Sort == True:
       if ByVariables is not None:
         SortCols = ByVariables
@@ -235,15 +236,19 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     if not RollColumnNames is None and not isinstance(RollColumnNames, list):
       RollColumnNames = [RollColumnNames]
 
+    # Ensure List
     if not MovingAvg_Periods is None and not isinstance(MovingAvg_Periods, list):
       MovingAvg_Periods = [MovingAvg_Periods]
 
+    # Ensure List
     if not MovingSD_Periods is None and not isinstance(MovingSD_Periods, list):
       MovingSD_Periods = [MovingSD_Periods]
 
+    # Ensure List
     if not MovingMin_Periods is None and not isinstance(MovingMin_Periods, list):
       MovingMin_Periods = [MovingMin_Periods]
 
+    # Ensure List
     if not MovingMax_Periods is None and not isinstance(MovingMax_Periods, list):
       MovingMax_Periods = [MovingMax_Periods]
 
