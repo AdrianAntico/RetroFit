@@ -164,19 +164,25 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     OutputFrame:      if you want the output Frame to be pandas change value to 'pandas'
     
     # QA: Test Function
+    
+    ## Group Example:
     import datatable as dt
     from datatable import sort, f, by
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    
-    ## Group Example:
     data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
     ## Group and Multiple Periods and RollColumnNames:
+    import datatable as dt
+    from datatable import sort, f, by
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
+    import datatable as dt
+    from datatable import sort, f, by
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
@@ -267,45 +273,3 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     
     # Return data
     return data
-
-
-
-# QA: No Group Case: Step through function
-InputFrame='datatable'
-OutputFrame='datatable'
-MovingAvg_Periods = 2
-MovingSD_Periods = 2
-MovingMin_Periods = 2
-MovingMax_Periods = 2
-RollColumnNames = 'Leads'
-scns = 'Leads'
-DateColumnName = 'CalendarDateColumn'
-ByVariables = None
-ns = 1
-ImputeValue = -1
-Sort = True
-
-# QA: Group Case: Step through function
-InputFrame='datatable'
-OutputFrame='datatable'
-MovingAvg_Periods = 2
-MovingSD_Periods = 2
-MovingMin_Periods = 2
-MovingMax_Periods = 2
-RollColumnNames = 'Leads'
-scns = 'Leads'
-DateColumnName = 'CalendarDateColumn'
-ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-ns = 1
-ImputeValue = -1
-Sort = True
-rcn = 'Leads'
-
-import datatable as dt
-from datatable import sort, f, by
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
-data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
-
-print(data.names)
-    
