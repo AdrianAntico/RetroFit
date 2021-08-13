@@ -91,14 +91,12 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
       LagPeriods = [LagPeriods]
     
     # Build lags
-    Cols = data.names
     for lcn in LagColumnNames:
-      colnum = Cols.index(lcn)
       for lp in LagPeriods:
         if ByVariables is not None:
-          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[colnum], n = lp)}), by(ByVariables)]
+          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[(data.names).index(lcn)], n = lp)}), by(ByVariables)]
         else:
-          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[colnum], n = lp)})]
+          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[(data.names).index(lcn)], n = lp)})]
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
@@ -110,15 +108,11 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
 # Inner function for AutoRollStats
 def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_, MovingSD_Periods_, MovingMin_Periods_, MovingMax_Periods_):
 
-  # Metadata for column number identifiers
-  Cols = data.names
-  colnum = Cols.index(rcn)
-
   # Generate Lags for rowmean, rowsd, rowmin, rowmax
   if ByVariables is not None:
-    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[colnum], n = ns)}), by(ByVariables)]
+    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[(data.names).index(rcn)], n = ns)}), by(ByVariables)]
   else:
-    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[colnum], n = ns)})]
+    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[(data.names).index(rcn)], n = ns)})]
 
   # Metadata
   MA_Cols = list(set(data.names) - set(ColsOriginal))
@@ -153,15 +147,15 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     Return datatable with new rolling statistics columns
     
     # Parameters
-    data:             is your source datatable
-    RollColumnNames:   a list of columns that will be lagged
-    DateColumnName:   primary date column used for sorting
-    ByVariables:      columns to lag by
-    Moving_*_Periods: list of integers for look back window
-    ImputeValue:      value to fill the NA's for beginning of series
-    Sort:             sort the Frame before computing the lags - if you're data is sorted set this to False
-    IntputFrame:      if you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:      if you want the output Frame to be pandas change value to 'pandas'
+    data:             Source data
+    RollColumnNames:  A list of columns that will be lagged
+    DateColumnName:   Primary date column used for sorting
+    ByVariables:      Columns to lag by
+    Moving_*_Periods: List of integers for look back window
+    ImputeValue:      Value to fill the NA's for beginning of series
+    Sort:             Sort the Frame before computing the lags - if you're data is sorted set this to False
+    IntputFrame:      'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    OutputFrame:      'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA: Test Function
     
@@ -267,6 +261,237 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
 
       # Remove Temporary Lagged Columns
       del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+
+    # Convert Frame
+    if OutputFrame == 'pandas': data = data.to_pandas()
+    
+    # Return data
+    return data
+
+
+def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+    """
+    # Goal:
+    Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
+    
+    # Output
+    Return datatable with new rolling statistics columns
+    
+    # Parameters
+    data:                 Source data
+    DateColumnName:       Primary date column used for sorting
+    ByVariables:          By grouping variables
+    DiffNumericVariables: None
+    DiffDateVariables:    None
+    DiffGroupVariables:   None
+    NLag1:                Default 0. 0 means the current value - NLag2_Current_Value
+    NLag2:                Default 1. 1 means a lag1 of the current value
+    Sort:                 True or False
+    InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    
+    # QA: Test Function
+    
+    ## Group Example:
+    import datatable as dt
+    from datatable import sort, f, by
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    print(data.names)
+    
+    ## Group and Multiple Periods and RollColumnNames:
+    import datatable as dt
+    from datatable import sort, f, by
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    print(data.names)
+
+    ## No Group Example:
+    import datatable as dt
+    from datatable import sort, f, by
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    print(data.names)
+    
+    # QA: No Group Case: Step through function
+    data=data
+    DateColumnName = 'CalendarDateColumn'
+    ByVariables = None
+    DiffNumericVariables = 'Leads'
+    DiffDateVariables = 'CalendarDateColumn'
+    DiffGroupVariables = None
+    NLag1 = 0
+    NLag2 = 1
+    Sort=True
+    InputFrame = 'datatable'
+    OutputFrame = 'datatable'
+    rcn = 'Leads'
+
+    # QA: Group Case: Step through function
+    data=data
+    DateColumnName = 'CalendarDateColumn'
+    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
+    DiffNumericVariables = 'Leads'
+    DiffDateVariables = 'CalendarDateColumn'
+    DiffGroupVariables = None
+    NLag1 = 0
+    NLag2 = 1
+    Sort=True
+    InputFrame = 'datatable'
+    OutputFrame = 'datatable'
+    rcn = 'Leads'
+    """
+    
+    # Load minimal dependencies
+    import datatable as dt
+    from datatable import sort, f, by
+    
+    # Convert to datatable
+    if InputFrame == 'pandas': 
+      data = dt.Frame(data)
+
+    # Ensure ByVariables is a list
+    if not ByVariables is None and not isinstance(ByVariables, list):
+      ByVariables = [ByVariables]
+
+    # Ensure DiffNumericVariables is a list
+    if not DiffNumericVariables is None and not isinstance(DiffNumericVariables, list):
+      DiffNumericVariables = [DiffNumericVariables]
+
+    # Ensure DiffDateVariables is a list
+    if not DiffDateVariables is None and not isinstance(DiffDateVariables, list):
+      DiffDateVariables = [DiffDateVariables]
+
+    # Ensure DiffGroupVariables is a list
+    if not DiffGroupVariables is None and not isinstance(DiffGroupVariables, list):
+      DiffGroupVariables = [DiffGroupVariables]
+
+    # Sort data if requested
+    if Sort == True:
+      if ByVariables is not None:
+        SortCols = ByVariables
+        SortCols.append(DateColumnName)
+        data = data[:, :, sort(SortCols, reverse=True)]
+      else:
+        data = data[:, :, sort(DateColumnName)]
+
+    # DiffNumericVariables
+    if not DiffNumericVariables is None:
+      for rcn in DiffNumericVariables:
+        
+        # Numeric Variable Procedure
+        if NLag1 == 0:
+          
+          # Create Lags
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+
+          # Create diffs
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref2)]]
+
+        else:
+          
+          # Create Lags
+          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+          
+          # Create diffs
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref1)]]
+          del data[:, f[(data.names).index(Ref2)]]
+
+    # DiffDateVariables
+    if not DiffDateVariables is None:
+      for rcn in DiffDateVariables:
+
+        # Date Variable Procedure
+        if NLag1 == 0:
+          
+          # Create Lags
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+
+          # Create diffs
+          colnum = (data.names).index(rcn)
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref2)]]
+
+        else:
+          
+          # Create Lags
+          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+          
+          # Create diffs
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref1)]]
+          del data[:, f[(data.names).index(Ref2)]]
+
+    # DiffGroupVariables
+    if not DiffGroupVariables is None:
+      for rcn in DiffGroupVariables:
+        
+        # Date Variable Procedure
+        if NLag1 == 0:
+          
+          # Create Lags
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+
+          # Create diffs
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref2)]]
+
+        else:
+          
+          # Create Lags
+          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+          if not ByVariables is None:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+          
+          # Create diffs
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          
+          # Remove temp columns
+          del data[:, f[(data.names).index(Ref1)]]
+          del data[:, f[(data.names).index(Ref2)]]
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
