@@ -56,3 +56,7 @@ print(data.names)
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
 print(data.names)
+
+
+
+

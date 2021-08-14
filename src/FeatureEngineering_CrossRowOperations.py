@@ -127,19 +127,23 @@ def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_P
 
   # Rolling Mean
   if ns in MovingAvg_Periods_:
-    data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref1])})]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
     
   # Rolling SD
   if ns in MovingSD_Periods_:
-    data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref1])})]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
     
   # Rolling Min
   if ns in MovingMin_Periods_:
-    data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref1])})]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
     
   # Rolling Max
   if ns in MovingMax_Periods_:
-    data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref1])})]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
     
   # Return
   return data
