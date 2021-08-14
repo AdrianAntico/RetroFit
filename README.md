@@ -82,7 +82,7 @@ print(data.names)
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoLags()</code> Automatically generate any number of lags for any number of lookback periods by any number of By-Variables, using datatable.
+<code>AutoLags()</code> Automatically generate any number of lags, for any number of columns, by any number of By-Variables, using datatable.
 
 </p>
 </details>
