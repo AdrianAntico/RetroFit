@@ -23,28 +23,30 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     IntputFrame:    if you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:    if you want the output Frame to be pandas change value to 'pandas'
     
-    # QA: Test Function
+    # QA: Test AutoLags
     import datatable as dt
     from datatable import sort, f
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    
+
     ## Group Example:
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
     print(data.names)
-    
+
     ## Group and Multiple Periods and LagColumnNames:
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
     print(data.names)
     
     # QA: No Group Case: Step through function
     InputFrame='datatable'
     OutputFrame='datatable'
-    LagPeriods = 1
-    LagColumnNames = 'Leads'
+    LagPeriods = [1, 3, 5]
+    LagColumnNames = ['Leads','XREGS1','XREGS2']
     scns = 'Leads'
     DateColumnName = 'CalendarDateColumn'
     ByVariables = None
@@ -85,7 +87,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
-    
+
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
       LagColumnNames = [LagColumnNames]
@@ -93,7 +95,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     # Ensure List
     if not LagPeriods is None and not isinstance(LagPeriods, list):
       LagPeriods = [LagPeriods]
-    
+
     # Build lags
     for lcn in LagColumnNames:
       for lp in LagPeriods:
@@ -162,25 +164,21 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     IntputFrame:      'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:      'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
-    # QA: Test Function
-    
-    ## Group Example:
+    # QA AutoRollStats
     import datatable as dt
     from datatable import sort, f, by
+
+    ## No Group Example
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
-    
+
     ## Group and Multiple Periods and RollColumnNames:
-    import datatable as dt
-    from datatable import sort, f, by
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
-    import datatable as dt
-    from datatable import sort, f, by
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
@@ -295,25 +293,21 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
     InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
-    # QA: Test Function
-    
-    ## Group Example:
+    # QA AutoDiff
     import datatable as dt
     from datatable import sort, f, by
+
+    ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
-    
+
     ## Group and Multiple Periods and RollColumnNames:
-    import datatable as dt
-    from datatable import sort, f, by
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## No Group Example:
-    import datatable as dt
-    from datatable import sort, f, by
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
