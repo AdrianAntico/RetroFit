@@ -73,9 +73,11 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     if InputFrame == 'pandas': 
       data = dt.Frame(data)
 
-    # Sort data if requested
+    # Ensure List
     if not ByVariables is None and not isinstance(ByVariables, list):
       ByVariables = [ByVariables]
+
+    # Sort data
     if Sort == True:
       if ByVariables is not None:
         SortCols = ByVariables
@@ -84,9 +86,11 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
     
-    # Prepare column and value references
+    # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
       LagColumnNames = [LagColumnNames]
+
+    # Ensure List
     if not LagPeriods is None and not isinstance(LagPeriods, list):
       LagPeriods = [LagPeriods]
     
@@ -109,8 +113,11 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
 # Inner function for AutoRollStats
 def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_, MovingSD_Periods_, MovingMin_Periods_, MovingMax_Periods_):
 
+  # Constants
+  Ref = str(ns) + "_" + rcn
+  Ref1 = "TEMP__Lag_" + Ref
+  
   # Generate Lags for rowmean, rowsd, rowmin, rowmax
-  Ref1 = "TEMP__Lag_" + str(ns) + "_" + rcn
   if ByVariables is not None:
     data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
   else:
@@ -118,19 +125,19 @@ def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_P
 
   # Rolling Mean
   if ns in MovingAvg_Periods_:
-    data = data[:, f[:].extend({"RollMean_" + str(ns) + "_" + rcn: dt.rowmean(f[Ref1])})]
+    data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref1])})]
     
   # Rolling SD
   if ns in MovingSD_Periods_:
-    data = data[:, f[:].extend({"RollSD_" + str(ns) + "_" + rcn: dt.rowsd(f[Ref1])})]
+    data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref1])})]
     
   # Rolling Min
   if ns in MovingMin_Periods_:
-    data = data[:, f[:].extend({"RollMin_" + str(ns) + "_" + rcn: dt.rowmin(f[Ref1])})]
+    data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref1])})]
     
   # Rolling Max
   if ns in MovingMax_Periods_:
-    data = data[:, f[:].extend({"RollMax_" + str(ns) + "_" + rcn: dt.rowmax(f[Ref1])})]
+    data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref1])})]
     
   # Return
   return data
@@ -388,7 +395,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
 
           # Remove temp columns
           del data[:, f[Ref2]]
@@ -406,7 +413,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
           
           # Remove temp columns
           del data[:, f[Ref1]]
@@ -427,7 +434,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
           
           # Remove temp columns
           del data[:, f[Ref2]]
@@ -445,7 +452,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
           
           # Remove temp columns
           del data[:, f[Ref1]]
@@ -466,7 +473,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
           
           # Remove temp columns
           del data[:, f[Ref2]]
@@ -484,7 +491,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
           
           # Remove temp columns
           del data[:, f[Ref1]]
