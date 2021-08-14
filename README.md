@@ -50,8 +50,6 @@ pip install RetroFit.FeatureEngineering
 <details><summary>Expand to view content</summary>
 <p>
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/FeatureEngineeringMenu.PNG" align="center" width="800" />
-
 #### **AutoLags()**
 
 <details><summary>Code Example</summary>
