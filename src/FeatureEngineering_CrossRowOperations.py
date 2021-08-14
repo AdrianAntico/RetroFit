@@ -466,7 +466,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
           
           # Remove temp columns
           del data[:, f[Ref2]]
@@ -484,7 +484,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
             data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
           
           # Remove temp columns
           del data[:, f[Ref1]]
