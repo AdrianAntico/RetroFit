@@ -82,7 +82,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
-        data = data[:, :, sort(DateColumnName)]
+        data = data[:, :, sort(DateColumnName, reverse=True)]
     
     # Prepare column and value references
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -93,10 +93,11 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     # Build lags
     for lcn in LagColumnNames:
       for lp in LagPeriods:
+        Ref1 = "Lag_" + str(lp) + "_" + lcn
         if ByVariables is not None:
-          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[(data.names).index(lcn)], n = lp)}), by(ByVariables)]
+          data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
         else:
-          data = data[:, f[:].extend({"Lag_" + str(lp) + "_" + lcn: dt.shift(f[(data.names).index(lcn)], n = lp)})]
+          data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
@@ -109,30 +110,27 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
 def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_, MovingSD_Periods_, MovingMin_Periods_, MovingMax_Periods_):
 
   # Generate Lags for rowmean, rowsd, rowmin, rowmax
+  Ref1 = "TEMP__Lag_" + str(ns) + "_" + rcn
   if ByVariables is not None:
-    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[(data.names).index(rcn)], n = ns)}), by(ByVariables)]
+    data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
   else:
-    data = data[:, f[:].extend({"TEMP__Lag_" + str(ns) + "_" + rcn: dt.shift(f[(data.names).index(rcn)], n = ns)})]
-
-  # Metadata
-  MA_Cols = list(set(data.names) - set(ColsOriginal))
-  colnumtemp = [data.names.index(MA_Cols[gg-1]) for gg in range(1,len(MA_Cols)+1)]
+    data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)})]
 
   # Rolling Mean
   if ns in MovingAvg_Periods_:
-    data = data[:, f[:].extend({"RollMean_" + str(ns) + "_" + rcn: dt.rowmean(f[colnumtemp])})]
+    data = data[:, f[:].extend({"RollMean_" + str(ns) + "_" + rcn: dt.rowmean(f[Ref1])})]
     
   # Rolling SD
   if ns in MovingSD_Periods_:
-    data = data[:, f[:].extend({"RollSD_" + str(ns) + "_" + rcn: dt.rowsd(f[colnumtemp])})]
+    data = data[:, f[:].extend({"RollSD_" + str(ns) + "_" + rcn: dt.rowsd(f[Ref1])})]
     
   # Rolling Min
   if ns in MovingMin_Periods_:
-    data = data[:, f[:].extend({"RollMin_" + str(ns) + "_" + rcn: dt.rowmin(f[colnumtemp])})]
+    data = data[:, f[:].extend({"RollMin_" + str(ns) + "_" + rcn: dt.rowmin(f[Ref1])})]
     
   # Rolling Max
   if ns in MovingMax_Periods_:
-    data = data[:, f[:].extend({"RollMax_" + str(ns) + "_" + rcn: dt.rowmax(f[colnumtemp])})]
+    data = data[:, f[:].extend({"RollMax_" + str(ns) + "_" + rcn: dt.rowmax(f[Ref1])})]
     
   # Return
   return data
@@ -385,15 +383,15 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           # Create Lags
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
-          
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
+
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref2]]
 
         else:
           
@@ -401,18 +399,18 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
           
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref1)]]
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref1]]
+          del data[:, f[Ref2]]
 
     # DiffDateVariables
     if not DiffDateVariables is None:
@@ -424,16 +422,15 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           # Create Lags
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          colnum = (data.names).index(rcn)
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
           
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref2]]
 
         else:
           
@@ -441,18 +438,18 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
           
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref1)]]
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref1]]
+          del data[:, f[Ref2]]
 
     # DiffGroupVariables
     if not DiffGroupVariables is None:
@@ -464,15 +461,15 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           # Create Lags
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
 
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(rcn)] - f[(data.names).index(Ref2)]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
           
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref2]]
 
         else:
           
@@ -480,18 +477,18 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
           Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
           Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
           if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
           else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[(data.names).index(rcn)], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[(data.names).index(rcn)], n = NLag2)})]
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
           
           # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[(data.names).index(Ref1)] - f[(data.names).index(Ref2)]})]
+          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "-" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
           
           # Remove temp columns
-          del data[:, f[(data.names).index(Ref1)]]
-          del data[:, f[(data.names).index(Ref2)]]
+          del data[:, f[Ref1]]
+          del data[:, f[Ref2]]
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
