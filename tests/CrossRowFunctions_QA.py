@@ -1,6 +1,7 @@
 # QA: Test AutoLags
 import datatable as dt
 from datatable import sort, f
+from RetroFit_FeatureEngineering import FeatureEngineering_CrossRow
 
 ## Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
