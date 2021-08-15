@@ -1,12 +1,12 @@
 Metadata-Version: 2.1
-Name: RetroFit.FeatureEngineering
+Name: RetroFit-FeatureEngineering
 Version: 0.0.1
 Summary: Feature engineering functions for modeling. Package utilizes polars for extremely fast processing.
-Home-page: https://github.com/AdrianAntico/RetroFit.FeatureEngineering
+Home-page: https://github.com/AdrianAntico/RetroFit_FeatureEngineering
 Author: Adrian Antico
 Author-email: adrianantico@gmail.com
 License: UNKNOWN
-Project-URL: Bug Tracker, https://github.com/AdrianAntico/RetroFit.FeatureEngineering/issues
+Project-URL: Bug Tracker, https://github.com/AdrianAntico/RetroFit_FeatureEngineering/issues
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
