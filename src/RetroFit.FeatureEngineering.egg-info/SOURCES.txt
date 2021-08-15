@@ -1,8 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-setup.cfg
-src/RetroFit.FeatureEngineering.egg-info/PKG-INFO
-src/RetroFit.FeatureEngineering.egg-info/SOURCES.txt
-src/RetroFit.FeatureEngineering.egg-info/dependency_links.txt
-src/RetroFit.FeatureEngineering.egg-info/top_level.txt

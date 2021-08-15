@@ -2,8 +2,6 @@
 import datatable as dt
 from datatable import sort, f
 
-import RetroFit_FeatureEngineering
-
 ## Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 Output = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
