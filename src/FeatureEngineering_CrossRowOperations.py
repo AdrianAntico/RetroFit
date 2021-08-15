@@ -67,6 +67,21 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     Sort = True
     """
     
+    # ArgsList Collection
+    if not ArgsList is None:
+      LagColumnNames = ArgsList['LagColumnNames']
+      DateColumnName = ArgsList['DateColumnName']
+      ByVariables = ArgsList['ByVariables']
+      LagPeriods = ArgsList['LagPeriods']
+      ImputeValue = ArgsList['ImputeValue']
+    else:
+      ArgsList = dict(
+        LagColumnNames = LagColumnNames,
+        DateColumnName = DateColumnName,
+        ByVariables = ByVariables,
+        LagPeriods = LagPeriods,
+        ImputeValue = ImputeValue)
+
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f
@@ -109,7 +124,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     if OutputFrame == 'pandas': data = data.to_pandas()
     
     # Return data
-    return data
+    return dict(data = data, ArgsList = ArgsList)
 
 
 # Inner function for AutoRollStats
@@ -127,22 +142,22 @@ def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_P
 
   # Rolling Mean
   if ns in MovingAvg_Periods_:
-    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
     data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
     
   # Rolling SD
   if ns in MovingSD_Periods_:
-    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
     data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
     
   # Rolling Min
   if ns in MovingMin_Periods_:
-    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
     data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
     
   # Rolling Max
   if ns in MovingMax_Periods_:
-    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+    Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
     data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
     
   # Return
@@ -218,6 +233,27 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     Sort = True
     """
     
+    # ArgsList Collection
+    if not ArgsList is None:
+      RollColumnName = ArgsList['RollColumnNames']
+      DateColumnName = ArgsList['DateColumnName']
+      ByVariables = ArgsList['ByVariables']
+      MovingAvg_Periods = ArgsList['MovingAvg_Periods']
+      MovingSD_Periods = ArgsList['MovingSD_Periods']
+      MovingMin_Periods = ArgsList['MovingMin_Periods']
+      MovingMax_Periods = ArgsList['MovingMax_Periods']
+      ImputeValue = ArgsList['ImputeValue']
+    else:
+      ArgsList = dict(
+        RollColumnNames = RollColumnNames,
+        DateColumnName = DateColumnName,
+        ByVariables = ByVariables,
+        MovingAvg_Periods = MovingAvg_Periods,
+        MovingSD_Periods = MovingSD_Periods,
+        MovingMin_Periods = MovingMin_Periods,
+        MovingMax_Periods = MovingMax_Periods,
+        ImputeValue = ImputeValue)
+
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f, by
@@ -273,10 +309,10 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     if OutputFrame == 'pandas': data = data.to_pandas()
     
     # Return data
-    return data
+    return dict(data = data, ArgsList = ArgsList)
 
 
-def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
@@ -286,6 +322,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
     
     # Parameters
     data:                 Source data
+    ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     DateColumnName:       Primary date column used for sorting
     ByVariables:          By grouping variables
     DiffNumericVariables: None
@@ -303,21 +340,22 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function
     data=data
+    ArgsList=None
     DateColumnName = 'CalendarDateColumn'
     ByVariables = None
     DiffNumericVariables = 'Leads'
@@ -332,6 +370,7 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
 
     # QA: Group Case: Step through function
     data=data
+    ArgsList=None
     DateColumnName = 'CalendarDateColumn'
     ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
     DiffNumericVariables = 'Leads'
@@ -345,6 +384,25 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
     rcn = 'Leads'
     """
     
+    # ArgsList Collection
+    if not ArgsList is None:
+      DateColumnName = ArgsList['DateColumnName']
+      ByVariables = ArgsList['ByVariables']
+      DiffNumericVariables = ArgsList['DiffNumericVariables']
+      DiffDateVariables = ArgsList['DiffDateVariables']
+      DiffGroupVariables = ArgsList['DiffGroupVariables']
+      NLag1 = ArgsList['NLag1']
+      NLag2 = ArgsList['NLag2']
+    else:
+      ArgsList = dict(
+        DateColumnName = DateColumnName,
+        ByVariables = ByVariables,
+        DiffNumericVariables = DiffNumericVariables,
+        DiffDateVariables = DiffDateVariables,
+        DiffGroupVariables = DiffGroupVariables,
+        NLag1 = NLag1,
+        NLag2 = NLag2)
+
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f, by
@@ -499,4 +557,4 @@ def AutoDiff(data = None, DateColumnName = None, ByVariables = None, DiffNumeric
     if OutputFrame == 'pandas': data = data.to_pandas()
     
     # Return data
-    return data
+    return dict(data = data, ArgsList = ArgsList)
