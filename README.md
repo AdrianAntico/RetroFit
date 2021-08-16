@@ -3,9 +3,9 @@
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
-[![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.FeatureEngineering.svg?style=social)](https://github.com/AdrianAntico/RetroFit.FeatureEngineering)
+[![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/retrofit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/PackageLogo.PNG" align="center" width="1000" />
+<img src="https://github.com/AdrianAntico/retrofit/blob/main/images/PackageLogo.PNG" align="center" width="1000" />
 
 ## Feature Engineering
 
@@ -15,15 +15,15 @@
 
 ## Installation
 ```
-pip install RetroFit
+pip install retrofit
 ```
 
-## RetroFit and RemixAutoML Blogs
+## retrofit and RemixAutoML Blogs
 
 <details><summary>Expand to view content</summary>
 <p>
 
-### Python RetroFit and R RemixAutoML Blogs
+### Python retrofit and R RemixAutoML Blogs
 
 ### R RemixAutoML Blogs
 [Sales Funnel Forecasting with ML using RemixAutoML](https://adrianantico.medium.com/sales-funnel-forecasting-using-ml-with-remixautoml-86361ce281b3)

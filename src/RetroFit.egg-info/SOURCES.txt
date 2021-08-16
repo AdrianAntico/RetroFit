@@ -2,7 +2,7 @@ LICENSE
 README.md
 pyproject.toml
 setup.cfg
-src/RetroFit.egg-info/PKG-INFO
-src/RetroFit.egg-info/SOURCES.txt
-src/RetroFit.egg-info/dependency_links.txt
-src/RetroFit.egg-info/top_level.txt
+src/retrofit.egg-info/PKG-INFO
+src/retrofit.egg-info/SOURCES.txt
+src/retrofit.egg-info/dependency_links.txt
+src/retrofit.egg-info/top_level.txt
