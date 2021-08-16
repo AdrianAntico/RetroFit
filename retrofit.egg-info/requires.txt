@@ -1,0 +1,4 @@
+datatable
+pandas
+scipy<=1.5.4
+numpy==1.19.5

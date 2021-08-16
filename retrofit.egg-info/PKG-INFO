@@ -1,21 +1,20 @@
 Metadata-Version: 2.1
 Name: retrofit
 Version: 0.0.1
-Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing
+Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico
 Author-email: adrianantico@gmail.com
-License: UNKNOWN
-Project-URL: Bug Tracker, https://github.com/AdrianAntico/retrofit/issues
+License: MPL
 Platform: UNKNOWN
-Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MPL 2.0 License
-Classifier: Operating System :: OS Independent
-Requires-Python: >=3.6
+Classifier: Programming Language :: Python
+Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
 ![Version: 0.0.1](https://img.shields.io/static/v1?label=Version&message=0.0.1&color=blue&?style=plastic)
+[![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)]
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
