@@ -1,3 +1,17 @@
+Metadata-Version: 2.1
+Name: RetroFit
+Version: 0.0.1
+Summary: RetroFit - A low-code, high performance machine learning, forecasting, feature engineering, and model evaluation library in Python.
+Home-page: https://github.com/AdrianAntico/RetroFit
+Author: Adrian Antico
+Author-email: adrianantico@gmail.com
+License: MPL 2.0
+Platform: UNKNOWN
+Description-Content-Type: text/markdown
+Provides-Extra: full
+Provides-Extra: test
+License-File: LICENSE
+
 ![Version: 0.0.1](https://img.shields.io/static/v1?label=Version&message=0.0.1&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -166,3 +180,5 @@ print(data.names)
 
 </p>
 </details>
+
+
