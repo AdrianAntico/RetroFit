@@ -15,7 +15,7 @@
 
 ## Installation
 ```
-pip install RetroFit_FeatureEngineering
+pip install RetroFit
 ```
 
 ## RetroFit and RemixAutoML Blogs
