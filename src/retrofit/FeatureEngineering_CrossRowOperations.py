@@ -4,7 +4,7 @@
 # Release: RetroFit 0.0.1
 # Last modified : 2021-08-11
 
-def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate lags for multiple periods for multiple variables and by variables
@@ -14,6 +14,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     
     # Parameters
     data:           is your source datatable
+    ArgsList:       If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     LagColumnNames: a list of columns that will be lagged
     DateColumnName: primary date column used for sorting
     ByVariables:    columns to lag by
@@ -85,6 +86,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f
+    import copy
     
     # Convert to datatable
     if InputFrame == 'pandas': 
@@ -97,7 +99,7 @@ def AutoLags(data = None, LagColumnNames = None, DateColumnName = None, ByVariab
     # Sort data
     if Sort == True:
       if ByVariables is not None:
-        SortCols = ByVariables
+        SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
@@ -164,7 +166,7 @@ def RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_P
   return data
 
 
-def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
@@ -174,6 +176,7 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     
     # Parameters
     data:             Source data
+    ArgsList:         If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     RollColumnNames:  A list of columns that will be lagged
     DateColumnName:   Primary date column used for sorting
     ByVariables:      Columns to lag by
@@ -257,6 +260,7 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f, by
+    import copy
     
     # Convert to datatable
     if InputFrame == 'pandas': 
@@ -269,7 +273,7 @@ def AutoRollStats(data = None, RollColumnNames = None, DateColumnName = None, By
     # Sort data if requested
     if Sort == True:
       if ByVariables is not None:
-        SortCols = ByVariables
+        SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
@@ -406,6 +410,7 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     # Load minimal dependencies
     import datatable as dt
     from datatable import sort, f, by
+    import copy
     
     # Convert to datatable
     if InputFrame == 'pandas': 
@@ -430,7 +435,7 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     # Sort data if requested
     if Sort == True:
       if ByVariables is not None:
-        SortCols = ByVariables
+        SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
