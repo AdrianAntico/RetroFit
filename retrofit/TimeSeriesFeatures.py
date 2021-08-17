@@ -198,41 +198,6 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     ImputeValue = -1
     Sort = True
     """
-    # Inner function for AutoRollStats
-    def _RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_, MovingSD_Periods_, MovingMin_Periods_, MovingMax_Periods_):
-
-      # Constants
-      Ref = str(ns) + "_" + rcn
-      Ref1 = "TEMP__Lag_" + Ref
-  
-      # Generate Lags for rowmean, rowsd, rowmin, rowmax
-      if ByVariables is not None:
-        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
-      else:
-        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)})]
-
-      # Rolling Mean
-      if ns in MovingAvg_Periods_:
-        Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-        data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
-
-      # Rolling SD
-      if ns in MovingSD_Periods_:
-        Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-        data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
-
-      # Rolling Min
-      if ns in MovingMin_Periods_:
-        Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-        data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
-
-      # Rolling Max
-      if ns in MovingMax_Periods_:
-        Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-        data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
-
-      # Return
-      return data
 
     # ArgsList Collection
     if not ArgsList is None:
@@ -302,7 +267,36 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     MaxVal = max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)[0]
     for rcn in RollColumnNames:
       for ns in range(1, MaxVal+1):
-        data = _RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_=MovingAvg_Periods, MovingSD_Periods_=MovingSD_Periods, MovingMin_Periods_=MovingMin_Periods, MovingMax_Periods_=MovingMax_Periods)
+        
+        # Constants
+        Ref = str(ns) + "_" + rcn
+        Ref1 = "TEMP__Lag_" + Ref
+
+        # Generate Lags for rowmean, rowsd, rowmin, rowmax
+        if ByVariables is not None:
+          data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
+        else:
+          data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)})]
+
+        # Rolling Mean
+        if ns in MovingAvg_Periods:
+          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+          data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
+
+        # Rolling SD
+        if ns in MovingSD_Periods:
+          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+          data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
+
+        # Rolling Min
+        if ns in MovingMin_Periods:
+          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+          data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
+
+        # Rolling Max
+        if ns in MovingMax_Periods:
+          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+          data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
 
       # Remove Temporary Lagged Columns
       del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
