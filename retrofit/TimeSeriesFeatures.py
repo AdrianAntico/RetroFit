@@ -26,7 +26,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     
     # QA: Test AutoLags
     import datatable as dt
-    from datatable import sort, f
+    from datatable import sort, f, by
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -267,7 +267,7 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     MaxVal = max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)[0]
     for rcn in RollColumnNames:
       for ns in range(1, MaxVal+1):
-        data = RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_=MovingAvg_Periods, MovingSD_Periods_=MovingSD_Periods, MovingMin_Periods_=MovingMin_Periods, MovingMax_Periods_=MovingMax_Periods)
+        data = _RollStatSingleInstance(data, rcn, ns, ByVariables, ColsOriginal, MovingAvg_Periods_=MovingAvg_Periods, MovingSD_Periods_=MovingSD_Periods, MovingMin_Periods_=MovingMin_Periods, MovingMax_Periods_=MovingMax_Periods)
 
       # Remove Temporary Lagged Columns
       del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
