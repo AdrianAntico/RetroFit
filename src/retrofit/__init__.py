@@ -1,5 +1,9 @@
-__all__ = (
-    "AutoLags",
-    "AutoRollStats",
-    "AutoDiffs"
-)
+__all__ = [
+  "AutoLags",
+  "AutoRollStats",
+  "AutoDiffs"
+  ]
+
+from .AutoLags import AutoLags
+from .AutoRollStats import AutoRollStats
+from .AutoDiff import AutoDiff
