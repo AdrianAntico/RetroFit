@@ -1,8 +1,8 @@
 # Module: TimeSeriesFeatures
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: Mozilla Public License 2.0
-# Release: RetroFit 0.0.1
-# Last modified : 2021-08-11
+# Release: retrofit 0.0.1
+# Last modified : 2021-08-17
 
 def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
     """
