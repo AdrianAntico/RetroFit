@@ -36,7 +36,6 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 ### Python retrofit and R RemixAutoML Blogs
 
-### R RemixAutoML Blogs
 [Sales Funnel Forecasting with ML using RemixAutoML](https://adrianantico.medium.com/sales-funnel-forecasting-using-ml-with-remixautoml-86361ce281b3)
  
 [The Most Feature Rich ML Forecasting Methods Available](https://adrianantico.medium.com/the-most-feature-rich-ml-forecasting-methods-available-compliments-of-remixautoml-61b53daf42e6)
