@@ -237,10 +237,53 @@ print(data.names)
 
 
 
+
 ## Machine Learning
 <p>
  
 <details><summary>Expand to view machine learning functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Scoring
+<p>
+ 
+<details><summary>Expand to view machine learning scoring functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Evaluation
+<p>
+ 
+<details><summary>Expand to view machine learning evaluation functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Interpretation
+<p>
+ 
+<details><summary>Expand to view machine learning interpretation functions</summary>
 <p>
 
 #### Coming Soon
