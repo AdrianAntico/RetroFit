@@ -59,7 +59,6 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
  
@@ -98,7 +97,6 @@ print(data.names)
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
 
@@ -141,7 +139,6 @@ print(data.names)
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
 
