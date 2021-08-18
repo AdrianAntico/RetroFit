@@ -23,6 +23,11 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 > Machine Learning Training -
 
+> Machine Learning Scoring -
+
+> Machine Learning Evaluation -
+
+> Machine Learning Interpretation -
 
 ## retrofit and RemixAutoML Blogs
 
