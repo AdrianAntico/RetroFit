@@ -238,7 +238,7 @@ print(data.names)
 
 
 
-## Machine Learning
+## Machine Learning Training
 <p>
  
 <details><summary>Expand to view machine learning functions</summary>
