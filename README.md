@@ -44,9 +44,12 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 <img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="800" />
 
+
+
+
 ## Feature Engineering
 <p>
- 
+
 <img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/FeatureEngineeringAll.PNG" align="center" width="600" />
 
 <details><summary>Expand to view feature engineering functions</summary>
@@ -228,6 +231,19 @@ print(data.names)
 
 </p>
 </details>
+
+</p>
+</details>
+
+
+
+## Machine Learning
+<p>
+ 
+<details><summary>Expand to view machine learning functions</summary>
+<p>
+
+#### Coming Soon
 
 </p>
 </details>
