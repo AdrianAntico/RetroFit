@@ -42,7 +42,7 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 </p>
 </details>
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="725" />
+<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="800" />
 
 ## Feature Engineering
 <p>
