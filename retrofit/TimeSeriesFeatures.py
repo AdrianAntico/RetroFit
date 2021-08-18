@@ -13,16 +13,16 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     Return datatable with new lag columns
     
     # Parameters
-    data:           is your source datatable
+    data:           Source data. Either a datatable frame or pandas frame
     ArgsList:       If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    LagColumnNames: a list of columns that will be lagged
-    DateColumnName: primary date column used for sorting
-    ByVariables:    columns to lag by
-    LagPeriods:              list of integers for the lookback lengths
-    ImputeValue:    value to fill the NA's for beginning of series
-    Sort:           sort the Frame before computing the lags - if you're data is sorted set this to False
-    IntputFrame:    if you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:    if you want the output Frame to be pandas change value to 'pandas'
+    LagColumnNames: A list of columns that will be lagged
+    DateColumnName: Primary date column used for sorting
+    ByVariables:    Columns to partition over
+    LagPeriods:     List of integers for the lookback lengths
+    ImputeValue:    Value to fill the NA's for beginning of series
+    Sort:           Sort the Frame before computing the lags - if you're data is sorted set this to False
+    InputFrame:     'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    OutputFrame:    'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA: Test AutoLags
     import datatable as dt
@@ -138,15 +138,15 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     Return datatable with new rolling statistics columns
     
     # Parameters
-    data:             Source data
+    data:             Source data. Either a datatable frame or pandas frame
     ArgsList:         If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     RollColumnNames:  A list of columns that will be lagged
     DateColumnName:   Primary date column used for sorting
-    ByVariables:      Columns to lag by
+    ByVariables:      Columns to partition over
     Moving_*_Periods: List of integers for look back window
     ImputeValue:      Value to fill the NA's for beginning of series
     Sort:             Sort the Frame before computing the lags - if you're data is sorted set this to False
-    IntputFrame:      'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    InputFrame:      'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:      'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA AutoRollStats
@@ -317,14 +317,14 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     Return datatable with new rolling statistics columns
     
     # Parameters
-    data:                 Source data
+    data:                 Source data. Either a datatable frame or pandas frame
     ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     DateColumnName:       Primary date column used for sorting
-    ByVariables:          By grouping variables
-    DiffNumericVariables: None
-    DiffDateVariables:    None
-    DiffGroupVariables:   None
-    NLag1:                Default 0. 0 means the current value - NLag2_Current_Value
+    ByVariables:          Columns to partition over
+    DiffNumericVariables: Numeric variable name scalar or list
+    DiffDateVariables:    Date variable name scalar or list
+    DiffGroupVariables:   Categorical variable name scalar or list
+    NLag1:                Default 0. 0 means the current value - NLag2_Current_Value, otherwise NLag1_Current_Value - NLag2_Current_Value
     NLag2:                Default 1. 1 means a lag1 of the current value
     Sort:                 True or False
     InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns

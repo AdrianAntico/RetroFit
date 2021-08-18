@@ -25,8 +25,6 @@ License-File: LICENSE
 
 ## Feature Engineering
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/FeatureEngineeringMenu.PNG" align="center" width="800" />
-
 > Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of datatable for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
 
 ## Installation
@@ -59,9 +57,44 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 </p>
 </details>
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="725" />
+<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="800" />
 
-## Feature Engineering: Cross-Row Operations
+## Feature Engineering
+<p>
+ 
+<img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/FeatureEngineeringAll.PNG" align="center" width="800" />
+
+### Feature Engineering: Date Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Numeric Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Categorical Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Cross-Row Operations
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -74,7 +107,6 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
  
@@ -113,7 +145,6 @@ print(data.names)
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
 
@@ -156,7 +187,6 @@ print(data.names)
 ```
 # Test Function
 import datatable
-from datatable import 
 import retrofit
 from retrofit import TimeSeriesFeatures as ts
 
@@ -183,6 +213,30 @@ print(data.names)
 <p>
  
 <code>AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
+
+</p>
+</details>
+
+</p>
+</details>
+
+
+### Feature Engineering: Data Set Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Model-Based Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
 
 </p>
 </details>
