@@ -30,16 +30,19 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     from datatable import sort, f, by
 
     ## Group Example:
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## Group and Multiple Periods and LagColumnNames:
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## No Group Example:
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
@@ -86,17 +89,19 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
         LagPeriods = LagPeriods,
         ImputeValue = ImputeValue)
 
-    # Load dependencies
+    # For making copies of lists so originals aren't modified
     import copy
+    
+    # Import datatable methods
     if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
       import datatable as dt
       from datatable import sort, f
     
-    # Load dependencies
+    # Import polars methods
     if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
       import polars as pl
-      from polars import *
-      from polars.lazy import *
+      from polars import col
+      from polars.lazy import col
       
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
