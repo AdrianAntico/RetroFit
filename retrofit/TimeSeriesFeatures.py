@@ -97,14 +97,14 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     # Import datatable methods
     if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
       import datatable as dt
-      from datatable import sort, f, by
-    
+      from datatable import sort, f, by, ifelse
+
     # Import polars methods
     if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
       import polars as pl
       from polars import col
       from polars.lazy import col
-      
+
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
       data = dt.Frame(data)
@@ -143,23 +143,46 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     if Processing == 'datatable':
       for lcn in LagColumnNames:
         for lp in LagPeriods:
+          
+          # New Column Name
           Ref1 = "Lag_" + str(lp) + "_" + lcn
+          
+          # Generate lags
           if ByVariables is not None:
             data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
           else:
             data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
+
+          # Impute NA
+          if not ImputeValue is None:
+            data[Ref1] = data[:, ifelse(f[Ref1] == None, -1, f[Ref1])]
+
     elif Processing == 'polars':
       for lcn in LagColumnNames:
         for lp in LagPeriods:
+          
+          # New Column Name
           Ref1 = "Lag_" + str(lp) + "_" + lcn
+          
+          # Generate lags
           if ByVariables is not None:
-            data = (data.select([
+            if not ImputeValue is None:
+              data = (data.select([
               pl.all(),
-              col(lcn).shift(lp).over(ByVariables).explode().alias("Lag1_" + lcn)]))
+              col(lcn).shift_and_fill(lp, ImputeValue).over(ByVariables).explode().alias(Ref1)]))
+            else:
+              data = (data.select([
+              pl.all(),
+              col(lcn).shift(lp).over(ByVariables).explode().alias(Ref1)]))
           else:
-            data = (data.select([
+            if not ImputeValue is None:
+              data = (data.select([
               pl.all(),
-              col(lcn).shift(lp).alias("Lag1_" + lcn)]))
+              col(lcn).shift_and_fill(lp, ImputeValue).alias(Ref1)]))
+            else:
+              data = (data.select([
+              pl.all(),
+              col(lcn).shift(lp).alias(Ref1)]))
 
     # Convert Frame
     if OutputFrame == 'pandas' and Processing == 'datatable': 
