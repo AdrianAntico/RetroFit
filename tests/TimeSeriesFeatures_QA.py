@@ -1,28 +1,56 @@
 # QA: Test AutoLags
 import datatable as dt
 from retrofit import TimeSeriesFeatures as ts
+import polars as pl
 
-## Group Example:
+## Group Example: datatable
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datable', OutputFrame='datatable')
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 data = Output['data']
 ArgsList = Output['ArgsList']
 del Output
 print(data.names)
 print(ArgsList)
 
-## Group and Multiple Periods and LagColumnNames:
+## Group Exmaple: polars
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+data = Output['data']
+ArgsList = Output['ArgsList']
+del Output
+print(data.columns)
+print(ArgsList)
+
+## Group and Multiple Periods and LagColumnNames: datatable
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 data = Output['data']
 ArgsList = Output['ArgsList']
 del Output
 print(data.names)
 print(ArgsList)
 
-## No Group Example:
+## Group and Multiple Periods and LagColumnNames: datatable
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+data = Output['data']
+ArgsList = Output['ArgsList']
+del Output
+print(data.names)
+print(ArgsList)
+
+## No Group Example: datatable
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+data = Output['data']
+ArgsList = Output['ArgsList']
+del Output
+print(data.names)
+print(ArgsList)
+
+## No Group Example: polars
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
 data = Output['data']
 ArgsList = Output['ArgsList']
 del Output
@@ -45,7 +73,7 @@ print(ArgsList)
 
 ## Group and Multiple Periods and RollColumnNames:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+Output = ts.AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
 data = Output['data']
 ArgsList = Output['ArgsList']
 del Output

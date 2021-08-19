@@ -97,7 +97,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     # Import datatable methods
     if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
       import datatable as dt
-      from datatable import sort, f
+      from datatable import sort, f, by
     
     # Import polars methods
     if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
