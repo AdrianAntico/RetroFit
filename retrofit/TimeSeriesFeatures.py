@@ -13,7 +13,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     Return datatable with new lag columns
     
     # Parameters
-    data:           Source data. Either a datatable frame or pandas frame
+    data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
     ArgsList:       If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     LagColumnNames: A list of columns that will be lagged
     DateColumnName: Primary date column used for sorting
@@ -21,8 +21,8 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     LagPeriods:     List of integers for the lookback lengths
     ImputeValue:    Value to fill the NA's for beginning of series
     Sort:           Sort the Frame before computing the lags - if you're data is sorted set this to False
-    InputFrame:     'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:    'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA: Test AutoLags
     import datatable as dt
@@ -84,10 +84,15 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
         ImputeValue = ImputeValue)
 
     # Load minimal dependencies
-    import datatable as dt
-    from datatable import sort, f
     import copy
-    
+    if InputFrame == 'datatable':
+      import datatable as dt
+      from datatable import sort, f
+    else:
+      import polars as pl
+      from polars import *
+      from polars.lazy import *
+      
     # Convert to datatable
     if InputFrame == 'pandas': 
       data = dt.Frame(data)
@@ -97,13 +102,20 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
       ByVariables = [ByVariables]
 
     # Sort data
-    if Sort == True:
+    if Sort == True and InputFrame == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
+    elif Sort == True and InputFrame == 'polars':
+      if ByVariables is not None:
+        SortCols = copy.copy(ByVariables)
+        SortCols.append(DateColumnName)
+        data = (data.sort(SortCols)[::-1])
+      else:
+        data = (data.sort(DateColumnName)[::-1])
 
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -114,13 +126,26 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
       LagPeriods = [LagPeriods]
 
     # Build lags
-    for lcn in LagColumnNames:
-      for lp in LagPeriods:
-        Ref1 = "Lag_" + str(lp) + "_" + lcn
-        if ByVariables is not None:
-          data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
-        else:
-          data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
+    if InputFrame == 'datatable':
+      for lcn in LagColumnNames:
+        for lp in LagPeriods:
+          Ref1 = "Lag_" + str(lp) + "_" + lcn
+          if ByVariables is not None:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
+    elif InputFrame == 'polars':
+      for lcn in LagColumnNames:
+        for lp in LagPeriods:
+          Ref1 = "Lag_" + str(lp) + "_" + lcn
+          if ByVariables is not None:
+            data = (data.select([
+              pl.all(),
+              col(lcn).shift(lp).over(ByVariables).explode().alias("Lag1_" + lcn)]))
+          else:
+            data = (data.select([
+              pl.all(),
+              col(lcn).shift(lp).alias("Lag1_" + lcn)]))
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()

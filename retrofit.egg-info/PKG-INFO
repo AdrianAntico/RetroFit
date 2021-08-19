@@ -23,14 +23,26 @@ License-File: LICENSE
 
 <img src="https://github.com/AdrianAntico/retrofit/blob/main/images/PackageLogo.PNG" align="center" width="1000" />
 
-## Feature Engineering
-
-> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of datatable for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
 
 ## Installation
 ```
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 ```
+
+
+## Feature Engineering
+
+> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of datatable for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
+
+## Machine Learning
+
+> Machine Learning Training -
+
+> Machine Learning Scoring -
+
+> Machine Learning Evaluation -
+
+> Machine Learning Interpretation -
 
 ## retrofit and RemixAutoML Blogs
 
@@ -39,7 +51,6 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 ### Python retrofit and R RemixAutoML Blogs
 
-### R RemixAutoML Blogs
 [Sales Funnel Forecasting with ML using RemixAutoML](https://adrianantico.medium.com/sales-funnel-forecasting-using-ml-with-remixautoml-86361ce281b3)
  
 [The Most Feature Rich ML Forecasting Methods Available](https://adrianantico.medium.com/the-most-feature-rich-ml-forecasting-methods-available-compliments-of-remixautoml-61b53daf42e6)
@@ -57,13 +68,19 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 </p>
 </details>
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="800" />
+<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="1000" />
+
+
+
 
 ## Feature Engineering
 <p>
- 
-<img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/FeatureEngineeringAll.PNG" align="center" width="800" />
 
+<img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/FeatureEngineeringAll.PNG" align="center" width="600" />
+
+<details><summary>Expand to view feature engineering functions</summary>
+<p>
+ 
 ### Feature Engineering: Date Feature Engineering
 
 <details><summary>Expand to view content</summary>
@@ -234,6 +251,65 @@ print(data.names)
 ### Feature Engineering: Model-Based Feature Engineering
 
 <details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Training
+<p>
+ 
+<details><summary>Expand to view machine learning functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Scoring
+<p>
+ 
+<details><summary>Expand to view machine learning scoring functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Evaluation
+<p>
+ 
+<details><summary>Expand to view machine learning evaluation functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+
+
+
+## Machine Learning Interpretation
+<p>
+ 
+<details><summary>Expand to view machine learning interpretation functions</summary>
 <p>
 
 #### Coming Soon
