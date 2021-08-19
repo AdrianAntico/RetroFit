@@ -28,23 +28,25 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     # QA: Test AutoLags
     import datatable as dt
     from datatable import sort, f, by
+    import retrofit
+    from retrofit import TimeSeriesFeatures as ts
 
     ## Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## Group and Multiple Periods and LagColumnNames:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## No Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -162,9 +164,9 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     # Convert Frame
     if OutputFrame == 'pandas' and Processing == 'datatable': 
       data = data.to_pandas()
-    elif Output == 'pandas' and Processing == 'polars':
+    elif OutputFrame == 'pandas' and Processing == 'polars':
       data = data.to_pandas()
-    elif Output == 'datatable' and Processing == 'polars':
+    elif OutputFrame == 'datatable' and Processing == 'polars':
       data = data.to_pandas()
       data = dt.Frame(data)
     
@@ -195,20 +197,22 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     # QA AutoRollStats
     import datatable as dt
     from datatable import sort, f, by
+    import retrofit
+    from retrofit import TimeSeriesFeatures as ts
 
     ## No Group Example
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = ts.AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = ts.AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = ts.AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -376,20 +380,22 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     # QA AutoDiff
     import datatable as dt
     from datatable import sort, f, by
+    import retrofit
+    from retrofit import TimeSeriesFeatures as ts
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = ts.AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = ts.AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = ts.AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function

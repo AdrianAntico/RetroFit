@@ -4,7 +4,7 @@ from retrofit import TimeSeriesFeatures as ts
 
 ## Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datable', OutputFrame='datatable')
 data = Output['data']
 ArgsList = Output['ArgsList']
 del Output
