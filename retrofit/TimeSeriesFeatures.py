@@ -31,20 +31,21 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+    data = AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## Group and Multiple Periods and LagColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
+    data = AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+    data = AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function
+    Processing='datatable'
     InputFrame='datatable'
     OutputFrame='datatable'
     LagPeriods = [1, 3, 5]
@@ -57,6 +58,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     Sort = True
     
     # QA: Group Case: Step through function
+    Processing='datatable'
     InputFrame='datatable'
     OutputFrame='datatable'
     LagPeriods = 1
@@ -84,12 +86,14 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
         LagPeriods = LagPeriods,
         ImputeValue = ImputeValue)
 
-    # Load minimal dependencies
+    # Load dependencies
     import copy
-    if Processing == 'datatable':
+    if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
       import datatable as dt
       from datatable import sort, f
-    elif Processing == 'polars':
+    
+    # Load dependencies
+    if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
       import polars as pl
       from polars import *
       from polars.lazy import *
@@ -151,7 +155,13 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
               col(lcn).shift(lp).alias("Lag1_" + lcn)]))
 
     # Convert Frame
-    if OutputFrame == 'pandas': data = data.to_pandas()
+    if OutputFrame == 'pandas' and Processing == 'datatable': 
+      data = data.to_pandas()
+    elif Output == 'pandas' and Processing == 'polars':
+      data = data.to_pandas()
+    elif Output == 'datatable' and Processing == 'polars':
+      data = data.to_pandas()
+      data = dt.Frame(data)
     
     # Return data
     return dict(data = data, ArgsList = ArgsList)
