@@ -61,7 +61,7 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 ## Feature Engineering
 <p>
 
-<img src="images/FeatureEngineeringAll.PNG" align="center" width="600" />
+<img src="Images/FeatureEngineeringAll.PNG" align="center" width="600" />
 
 <details><summary>Expand to view feature engineering functions</summary>
 <p>
