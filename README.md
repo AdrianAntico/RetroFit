@@ -6,7 +6,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/retrofit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src="https://github.com/AdrianAntico/retrofit/blob/main/images/PackageLogo.PNG" align="center" width="1000" />
+<img src="images/PackageLogo.PNG" align="center" width="1000" />
 
 
 ## Installation
@@ -53,7 +53,7 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 </p>
 </details>
 
-<img src="https://github.com/AdrianAntico/RemixAutoML/blob/master/Images/Documentation.PNG" align="center" width="1000" />
+<img src="Images/Documentation.PNG" align="center" width="1000" />
 
 
 
@@ -61,7 +61,7 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 ## Feature Engineering
 <p>
 
-<img src="https://github.com/AdrianAntico/RetroFit/blob/main/images/FeatureEngineeringAll.PNG" align="center" width="600" />
+<img src="images/FeatureEngineeringAll.PNG" align="center" width="600" />
 
 <details><summary>Expand to view feature engineering functions</summary>
 <p>
