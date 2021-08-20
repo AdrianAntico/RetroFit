@@ -129,7 +129,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
         SortCols.append(DateColumnName)
         data = (data.sort(SortCols)[::-1])
       else:
-        data = (data.sort(DateColumnName)[::-1])
+        data = (data.sort(DateColumnName))
 
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -168,12 +168,12 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
           if ByVariables is not None:
             if not ImputeValue is None:
               data = (data.select([
-              pl.all(),
-              col(lcn).shift_and_fill(lp, ImputeValue).over(ByVariables).explode().alias(Ref1)]))
+                pl.all(),
+                col(lcn).shift_and_fill(lp, ImputeValue).over(ByVariables).explode().alias(Ref1)]))
             else:
               data = (data.select([
-              pl.all(),
-              col(lcn).shift(lp).over(ByVariables).explode().alias(Ref1)]))
+                pl.all(),
+                col(lcn).shift(lp).over(ByVariables).explode().alias(Ref1)]))
           else:
             if not ImputeValue is None:
               data = (data.select([
@@ -197,7 +197,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     return dict(data = data, ArgsList = ArgsList)
 
 
-def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
@@ -214,7 +214,8 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     Moving_*_Periods: List of integers for look back window
     ImputeValue:      Value to fill the NA's for beginning of series
     Sort:             Sort the Frame before computing the lags - if you're data is sorted set this to False
-    InputFrame:      'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    Processing:       'datatable' or 'polars'. Choose the package you want to do your processing
+    InputFrame:       'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:      'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA AutoRollStats
@@ -290,27 +291,45 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
         MovingMax_Periods = MovingMax_Periods,
         ImputeValue = ImputeValue)
 
-    # Load minimal dependencies
-    import datatable as dt
-    from datatable import sort, f, by
+    # For making copies of lists so originals aren't modified
     import copy
     
-    # Convert to datatable
-    if InputFrame == 'pandas': 
-      data = dt.Frame(data)
+    # Import datatable methods
+    if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
+      import datatable as dt
+      from datatable import sort, f, by, ifelse
 
-    # Ensure ByVariables is a list
+    # Import polars methods
+    if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
+      import polars as pl
+      from polars import col
+      from polars.lazy import col
+    
+    # Convert to datatable
+    if InputFrame == 'pandas' and Processing == 'datatable': 
+      data = dt.Frame(data)
+    elif InputFrame == 'pandas' and Process == 'polars':
+      data = pl.from_pandas(data)
+
+    # Ensure List
     if not ByVariables is None and not isinstance(ByVariables, list):
       ByVariables = [ByVariables]
 
-    # Sort data if requested
-    if Sort == True:
+    # Sort data
+    if Sort == True and Processing == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
-        data = data[:, :, sort(DateColumnName)]
+        data = data[:, :, sort(DateColumnName, reverse=True)]
+    elif Sort == True and Processing == 'polars':
+      if ByVariables is not None:
+        SortCols = copy.copy(ByVariables)
+        SortCols.append(DateColumnName)
+        data = (data.sort(SortCols)[::-1])
+      else:
+        data = (data.sort(DateColumnName))
 
     # Prepare column and value references
     if not RollColumnNames is None and not isinstance(RollColumnNames, list):
@@ -378,7 +397,7 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     return dict(data = data, ArgsList = ArgsList)
 
 
-def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, InputFrame='datatable', OutputFrame='datatable'):
+def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
@@ -397,6 +416,7 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     NLag1:                Default 0. 0 means the current value - NLag2_Current_Value, otherwise NLag1_Current_Value - NLag2_Current_Value
     NLag2:                Default 1. 1 means a lag1 of the current value
     Sort:                 True or False
+    Processing:           'datatable' or 'polars'. Choose the package you want to do your processing
     InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
@@ -471,16 +491,27 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
         NLag1 = NLag1,
         NLag2 = NLag2)
 
-    # Load minimal dependencies
-    import datatable as dt
-    from datatable import sort, f, by
+    # For making copies of lists so originals aren't modified
     import copy
     
-    # Convert to datatable
-    if InputFrame == 'pandas': 
-      data = dt.Frame(data)
+    # Import datatable methods
+    if Processing == 'datatable' or OutputFrame == 'datatable' or InputFrame == 'datatable':
+      import datatable as dt
+      from datatable import sort, f, by, ifelse
 
-    # Ensure ByVariables is a list
+    # Import polars methods
+    if Processing == 'polars' or OutputFrame == 'polars' or InputFrame == 'polars':
+      import polars as pl
+      from polars import col
+      from polars.lazy import col
+    
+    # Convert to datatable
+    if InputFrame == 'pandas' and Processing == 'datatable': 
+      data = dt.Frame(data)
+    elif InputFrame == 'pandas' and Process == 'polars':
+      data = pl.from_pandas(data)
+
+    # Ensure List
     if not ByVariables is None and not isinstance(ByVariables, list):
       ByVariables = [ByVariables]
 
@@ -496,14 +527,21 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     if not DiffGroupVariables is None and not isinstance(DiffGroupVariables, list):
       DiffGroupVariables = [DiffGroupVariables]
 
-    # Sort data if requested
-    if Sort == True:
+    # Sort data
+    if Sort == True and Processing == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         data = data[:, :, sort(SortCols, reverse=True)]
       else:
-        data = data[:, :, sort(DateColumnName)]
+        data = data[:, :, sort(DateColumnName, reverse=True)]
+    elif Sort == True and Processing == 'polars':
+      if ByVariables is not None:
+        SortCols = copy.copy(ByVariables)
+        SortCols.append(DateColumnName)
+        data = (data.sort(SortCols)[::-1])
+      else:
+        data = (data.sort(DateColumnName))
 
     # DiffNumericVariables
     if not DiffNumericVariables is None:

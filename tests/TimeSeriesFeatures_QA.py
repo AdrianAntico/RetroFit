@@ -3,11 +3,12 @@ import timeit
 import datatable as dt
 import polars as pl
 from retrofit import TimeSeriesFeatures as ts
+import pandas as pd
 
 ## No Group Example: datatable
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/RemixAutoML/tests/QA_DataSets/ThreeGroup-FC-Walmart.csv")
 t_start = timeit.default_timer()
-Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Weekly_Sales', DateColumnName='Date', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 t_end = timeit.default_timer()
 print(t_end - t_start)
 data = Output['data']
@@ -17,9 +18,20 @@ print(data.names)
 print(ArgsList)
 
 ## No Group Example: polars
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/RemixAutoML/tests/QA_DataSets/ThreeGroup-FC-Walmart.csv")
 t_start = timeit.default_timer()
-Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Weekly_Sales', DateColumnName='Date', ByVariables=None, ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+data=data
+LagPeriods=1
+LagColumnNames='Weekly_Sales'
+DateColumnName='Date'
+ByVariables=None
+ImputeValue=-1.0
+Sort=True
+Processing='polars'
+InputFrame='polars'
+OutputFrame='polars'
+
 t_end = timeit.default_timer()
 print(t_end - t_start)
 data = Output['data']
@@ -34,23 +46,29 @@ t_start = timeit.default_timer()
 Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
+data1 = Output['data']
 ArgsList = Output['ArgsList']
 del Output
-print(data.names)
+print(data1.names)
 print(ArgsList)
 
-## Group Exmaple: polars
+## Group Exmaple: polars (Impute = -1 is failing, RuntimeError: Any(Other("Cannot cast list type")))
+# Issue raised #11224
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
-Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+Output = ts.AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
+data2 = Output['data']
 ArgsList = Output['ArgsList']
 del Output
-print(data.columns)
+print(data2.columns)
 print(ArgsList)
+
+# Check if equal
+data1 = data1.to_pandas()
+data2 = data2.to_pandas()
+
 
 ## Group and Multiple Periods and LagColumnNames: datatable
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -58,23 +76,29 @@ t_start = timeit.default_timer()
 Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
+data1 = Output['data']
 ArgsList = Output['ArgsList']
 del Output
-print(data.names)
+print(data1.names)
 print(ArgsList)
 
 ## Group and Multiple Periods and LagColumnNames: datatable
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
-Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+Output = ts.AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
+data2 = Output['data']
 ArgsList = Output['ArgsList']
 del Output
-print(data.columns)
+print(data2.columns)
 print(ArgsList)
+
+# Check if equal
+data1 = data1.to_pandas()
+data2 = data2.to_pandas()
+data1.equals(data2)
+
 
 #########################################################################################################
 
