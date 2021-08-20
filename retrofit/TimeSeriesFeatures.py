@@ -127,9 +127,9 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = (data.sort(SortCols)[::-1])
+        data = (data.sort(SortCols, reverse = True))
       else:
-        data = (data.sort(DateColumnName))
+        data = (data.sort(DateColumnName, reverse = True))
 
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -329,7 +329,7 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
         SortCols.append(DateColumnName)
         data = (data.sort(SortCols)[::-1])
       else:
-        data = (data.sort(DateColumnName))
+        data = (data.sort(DateColumnName, reverse = True))
 
     # Prepare column and value references
     if not RollColumnNames is None and not isinstance(RollColumnNames, list):
@@ -541,7 +541,7 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
         SortCols.append(DateColumnName)
         data = (data.sort(SortCols)[::-1])
       else:
-        data = (data.sort(DateColumnName))
+        data = (data.sort(DateColumnName, reverse = True))
 
     # DiffNumericVariables
     if not DiffNumericVariables is None:
