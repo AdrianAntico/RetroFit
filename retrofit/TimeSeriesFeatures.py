@@ -108,7 +108,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
       data = dt.Frame(data)
-    elif InputFrame == 'pandas' and Process == 'polars':
+    elif InputFrame == 'pandas' and Processing == 'polars':
       data = pl.from_pandas(data)
 
     # Ensure List
@@ -120,16 +120,18 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = data[:, :, sort(SortCols, reverse=True)]
+        rev = [True for t in range(len(SortCols))]
+        data = data[:, :, sort(SortCols, reverse=rev)]
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
     elif Sort == True and Processing == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = (data.sort(SortCols, reverse = True))
+        rev = [True for t in range(len(SortCols))]
+        data = data.sort(SortCols, reverse = rev)
       else:
-        data = (data.sort(DateColumnName, reverse = True))
+        data = data.sort(DateColumnName, reverse = True)
 
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -308,7 +310,7 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
       data = dt.Frame(data)
-    elif InputFrame == 'pandas' and Process == 'polars':
+    elif InputFrame == 'pandas' and Processing == 'polars':
       data = pl.from_pandas(data)
 
     # Ensure List
@@ -320,14 +322,16 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = data[:, :, sort(SortCols, reverse=True)]
+        rev = [True for t in range(len(SortCols))]
+        data = data[:, :, sort(SortCols, reverse=rev)]
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
     elif Sort == True and Processing == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = (data.sort(SortCols)[::-1])
+        rev = [True for t in range(len(SortCols))]
+        data = data[:, :, sort(SortCols, reverse=rev)]
       else:
         data = (data.sort(DateColumnName, reverse = True))
 
@@ -508,7 +512,7 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
       data = dt.Frame(data)
-    elif InputFrame == 'pandas' and Process == 'polars':
+    elif InputFrame == 'pandas' and Processing == 'polars':
       data = pl.from_pandas(data)
 
     # Ensure List
@@ -532,14 +536,16 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = data[:, :, sort(SortCols, reverse=True)]
+        rev = [True for t in range(len(SortCols))]
+        data = data[:, :, sort(SortCols, reverse=rev)]
       else:
         data = data[:, :, sort(DateColumnName, reverse=True)]
     elif Sort == True and Processing == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
-        data = (data.sort(SortCols)[::-1])
+        rev = [True for t in range(len(SortCols))]
+        data = data[:, :, sort(SortCols, reverse=rev)]
       else:
         data = (data.sort(DateColumnName, reverse = True))
 
