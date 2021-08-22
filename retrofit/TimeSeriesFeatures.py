@@ -10,7 +10,7 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
     Automatically generate lags for multiple periods for multiple variables and by variables
     
     # Output
-    Return datatable with new lag columns
+    Return a datatable, polars frame, or pandas frame with new lag columns
     
     # Parameters
     data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
@@ -179,12 +179,12 @@ def AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName =
           else:
             if not ImputeValue is None:
               data = (data.select([
-              pl.all(),
-              col(lcn).shift_and_fill(lp, ImputeValue).alias(Ref1)]))
+                pl.all(),
+                col(lcn).shift_and_fill(lp, ImputeValue).alias(Ref1)]))
             else:
               data = (data.select([
-              pl.all(),
-              col(lcn).shift(lp).alias(Ref1)]))
+                pl.all(),
+                col(lcn).shift(lp).alias(Ref1)]))
 
     # Convert Frame
     if OutputFrame == 'pandas' and Processing == 'datatable': 
@@ -205,10 +205,10 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
     
     # Output
-    Return datatable with new rolling statistics columns
+    Return a datatable, polars frame, or pandas frame with new rolling statistics columns
     
     # Parameters
-    data:             Source data. Either a datatable frame or pandas frame
+    data:             Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
     ArgsList:         If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     RollColumnNames:  A list of columns that will be lagged
     DateColumnName:   Primary date column used for sorting
@@ -306,7 +306,7 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
       import polars as pl
       from polars import col
       from polars.lazy import col
-    
+
     # Convert to datatable
     if InputFrame == 'pandas' and Processing == 'datatable': 
       data = dt.Frame(data)
@@ -356,43 +356,57 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
       MovingMax_Periods = [MovingMax_Periods]
 
     # Build lags to max window value
-    ColsOriginal = data.names
     MaxVal = max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)[0]
-    for rcn in RollColumnNames:
-      for ns in range(1, MaxVal+1):
-        
-        # Constants
-        Ref = str(ns) + "_" + rcn
-        Ref1 = "TEMP__Lag_" + Ref
 
-        # Generate Lags for rowmean, rowsd, rowmin, rowmax
-        if ByVariables is not None:
-          data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
-        else:
-          data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)})]
+    # datatable processing
+    if Processing == 'datatable':
+      for rcn in RollColumnNames:
+        for ns in range(1, MaxVal+1):
+          
+          # Constants
+          Ref = str(ns) + "_" + rcn
+          Ref1 = "TEMP__Lag_" + Ref
 
-        # Rolling Mean
-        if ns in MovingAvg_Periods:
-          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-          data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
+          # Generate Lags for rowmean, rowsd, rowmin, rowmax
+          if ByVariables is not None:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)}), by(ByVariables)]
+          else:
+            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = ns)})]
 
-        # Rolling SD
-        if ns in MovingSD_Periods:
-          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-          data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
+          # Rolling Mean
+          if ns in MovingAvg_Periods:
+            Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+            data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
 
-        # Rolling Min
-        if ns in MovingMin_Periods:
-          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-          data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
+          # Rolling SD
+          if ns in MovingSD_Periods:
+            Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+            data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
 
-        # Rolling Max
-        if ns in MovingMax_Periods:
-          Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
-          data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
+          # Rolling Min
+          if ns in MovingMin_Periods:
+            Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+            data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
 
-      # Remove Temporary Lagged Columns
-      del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+          # Rolling Max
+          if ns in MovingMax_Periods:
+            Ref2 = [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]
+            data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
+
+        # Remove Temporary Lagged Columns
+        del data[:, [zzz for zzz in data.names if 'TEMP__Lag_' in zzz]]
+
+    # polars processing
+    elif Processing == 'polars':
+      for rcn in RollColumnNames:
+        for ns in range(1, MaxVal+1):
+          
+          # Constants
+          Ref = str(ns) + "_" + rcn
+          
+          # Rolling Mean
+          data = (data.select([
+            pl.mean(ns).over(ByVariables).explode().alias(Ref)]))
 
     # Convert Frame
     if OutputFrame == 'pandas': data = data.to_pandas()
@@ -402,15 +416,16 @@ def AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumn
 
 
 def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
     
     # Output
-    Return datatable with new rolling statistics columns
+    Return a datatable, polars frame, or pandas frame with new difference columns
     
     # Parameters
-    data:                 Source data. Either a datatable frame or pandas frame
+    data:                 Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
     ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
     DateColumnName:       Primary date column used for sorting
     ByVariables:          Columns to partition over
@@ -670,4 +685,136 @@ def AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = 
     if OutputFrame == 'pandas': data = data.to_pandas()
     
     # Return data
+    return dict(data = data, ArgsList = ArgsList)
+
+
+def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, CalendarVariables = None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+  
+    """
+    # Goal:
+    Automatically generate calendar variables from your date columns
+    
+    # Output
+    Return a datatable, polars, or pandas frame with new calendar variables
+    
+    # Parameters
+    data:                 Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+    ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
+    DateColumnNames:      Primary date column used for sorting
+    CalendarVariables:    'nanosecond', 'second', 'minute', 'hour', 'mday', 'wday', 'month', 'quarter', 'year'
+    Processing:           'datatable' or 'polars'. Choose the package you want to do your processing
+    InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    
+    # QA AutoCalendarVariables
+    import datatable as dt
+    from datatable import sort, f, by, ifelse
+    import retrofit
+    from retrofit import TimeSeriesFeatures as ts
+
+    ## Example:
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    data = ts.AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+    print(data.names)
+
+    # QA: No Group Case: Step through function
+    data=data
+    ArgsList=None
+    DateColumnName = 'CalendarDateColumn'
+    CalendarVariables = ['wday','mday','wom','month','quarter','year']
+    Processing = 'datatable'
+    InputFrame = 'datatable'
+    OutputFrame = 'datatable'
+    """
+    
+    # ArgsList Collection
+    if not ArgsList is None:
+      DateColumnName = ArgsList['DateColumnName']
+      CalendarVariables = ArgsList['CalendarVariables']
+    else:
+      ArgsList = dict(
+        DateColumnNames = DateColumnName,
+        CalendarVariables = CalendarVariables)
+
+    # Imports
+    import datatable as dt
+    from datatable import time, ifelse, f
+    
+    # Ensure List
+    if not DateColumnNames is None and not isinstance(DateColumnNames, list):
+      DateColumnNames = [DateColumnNames]
+
+    # Ensure List
+    if not CalendarVariables is None and not isinstance(CalendarVariables, list):
+      CalendarVariables = [CalendarVariables]
+    
+    # Loop through DateColumns
+    for DateVar in DateColumnNames:
+      for CVars in CalendarVariables:
+        
+        # Nanosecond
+        if(CVars.lower() in 'nanosecond'):
+          try:
+            data[:, f[:].extend({CVars + '_nanosecond': time.nanosecond(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping time.nanosecond calculation due to type mismatch")
+
+        # Second
+        if(CVars.lower() in 'second'):
+          try:
+            data = data[:, f[:].extend({CVars + '_second': time.second(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping time.second calculation due to type mismatch")
+
+        # Minute
+        if(CVars.lower() in 'minute'):
+          try:
+            data = data[:, f[:].extend({CVars + '_minute': time.minute(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping time.minute calculation due to type mismatch")
+
+        # Hour
+        if(CVars.lower() in 'hour'):
+          try:
+            data = data[:, f[:].extend({CVars + '_hour': time.hour(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping time.hour calculation due to type mismatch")
+
+        # day_of_week
+        if(CVars.lower() in 'wday'):
+          try:
+            data = data[:, f[:].extend({CVars + '_wday': time.day_of_week(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping wday (time.day_of_week) calculation due to type mismatch")
+
+        # day of month
+        if(CVars.lower() in 'mday'):
+          try:
+            data = data[:, f[:].extend({CVars + '_mday': time.day(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping mday (time.day) calculation due to type mismatch")
+
+        # month
+        if(CVars.lower() in 'month'):
+          try:
+            data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping wday (time.month) calculation due to type mismatch")
+
+        # quarter
+        if(CVars.lower() in 'quarter'):
+          try:
+            data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
+            data = data[:, f[:].extend({CVars + '_quarter': ifelse(f[CVars + '_quarter'] <= 3, 1, ifelse(f[CVars + '_quarter'] <= 6, 2, ifelse(f[CVars + '_quarter'] <= 9, 3, 4)))})]
+          except Exception, e:
+            raise print("Skipping wday (time.month) calculation due to type mismatch")
+
+        # year
+        if(CVars.lower() in 'year'):
+          try:
+            data[:, f[:].extend({CVars + '_year': time.year(f[DateVar])})]
+          except Exception, e:
+            raise print("Skipping wday (time.year) calculation due to type mismatch")
+
+    # Return
     return dict(data = data, ArgsList = ArgsList)
