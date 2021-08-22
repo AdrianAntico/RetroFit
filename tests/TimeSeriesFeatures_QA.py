@@ -357,5 +357,6 @@ print(ArgsList)
 #########################################################################################################
 #########################################################################################################
 
+# Calendar Vars
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 data = ts.AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')

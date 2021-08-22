@@ -729,11 +729,11 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
     
     # ArgsList Collection
     if not ArgsList is None:
-      DateColumnName = ArgsList['DateColumnName']
+      DateColumnNames = ArgsList['DateColumnNames']
       CalendarVariables = ArgsList['CalendarVariables']
     else:
       ArgsList = dict(
-        DateColumnNames = DateColumnName,
+        DateColumnNames = DateColumnNames,
         CalendarVariables = CalendarVariables)
 
     # Imports
