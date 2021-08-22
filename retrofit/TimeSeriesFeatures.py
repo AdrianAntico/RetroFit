@@ -811,9 +811,9 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
           try:
             data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
           except ValueError:
-            raise print("Skipping wday (time.month) calculation due to type mismatch")
+            raise print("Skipping wday time.month calculation due to type mismatch")
           else:
-            print("Skipping wday (time.month) calculation due to type mismatch")
+            print("Skipping wday time.month calculation due to type mismatch")
 
         # quarter
         if(CVars.lower() in 'quarter'):
