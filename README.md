@@ -71,7 +71,44 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 <details><summary>Expand to view content</summary>
 <p>
 
-#### Coming Soon
+#### **AutoCalendarVariables()**
+
+<details><summary>Code Example</summary>
+<p>
+
+```
+# Test Function
+import datatable
+import retrofit
+from retrofit import TimeSeriesFeatures as ts
+ 
+# Data can be created using the R package RemixAutoML and function FakeDataGenerator
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+data = ts.AutoCalendarVariables(
+  data=data, 
+  ArgsList=None, 
+  DateColumnNames = 'CalendarDateColumn', 
+  CalendarVariables = ['wday','mday','wom','month','quarter','year'], 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Check
+data.names
+```
+
+</p>
+</details>
+
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your date columns using datatable.
+
+</p>
+</details>
+
 
 </p>
 </details>
