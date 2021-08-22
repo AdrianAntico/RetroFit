@@ -720,7 +720,7 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
     # QA: No Group Case: Step through function
     data=data
     ArgsList=None
-    DateColumnName = 'CalendarDateColumn'
+    DateColumnNames = 'CalendarDateColumn'
     CalendarVariables = ['wday','mday','wom','month','quarter','year']
     Processing = 'datatable'
     InputFrame = 'datatable'
@@ -747,7 +747,7 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
     # Ensure List
     if not CalendarVariables is None and not isinstance(CalendarVariables, list):
       CalendarVariables = [CalendarVariables]
-    
+
     # Loop through DateColumns
     for DateVar in DateColumnNames:
       for CVars in CalendarVariables:
@@ -756,49 +756,49 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
         if(CVars.lower() in 'nanosecond'):
           try:
             data[:, f[:].extend({CVars + '_nanosecond': time.nanosecond(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping time.nanosecond calculation due to type mismatch")
 
         # Second
         if(CVars.lower() in 'second'):
           try:
             data = data[:, f[:].extend({CVars + '_second': time.second(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping time.second calculation due to type mismatch")
 
         # Minute
         if(CVars.lower() in 'minute'):
           try:
             data = data[:, f[:].extend({CVars + '_minute': time.minute(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping time.minute calculation due to type mismatch")
 
         # Hour
         if(CVars.lower() in 'hour'):
           try:
             data = data[:, f[:].extend({CVars + '_hour': time.hour(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping time.hour calculation due to type mismatch")
 
         # day_of_week
         if(CVars.lower() in 'wday'):
           try:
             data = data[:, f[:].extend({CVars + '_wday': time.day_of_week(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping wday (time.day_of_week) calculation due to type mismatch")
 
         # day of month
         if(CVars.lower() in 'mday'):
           try:
             data = data[:, f[:].extend({CVars + '_mday': time.day(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping mday (time.day) calculation due to type mismatch")
 
         # month
         if(CVars.lower() in 'month'):
           try:
             data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping wday (time.month) calculation due to type mismatch")
 
         # quarter
@@ -806,14 +806,14 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
           try:
             data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
             data = data[:, f[:].extend({CVars + '_quarter': ifelse(f[CVars + '_quarter'] <= 3, 1, ifelse(f[CVars + '_quarter'] <= 6, 2, ifelse(f[CVars + '_quarter'] <= 9, 3, 4)))})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping wday (time.month) calculation due to type mismatch")
 
         # year
         if(CVars.lower() in 'year'):
           try:
             data[:, f[:].extend({CVars + '_year': time.year(f[DateVar])})]
-          except Exception, e:
+          except ValueError:
             raise print("Skipping wday (time.year) calculation due to type mismatch")
 
     # Return
