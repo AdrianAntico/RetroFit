@@ -2,6 +2,7 @@
 import timeit
 import datatable as dt
 import polars as pl
+import retrofit
 from retrofit import TimeSeriesFeatures as ts
 
 ## No Group Example: datatable
