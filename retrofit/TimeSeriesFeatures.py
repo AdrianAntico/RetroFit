@@ -797,7 +797,7 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
         # month
         if(CVars.lower() in 'month'):
           try:
-            data = data[:, f[:].extend({CVars + '_quarter': time.month(f[DateVar])})]
+            data = data[:, f[:].extend({CVars + '_month': time.month(f[DateVar])})]
           except ValueError:
             raise print("Skipping wday time.month calculation due to type mismatch")
 

@@ -361,4 +361,4 @@ print(ArgsList)
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 Output = ts.AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
 data = Output['data']
-data[12]
+data[11]
