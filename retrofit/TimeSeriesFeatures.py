@@ -738,7 +738,8 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
 
     # Imports
     import datatable as dt
-    from datatable import time, ifelse, f
+    from datatable import time, ifelse, f, update
+    from datatable import Frame
     
     # Ensure List
     if not DateColumnNames is None and not isinstance(DateColumnNames, list):
@@ -804,8 +805,9 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
         # quarter
         if(CVars.lower() in 'quarter'):
           try:
-            data = data[:, f[:].extend({DateVar + '_quarter': time.month(f[DateVar])})]
-            data = data[:, f[:].extend({DateVar + '_quarter': ifelse(f[DateVar + '_quarter'] <= 3, 1, ifelse(f[DateVar + '_quarter'] <= 6, 2, ifelse(f[DateVar + '_quarter'] <= 9, 3, 4)))})]
+            data = data[:, f[:].extend({'temp___temp': time.month(f[DateVar])})]
+            data[:, update(temp___temp = ifelse(f['temp___temp'] <= 3, 1, ifelse(f['temp___temp'] <= 6, 2, ifelse(f['temp___temp'] <= 9, 3, 4))))]
+            data.names = {'temp___temp': DateVar + '_quarter'}
           except ValueError:
             raise print("Skipping time.month 'quarter' calculation due to type mismatch")
 
