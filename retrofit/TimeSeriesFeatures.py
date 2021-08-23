@@ -725,6 +725,8 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
     Processing = 'datatable'
     InputFrame = 'datatable'
     OutputFrame = 'datatable'
+    DateVar = 'CalendarDateColumn'
+    CVars = 'year'
     """
     
     # ArgsList Collection
@@ -814,7 +816,7 @@ def AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, 
         # year
         if(CVars.lower() in 'year'):
           try:
-            data[:, f[:].extend({DateVar + '_year': time.year(f[DateVar])})]
+            data = data[:, f[:].extend({DateVar + '_year': time.year(f[DateVar])})]
           except ValueError:
             raise print("Skipping time.year calculation due to type mismatch")
 
