@@ -1,4 +1,4 @@
-![Version: 0.0.2](https://img.shields.io/static/v1?label=Version&message=0.0.2&color=blue&?style=plastic)
+![Version: 0.0.3](https://img.shields.io/static/v1?label=Version&message=0.0.3&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -36,29 +36,7 @@ https://github.com/AdrianAntico/RemixAutoML
 
 > Machine Learning Interpretation -
 
-## retrofit and RemixAutoML Blogs
 
-<details><summary>Expand to view content</summary>
-<p>
-
-### Python retrofit and R RemixAutoML Blogs
-
-[Sales Funnel Forecasting with ML using RemixAutoML](https://adrianantico.medium.com/sales-funnel-forecasting-using-ml-with-remixautoml-86361ce281b3)
- 
-[The Most Feature Rich ML Forecasting Methods Available](https://adrianantico.medium.com/the-most-feature-rich-ml-forecasting-methods-available-compliments-of-remixautoml-61b53daf42e6)
-
-[AutoML Frameworks in R & Python](https://iamnagdev.com/2020/04/01/automl-frameworks-in-r-python/)
-
-[AI for Small to Medium Size Businesses: A Management Take On The Challenges...](https://www.remixinstitute.com/blog/business-ai-for-small-to-medium-sized-businesses-with-remixautoml/#.XX-lD2ZlD8A)
-
-[Why Machine Learning is more Practical than Econometrics in the Real World](https://medium.com/@adrianantico/machine-learning-vs-econometrics-in-the-real-world-4058095b1013)
-
-[Build Thousands of Automated Demand Forecasts in 15 Minutes Using AutoCatBoostCARMA in R](https://www.remixinstitute.com/blog/automated-demand-forecasts-using-autocatboostcarma-in-r/#.XUIO1ntlCDM)
-
-[Automate Your KPI Forecasts With Only 1 Line of R Code Using AutoTS](https://www.remixinstitute.com/blog/automate-your-kpi-forecasts-with-only-1-line-of-r-code-using-autots/#.XUIOr3tlCDM)
-
-</p>
-</details>
 
 <img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG" align="center" width="1000" />
 
