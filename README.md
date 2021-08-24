@@ -6,7 +6,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG?token=AKBAWPHRLE6TOC2XZMSSMTLBFWJYY" align="center" width="1000" />
+<img src="images/PackageLogo.PNG" align="center" width="1000" />
 
 
 ## Installation
@@ -65,11 +65,33 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 <details><summary>Expand to view feature engineering functions</summary>
 <p>
- 
-### Feature Engineering: Date Feature Engineering
+
+
+### Feature Engineering: Numeric Feature Engineering
 
 <details><summary>Expand to view content</summary>
 <p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Categorical Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Module TimeSeriesFeatures
+
+<details><summary>Expand to view content</summary>
+<p>
+
 
 #### **AutoCalendarVariables()**
 
@@ -104,39 +126,11 @@ data.names
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your date columns using datatable.
+<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
 
 </p>
 </details>
 
-
-</p>
-</details>
-
-### Feature Engineering: Numeric Feature Engineering
-
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-### Feature Engineering: Categorical Feature Engineering
-
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-### Feature Engineering: Cross-Row Operations
-
-<details><summary>Expand to view content</summary>
-<p>
 
 #### **AutoLags()**
 
