@@ -60,7 +60,7 @@ https://github.com/AdrianAntico/RemixAutoML
 </p>
 </details>
 
-<img src="images/Documentation.PNG" align="center" width="1000" />
+<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG" align="center" width="1000" />
 
 
 
