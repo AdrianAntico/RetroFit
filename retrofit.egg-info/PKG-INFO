@@ -5,9 +5,9 @@ Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Mo
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico
 Author-email: adrianantico@gmail.com
-License: MPL
+License: MIT
 Platform: UNKNOWN
-Classifier: License :: OSI Approved :: MPL 2.0 License
+Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown

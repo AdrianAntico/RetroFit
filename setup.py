@@ -22,12 +22,12 @@ setup(
     url="https://github.com/AdrianAntico/retrofit",
     author="Adrian Antico",
     author_email="adrianantico@gmail.com",
-    license="MPL",
+    license="MIT",
     packages=find_packages(),
     include_package_data=True,
     install_requires=required,
     classifiers=[
-        "License :: OSI Approved :: MPL 2.0 License",
+        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
     ]
