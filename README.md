@@ -68,7 +68,7 @@ https://github.com/AdrianAntico/RemixAutoML
 ## Feature Engineering
 <p>
 
-<img src="images/FeatureEngineeringAll.PNG" align="center" width="600" />
+<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/FeatureEngineeringAll.PNG" align="center" width="600" />
 
 <details><summary>Expand to view feature engineering functions</summary>
 <p>
