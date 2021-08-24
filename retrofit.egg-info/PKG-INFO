@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: retrofit
-Version: 0.0.1
+Version: 0.0.2
 Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico
@@ -13,7 +13,7 @@ Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-![Version: 0.0.1](https://img.shields.io/static/v1?label=Version&message=0.0.1&color=blue&?style=plastic)
+![Version: 0.0.2](https://img.shields.io/static/v1?label=Version&message=0.0.2&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -21,12 +21,19 @@ License-File: LICENSE
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG?token=AKBAWPHRLE6TOC2XZMSSMTLBFWJYY" align="center" width="1000" />
+<img src="images/PackageLogo.PNG" align="center" width="1000" />
 
 
 ## Installation
 ```
+# Most up-to-date
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
+
+# From pypi
+pip install retrofit==0.0.2
+
+# Check out R package RemixAutoML
+https://github.com/AdrianAntico/RemixAutoML
 ```
 
 
@@ -80,11 +87,33 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 <details><summary>Expand to view feature engineering functions</summary>
 <p>
- 
-### Feature Engineering: Date Feature Engineering
+
+
+### Feature Engineering: Numeric Feature Engineering
 
 <details><summary>Expand to view content</summary>
 <p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Categorical Feature Engineering
+
+<details><summary>Expand to view content</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
+### Feature Engineering: Module TimeSeriesFeatures
+
+<details><summary>Expand to view content</summary>
+<p>
+
 
 #### **AutoCalendarVariables()**
 
@@ -119,39 +148,11 @@ data.names
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your date columns using datatable.
+<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
 
 </p>
 </details>
 
-
-</p>
-</details>
-
-### Feature Engineering: Numeric Feature Engineering
-
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-### Feature Engineering: Categorical Feature Engineering
-
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-### Feature Engineering: Cross-Row Operations
-
-<details><summary>Expand to view content</summary>
-<p>
 
 #### **AutoLags()**
 
