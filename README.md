@@ -17,7 +17,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.2
+pip install retrofit==0.0.3
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
