@@ -218,6 +218,9 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     # CatBoost
     if Processing.to_lower() == 'catboost':
       
+      # Imports
+      from catboost import Pool
+      
       # TrainData
       train_data = Pool(
         data = TrainData,
@@ -225,7 +228,6 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         cat_features=train_categorical, 
         text_features=train_text, 
         pairs=None,
-        delimiter='\t',
         has_header=False,
         weight=WeightColumnName, 
         group_id=None,
@@ -234,7 +236,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         pairs_weight=None
         baseline=None,
         feature_names=None,
-        thread_count=-1)
+        thread_count=Threads)
       
       # ValidationData
       if not ValidationData is None:
@@ -244,7 +246,6 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           cat_features=Train_Categorical, 
           text_features=Train_Text, 
           pairs=None,
-          delimiter='\t',
           has_header=False,
           weight=None, 
           group_id=None,
@@ -253,7 +254,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           pairs_weight=None
           baseline=None,
           feature_names=None,
-          thread_count=-1)
+          thread_count=Threads)
           
       # TestData
       if not TestData is None:
@@ -263,7 +264,6 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           cat_features=Train_Categorical, 
           text_features=Train_Text, 
           pairs=None,
-          delimiter='\t',
           has_header=False,
           weight=None, 
           group_id=None,
@@ -272,7 +272,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           pairs_weight=None
           baseline=None,
           feature_names=None,
-          thread_count=-1)
+          thread_count=Threads)
     
     # Return
     return dict(train_data=train_data, validation_data=validation_data, test_data=test_data)
