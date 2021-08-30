@@ -233,7 +233,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         group_id=None,
         group_weight=None,
         subgroup_id=None,
-        pairs_weight=None
+        pairs_weight=None,
         baseline=None,
         feature_names=None,
         thread_count=Threads)
@@ -251,7 +251,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           group_id=None,
           group_weight=None,
           subgroup_id=None,
-          pairs_weight=None
+          pairs_weight=None,
           baseline=None,
           feature_names=None,
           thread_count=Threads)
@@ -269,7 +269,7 @@ def ModelDataPrepare(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           group_id=None,
           group_weight=None,
           subgroup_id=None,
-          pairs_weight=None
+          pairs_weight=None,
           baseline=None,
           feature_names=None,
           thread_count=Threads)
