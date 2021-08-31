@@ -430,20 +430,6 @@ catboost_test = DataSets['test_data']
 </details>
 
 
-## Machine Learning Scoring
-<p>
- 
-<details><summary>Expand to view machine learning scoring functions</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-
-
-
 ## Machine Learning Evaluation
 <p>
  
@@ -468,3 +454,16 @@ catboost_test = DataSets['test_data']
 
 </p>
 </details>
+
+
+## Machine Learning Scoring
+<p>
+ 
+<details><summary>Expand to view machine learning scoring functions</summary>
+<p>
+
+#### Coming Soon
+
+</p>
+</details>
+
