@@ -1,4 +1,4 @@
-![Version: 0.0.4](https://img.shields.io/static/v1?label=Version&message=0.0.4&color=blue&?style=plastic)
+![Version: 0.0.5](https://img.shields.io/static/v1?label=Version&message=0.0.5&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -17,7 +17,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.4
+pip install retrofit==0.0.5
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -51,7 +51,7 @@ https://github.com/AdrianAntico/RemixAutoML
 <p>
 
 
-### S0 Feature Engineering: Row-Dependence
+### FE0 Feature Engineering: Row-Dependence
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -72,15 +72,15 @@ from retrofit import FeatureEngineering as fe
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     
 ## Group Example:
-data = fe.S0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
 print(data.names)
     
 ## Group and Multiple Periods and LagColumnNames:
-data = fe.S0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True)
 print(data.names)
 
 ## No Group Example:
-data = fe.S0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True)
 print(data.names)
 ```
 
@@ -110,17 +110,17 @@ from retrofit import FeatureEngineering as fe
 import datatable as dt
 from datatable import sort, f, by
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
 print(data.names)
     
 ## Group and Multiple Periods and RollColumnNames:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
 print(data.names)
 
 ## No Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
 print(data.names)
 ```
 
@@ -150,17 +150,17 @@ from retrofit import FeatureEngineering as fe
 
 ## Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+data = fe.FE0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
 print(data.names)
     
 ## Group and Multiple Periods and RollColumnNames:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+data = fe.FE0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
 print(data.names)
 
 ## No Group Example:
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-data = fe.S0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+data = fe.FE0_AutoDiff(data=data, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
 print(data.names)
 ```
 
@@ -179,7 +179,7 @@ print(data.names)
 </details>
 
 
-### S1 Feature Engineering: Row-Independence
+### FE1 Feature Engineering: Row-Independence
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -223,7 +223,7 @@ data.names
 </details>
 
 
-#### **S1_DummyVariables()**
+#### **FE1_DummyVariables()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -233,7 +233,7 @@ import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = fe.S1_DummyVariables(
+Output = fe.FE1_DummyVariables(
   data=data, 
   ArgsList=None, 
   CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
@@ -251,7 +251,7 @@ ArgsList = Output['ArgsList']
 <details><summary>Function Description</summary>
 <p>
  
-<code>S1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
+<code>FE1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
 
 </p>
 </details>
@@ -262,13 +262,13 @@ ArgsList = Output['ArgsList']
 
 
 
-### S2 Feature Engineering: Full-Data-Set
+### FE2 Feature Engineering: Full-Data-Set
 
 <details><summary>Expand to view content</summary>
 <p>
 
 
-#### **S2_AutoDataParition()**
+#### **FE2_AutoDataParition()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -283,7 +283,7 @@ from retrofit import utils as u
     
 # random
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-DataSets = fe.S2_AutoDataParition(
+DataSets = fe.FE2_AutoDataParition(
   data=data, 
   ArgsList=None, 
   DateColumnName='CalendarDateColumn', 
@@ -306,7 +306,7 @@ ArgsList = DataSets['ArgsList']
 <details><summary>Function Description</summary>
 <p>
  
-<code>S2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
+<code>FE2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
 
 </p>
 </details>
@@ -360,7 +360,7 @@ from retrofit import MachineLearning as ml
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     
 # Create partitioned data sets
-DataSets = fe.S2_AutoDataParition(
+DataSets = fe.FE2_AutoDataParition(
   data=data, 
   ArgsList=None, 
   DateColumnName='CalendarDateColumn', 

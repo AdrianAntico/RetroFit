@@ -1,10 +1,10 @@
 # Module: FeatureEngineering
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.0.4
+# Release: retrofit 0.0.5
 # Last modified : 2021-08-31
 
-def S0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate lags for multiple periods for multiple variables and by variables
@@ -34,19 +34,19 @@ def S0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNam
     ## Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## Group and Multiple Periods and LagColumnNames:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
 
     ## No Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = fe.FE0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -197,7 +197,7 @@ def S0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNam
     return dict(data = data, ArgsList = ArgsList)
 
 
-def S0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = 2, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
@@ -226,17 +226,17 @@ def S0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCol
 
     ## No Group Example
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = fe.FE0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -417,7 +417,7 @@ def S0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCol
     return dict(data = data, ArgsList = ArgsList)
 
 
-def S0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables = None, DiffNumericVariables = None, DiffDateVariables = None, DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
 
     """
     # Goal:
@@ -449,17 +449,17 @@ def S0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -694,7 +694,7 @@ def S0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariables
     return dict(data = data, ArgsList = ArgsList)
 
 
-def S1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, CalendarVariables = None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = None, CalendarVariables = None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
   
     """
     # Goal:
@@ -720,7 +720,7 @@ def S1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = Non
 
     ## Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = fe.S1_AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+    data = fe.FE1_AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
     print(data.names)
 
     # QA: No Group Case: Step through function
@@ -829,7 +829,7 @@ def S1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = Non
     # Return
     return dict(data = data, ArgsList = ArgsList)
 
-def S1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
     # Goal:
     Automatically generate dummy variables for CategoricalColumnNames provided by user
@@ -850,7 +850,7 @@ def S1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pro
     import retrofit
     from retrofit import FeatureEngineering as fe
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    Output = fe.S1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     data = Output['data']
     ArgsList = Output['ArgsList']
     
@@ -908,7 +908,7 @@ def S1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pro
     # Return data
     return dict(data = data_new, ArgsList = ArgsList)
 
-def S2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, PartitionType='random', Ratios=None, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, PartitionType='random', Ratios=None, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     
     """
     # Goal:
@@ -936,7 +936,7 @@ def S2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partition
     
     # random
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    DataSets = fe.S2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     TrainData = DataSets['TrainData']
     ValidationData = DataSets['ValidationData']
     TestData = DataSets['TestData']
@@ -944,7 +944,7 @@ def S2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partition
     
     # time
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    DataSets = fe.S2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     TrainData = DataSets['TrainData']
     ValidationData = DataSets['ValidationData']
     TestData = DataSets['TestData']
