@@ -1,7 +1,7 @@
 # Module: FeatureEngineering
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.0.5
+# Release: retrofit 0.0.7
 # Last modified : 2021-08-31
 
 def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):

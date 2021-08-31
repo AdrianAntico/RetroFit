@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: retrofit
-Version: 0.0.6
+Version: 0.0.7
 Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico
@@ -13,7 +13,7 @@ Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-![Version: 0.0.6](https://img.shields.io/static/v1?label=Version&message=0.0.6&color=blue&?style=plastic)
+![Version: 0.0.7](https://img.shields.io/static/v1?label=Version&message=0.0.7&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -32,7 +32,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.6
+pip install retrofit==0.0.7
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -61,6 +61,7 @@ https://github.com/AdrianAntico/RemixAutoML
 
 
 ## Feature Engineering
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -72,7 +73,16 @@ https://github.com/AdrianAntico/RemixAutoML
 <p>
 
 
-#### **AutoLags()**
+#### **FE0_AutoLags()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE0_AutoLags()</code> Automatically generate any number of lags, for any number of columns, by any number of By-Variables, using datatable.
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -102,15 +112,19 @@ print(data.names)
 </p>
 </details>
 
+
+
+#### **FE0_AutoRollStats()**
+<p>
+
+
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoLags()</code> Automatically generate any number of lags, for any number of columns, by any number of By-Variables, using datatable.
+<code>FE0_AutoRollStats()</code> Automatically generate any number of moving averages, moving standard deviations, moving mins and moving maxs from any number of source columns, by any number of By-Variables, using datatable.
 
 </p>
 </details>
-
-#### **AutoRollStats()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -142,17 +156,20 @@ print(data.names)
 </p>
 </details>
 
+
+
+
+ 
+#### **FE0_AutoDiff()**
+<p>
+
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoRollStats()</code> Automatically generate any number of moving averages, moving standard deviations, moving mins and moving maxs from any number of source columns, by any number of By-Variables, using datatable.
+<code>FE0_AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
 
 </p>
 </details>
-
-
- 
-#### **AutoDiff()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -182,13 +199,7 @@ print(data.names)
 </p>
 </details>
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
 
-</p>
-</details>
 
 </p>
 </details>
@@ -199,7 +210,16 @@ print(data.names)
 <details><summary>Expand to view content</summary>
 <p>
 
-#### **AutoCalendarVariables()**
+#### **FE1_AutoCalendarVariables()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE1_AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -229,16 +249,19 @@ data.names
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
 
-</p>
-</details>
 
 
 #### **FE1_DummyVariables()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -263,13 +286,7 @@ ArgsList = Output['ArgsList']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>FE1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
 
-</p>
-</details>
 
 
 </p>
@@ -284,6 +301,15 @@ ArgsList = Output['ArgsList']
 
 
 #### **FE2_AutoDataParition()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -318,13 +344,7 @@ ArgsList = DataSets['ArgsList']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>FE2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
 
-</p>
-</details>
 
 </p>
 </details>
@@ -359,6 +379,15 @@ ArgsList = DataSets['ArgsList']
 
 
 #### **ML0_GetModelData()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -417,13 +446,7 @@ catboost_test = DataSets['test_data']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm
 
-</p>
-</details>
 
 </p>
 </details>
