@@ -53,6 +53,9 @@ https://github.com/AdrianAntico/RemixAutoML
 
 ### S0 Feature Engineering: Row-Dependence
 
+<details><summary>Expand to view content</summary>
+<p>
+
 
 #### **AutoLags()**
 
@@ -168,6 +171,9 @@ print(data.names)
 <p>
  
 <code>AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
+
+</p>
+</details>
 
 </p>
 </details>
