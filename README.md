@@ -319,7 +319,8 @@ ArgsList = DataSets['ArgsList']
 </p>
 </details>
 
-
+</p>
+</details>
 
 
 ## Machine Learning Training
