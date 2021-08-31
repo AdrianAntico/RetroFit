@@ -47,6 +47,9 @@ https://github.com/AdrianAntico/RemixAutoML
 
 ## Feature Engineering
 
+<details><summary>Expand to view content</summary>
+<p>
+
 
 ### S0 Feature Engineering: Row-Dependence
 
@@ -175,6 +178,9 @@ print(data.names)
 
 ### S1 Feature Engineering: Row-Independence
 
+<details><summary>Expand to view content</summary>
+<p>
+
 #### **AutoCalendarVariables()**
 
 <details><summary>Code Example</summary>
@@ -248,6 +254,10 @@ ArgsList = Output['ArgsList']
 </details>
 
 
+</p>
+</details>
+
+
 
 ### S2 Feature Engineering: Full-Data-Set
 
@@ -301,6 +311,16 @@ ArgsList = DataSets['ArgsList']
 
 ### S3 Feature Engineering: Model-Based
 
+<details><summary>Expand to view content</summary>
+<p>
+
+##### Coming soon
+
+</p>
+</details>
+
+</p>
+</details>
 
 
 </p>
@@ -308,14 +328,15 @@ ArgsList = DataSets['ArgsList']
 
 
 
-
 ## Machine Learning Training
 <p>
  
-<details><summary>Expand to view machine learning functions</summary>
+<details><summary>Expand to view content</summary>
 <p>
 
-<details><summary>Expand to view content</summary>
+### **ML0_GetModelData()**
+
+<details><summary>Code Example</summary>
 <p>
 
 ```
