@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: retrofit
-Version: 0.0.5
+Version: 0.0.6
 Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico
@@ -13,7 +13,7 @@ Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-![Version: 0.0.4](https://img.shields.io/static/v1?label=Version&message=0.0.4&color=blue&?style=plastic)
+![Version: 0.0.6](https://img.shields.io/static/v1?label=Version&message=0.0.6&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -32,7 +32,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.4
+pip install retrofit==0.0.6
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
