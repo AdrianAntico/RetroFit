@@ -240,6 +240,14 @@ data.names
 #### **FE1_DummyVariables()**
 <p>
 
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
+
+</p>
+</details>
+
 <details><summary>Code Example</summary>
 <p>
 
@@ -263,13 +271,7 @@ ArgsList = Output['ArgsList']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>FE1_DummyVariables()</code> Automatically generate dummy variables for user supplied categorical columns
 
-</p>
-</details>
 
 
 </p>
@@ -285,6 +287,14 @@ ArgsList = Output['ArgsList']
 
 #### **FE2_AutoDataParition()**
 <p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -319,13 +329,7 @@ ArgsList = DataSets['ArgsList']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>FE2_AutoDataParition()</code> Automatically create data sets for training based on random or time based splits
 
-</p>
-</details>
 
 </p>
 </details>
