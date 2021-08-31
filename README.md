@@ -172,9 +172,6 @@ print(data.names)
 </p>
 </details>
 
-</p>
-</details>
-
 
 ### S1 Feature Engineering: Row-Independence
 
