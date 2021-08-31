@@ -336,7 +336,14 @@ ArgsList = DataSets['ArgsList']
 <details><summary>Expand to view content</summary>
 <p>
 
-### **ML0_GetModelData()**
+
+### ML0 Machine Learning: Prepare for Modeling
+
+<details><summary>Expand to view content</summary>
+<p>
+
+
+#### **ML0_GetModelData()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -403,11 +410,24 @@ catboost_test = DataSets['test_data']
 </p>
 </details>
 
+</p>
+</details>
+
+
+
+### ML1 Machine Learning: Modeling
+
+<details><summary>Code Example</summary>
+<p>
+
+##### Coming Soon
 
 </p>
 </details>
 
 
+</p>
+</details>
 
 
 ## Machine Learning Scoring
