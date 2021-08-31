@@ -311,6 +311,9 @@ ArgsList = DataSets['ArgsList']
 </p>
 </details>
 
+</p>
+</details>
+
 
 ### S3 Feature Engineering: Model-Based
 
@@ -325,8 +328,6 @@ ArgsList = DataSets['ArgsList']
 </p>
 </details>
 
-</p>
-</details>
 
 
 ## Machine Learning Training
