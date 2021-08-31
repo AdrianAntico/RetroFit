@@ -58,7 +58,16 @@ https://github.com/AdrianAntico/RemixAutoML
 <p>
 
 
-#### **AutoLags()**
+#### **FE0_AutoLags()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE0_AutoLags()</code> Automatically generate any number of lags, for any number of columns, by any number of By-Variables, using datatable.
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -88,15 +97,19 @@ print(data.names)
 </p>
 </details>
 
+
+
+#### **FE0_AutoRollStats()**
+<p>
+
+
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoLags()</code> Automatically generate any number of lags, for any number of columns, by any number of By-Variables, using datatable.
+<code>FE0_AutoRollStats()</code> Automatically generate any number of moving averages, moving standard deviations, moving mins and moving maxs from any number of source columns, by any number of By-Variables, using datatable.
 
 </p>
 </details>
-
-#### **AutoRollStats()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -128,17 +141,20 @@ print(data.names)
 </p>
 </details>
 
+
+
+
+ 
+#### **FE0_AutoDiff()**
+<p>
+
 <details><summary>Function Description</summary>
 <p>
  
-<code>AutoRollStats()</code> Automatically generate any number of moving averages, moving standard deviations, moving mins and moving maxs from any number of source columns, by any number of By-Variables, using datatable.
+<code>FE0_AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
 
 </p>
 </details>
-
-
- 
-#### **AutoDiff()**
 
 <details><summary>Code Example</summary>
 <p>
@@ -168,13 +184,7 @@ print(data.names)
 </p>
 </details>
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>AutoDiff()</code> Automatically generate any number of differences from any number of source columns, for numeric, character, and date columns, by any number of By-Variables, using datatable.
 
-</p>
-</details>
 
 </p>
 </details>
@@ -185,7 +195,16 @@ print(data.names)
 <details><summary>Expand to view content</summary>
 <p>
 
-#### **AutoCalendarVariables()**
+#### **FE1_AutoCalendarVariables()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE1_AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -215,16 +234,11 @@ data.names
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>AutoCalendarVariables()</code> Automatically generate calendar variables from your datatable.
 
-</p>
-</details>
 
 
 #### **FE1_DummyVariables()**
+<p>
 
 <details><summary>Code Example</summary>
 <p>
@@ -270,6 +284,7 @@ ArgsList = Output['ArgsList']
 
 
 #### **FE2_AutoDataParition()**
+<p>
 
 <details><summary>Code Example</summary>
 <p>
@@ -345,6 +360,15 @@ ArgsList = DataSets['ArgsList']
 
 
 #### **ML0_GetModelData()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm
+
+</p>
+</details>
 
 <details><summary>Code Example</summary>
 <p>
@@ -403,13 +427,7 @@ catboost_test = DataSets['test_data']
 </details>
 
 
-<details><summary>Function Description</summary>
-<p>
- 
-<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm
 
-</p>
-</details>
 
 </p>
 </details>
