@@ -27,6 +27,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
 
     # ML0_GetModelData Example:
+    import timeit
     import datatable as dt
     from datatable import sort, f, by
     import retrofit
@@ -55,6 +56,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     del DataSets
     
     # Create catboost data sets
+    t_start = timeit.default_timer()
     DataSets = ml.ML0_GetModelData(
       TrainData=TrainData, 
       ValidationData=ValidationData, 
@@ -69,10 +71,15 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       Processing='catboost', 
       InputFrame='datatable')
       
+    # timer
+    t_end = timeit.default_timer()
+    t_end - t_start
+    
     # Collect catboost training data
     catboost_train = DataSets['train_data']
     catboost_validation = DataSets['validation_data']
     catboost_test = DataSets['test_data']
+    ArgsList = DataSets['ArgsList']
     
     # QA: Group Case: Step through function
     TrainData=TrainData
@@ -112,20 +119,20 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     import copy
     
     # Import datatable methods
-    if InputFrame == 'datatable':
+    if InputFrame.lower() == 'datatable':
       import datatable as dt
       from datatable import sort, f, by, ifelse
 
     # Import polars methods
-    if InputFrame == 'polars':
+    if InputFrame.lower() == 'polars':
       import polars as pl
       from polars import col
       from polars.lazy import col
 
     # Convert to datatable
-    if InputFrame == 'pandas' and Processing == 'datatable': 
+    if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
       data = dt.Frame(data)
-    elif InputFrame == 'pandas' and Processing == 'polars':
+    elif InputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
       data = pl.from_pandas(data)
     
     # Convert to list if not already
@@ -183,16 +190,9 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         label = trainlabel,
         cat_features = CategoricalColumnNames,
         text_features = TextColumnNames, 
-        pairs=None,
-        has_header=False,
         weight=WeightColumnName, 
-        group_id=None,
-        group_weight=None,
-        subgroup_id=None,
-        pairs_weight=None,
-        baseline=None,
-        feature_names=None,
-        thread_count=Threads)
+        thread_count=Threads,
+        pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
 
       # ValidationData
       if not ValidationData is None:
@@ -201,16 +201,9 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           label = validationlabel,
           cat_features = CategoricalColumnNames,
           text_features = TextColumnNames, 
-          pairs=None,
-          has_header=False,
-          weight=WeightColumnName, 
-          group_id=None,
-          group_weight=None,
-          subgroup_id=None,
-          pairs_weight=None,
-          baseline=None,
-          feature_names=None,
-          thread_count=Threads)
+          weight=WeightColumnName,
+          thread_count=Threads,
+          pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
           
       # TestData
       if not TestData is None:
@@ -219,16 +212,9 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           label = testlabel,
           cat_features = CategoricalColumnNames,
           text_features = TextColumnNames, 
-          pairs=None,
-          has_header=False,
-          weight=WeightColumnName, 
-          group_id=None,
-          group_weight=None,
-          subgroup_id=None,
-          pairs_weight=None,
-          baseline=None,
-          feature_names=None,
-          thread_count=Threads)
+          weight=WeightColumnName,
+          thread_count=Threads,
+          pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
     
-    # Return
-    return dict(train_data=train_data, validation_data=validation_data, test_data=test_data)
+      # Return catboost
+      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)

@@ -26,6 +26,7 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
     OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA: Test AutoLags
+    import timeit
     import datatable as dt
     from datatable import sort, f, by
     import retrofit
@@ -34,19 +35,28 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
     ## Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## Group and Multiple Periods and LagColumnNames:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## No Group Example:
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -219,6 +229,7 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
     OutputFrame:      'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA AutoRollStats
+    import timeit
     import datatable as dt
     from datatable import sort, f, by
     import retrofit
@@ -226,17 +237,26 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
 
     ## No Group Example
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -442,6 +462,7 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
     OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA AutoDiff
+    import timeit
     import datatable as dt
     from datatable import sort, f, by
     import retrofit
@@ -449,17 +470,26 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
 
     ## Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## Group and Multiple Periods and RollColumnNames:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     ## No Group Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
     
     # QA: No Group Case: Step through function
@@ -713,6 +743,7 @@ def FE1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = No
     OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # QA AutoCalendarVariables
+    import timeit
     import datatable as dt
     from datatable import sort, f, by, ifelse
     import retrofit
@@ -720,7 +751,10 @@ def FE1_AutoCalendarVariables(data = None, ArgsList = None, DateColumnNames = No
 
     ## Example:
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     data = fe.FE1_AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     print(data.names)
 
     # QA: No Group Case: Step through function
@@ -846,6 +880,7 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
     OutputFrame:            'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
     # Example: datatable
+    import timeit
     import datatable as dt
     import retrofit
     from retrofit import FeatureEngineering as fe
@@ -855,11 +890,15 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
     ArgsList = Output['ArgsList']
     
     # Example: polars
+    import timeit
     import retrofit
     from retrofit import FeatureEngineering as fe
     import polars as pl
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='polars', InputFrame='polars', OutputFrame='polars')
+    t_end = timeit.default_timer()
+    t_end - t_start
     data = Output['data']
     ArgsList = Output['ArgsList']
     
@@ -947,7 +986,8 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
-    # Example
+    # datatable Example
+    import timeit
     import datatable as dt
     import retrofit
     from retrofit import FeatureEngineering as fe
@@ -955,7 +995,10 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     
     # random
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     TrainData = DataSets['TrainData']
     ValidationData = DataSets['ValidationData']
     TestData = DataSets['TestData']
@@ -963,13 +1006,44 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     
     # time
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
     DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
     TrainData = DataSets['TrainData']
     ValidationData = DataSets['ValidationData']
     TestData = DataSets['TestData']
     ArgsList = DataSets['ArgsList']
     
-    # QA
+    # polars Example
+    import timeit
+    import polars as pl
+    import retrofit
+    from retrofit import FeatureEngineering as fe
+    from retrofit import utils as u
+    
+    # random
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
+    TrainData = DataSets['TrainData']
+    ValidationData = DataSets['ValidationData']
+    TestData = DataSets['TestData']
+    ArgsList = DataSets['ArgsList']
+    
+    # time
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    t_start = timeit.default_timer()
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    t_end = timeit.default_timer()
+    t_end - t_start
+    TrainData = DataSets['TrainData']
+    ValidationData = DataSets['ValidationData']
+    TestData = DataSets['TestData']
+    ArgsList = DataSets['ArgsList']
     
     # random
     ArgsList=None
@@ -980,6 +1054,10 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     Processing='datatable'
     InputFrame='datatable'
     OutputFrame='datatable'
+    
+    Processing='polars'
+    InputFrame='polars'
+    OutputFrame='polars'
     
     # time
     ArgsList=None
@@ -1028,53 +1106,80 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
 
     # Accumulate Ratios
     Ratios = u.cumsum(Ratios)
-
-    # Random partitioning
-    if PartitionType.lower() == 'random':
-
-      # Add random number column
-      data = data[:, f[:].extend({"ID": np.random.uniform(0,1, size = data.shape[0])})]
-
-      # TrainData
-      TrainData = data[f.ID <= Ratios[0], ...]
-      del TrainData['ID']
-
-      # ValidationData
-      ValidationData = data[(f.ID <= Ratios[1]) & (f.ID > Ratios[0]), ...]
-      del ValidationData['ID']
-
-      # TestData
-      if len(Ratios) == 3:
-        TestData = data[f.ID > Ratios[1], ...]
-        del TestData['ID']
-      else:
-        TestData = None
-
-    # Time base partitioning
-    if PartitionType.lower() == 'time':
+    
+    # datatable
+    if Processing.lower() == 'datatable':
       
-      # Sort data
-      if Sort == True and Processing.lower() == 'datatable':
-        data = data[:, :, sort(f[DateColumnName], reverse = False)]
-      elif Sort == True and Processing.lower() == 'polars':
-        data = (data.sort(f[DateColumnName], reverse = False))
+      # Random partitioning
+      if PartitionType.lower() == 'random':
+        
+        # Add random number column
+        data = data[:, f[:].extend({"ID": np.random.uniform(0,1, size = data.shape[0])})]
+        
+        # TrainData
+        TrainData = data[f.ID <= Ratios[0], ...]
+        del TrainData['ID']
+        
+        # ValidationData
+        ValidationData = data[(f.ID <= Ratios[1]) & (f.ID > Ratios[0]), ...]
+        del ValidationData['ID']
+        
+        # TestData
+        if len(Ratios) == 3:
+          TestData = data[f.ID > Ratios[1], ...]
+          del TestData['ID']
+        else:
+          TestData = None
 
-      # Grab row number boundaries
-      TrainRowsMax = data.nrows * Ratios[0]
-      ValidRowsMax = data.nrows * Ratios[1]
-      
-      # TrainData
-      TrainData = data[range(int(TrainRowsMax)), ...]
-      
-      # ValidationData
-      ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax)), ...]
-      
-      # TestData
-      if len(Ratios) == 3:
-        TestData = data[range(int(ValidRowsMax), data.nrows), ...]
-      else:
-        TestData = None
+      # Time base partitioning
+      if PartitionType.lower() == 'time':
+        
+        # Sort data
+        if Sort == True and Processing.lower() == 'datatable':
+          data = data[:, :, sort(f[DateColumnName], reverse = False)]
+        elif Sort == True and Processing.lower() == 'polars':
+          data = (data.sort(f[DateColumnName], reverse = False))
+  
+        # Grab row number boundaries
+        TrainRowsMax = data.nrows * Ratios[0]
+        ValidRowsMax = data.nrows * Ratios[1]
+        
+        # TrainData
+        TrainData = data[range(int(TrainRowsMax)), ...]
+        
+        # ValidationData
+        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax)), ...]
+        
+        # TestData
+        if len(Ratios) == 3:
+          TestData = data[range(int(ValidRowsMax), data.nrows), ...]
+        else:
+          TestData = None
 
+    # polars
+    if Processing.lower() == 'polars':
+      
+      # Random partitioning
+      if PartitionType.lower() == 'random':
+        
+        # Add random number column
+        data['ID'] = np.random.uniform(0,1, size = data.shape[0])
+        
+        # TrainData
+        TrainData = data[data['ID'] <= Ratios[0]]
+        TrainData.drop_in_place('ID')
+        
+        # ValidationData
+        ValidationData = data[(data['ID'] <= Ratios[1]) & (data['ID'] > Ratios[0])]
+        ValidationData.drop_in_place('ID')
+        
+        # TestData
+        if len(Ratios) == 3:
+          TestData = data[data['ID'] > Ratios[1]]
+          TestData.drop_in_place('ID')
+        else:
+          TestData = None
+    
     # Convert Frame
     if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
       TrainData = TrainData.to_pandas()
@@ -1089,6 +1194,6 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       if len(Ratios) == 3:
         TestData = TestData.to_pandas()
         TestData = dt.Frame(TestData)
-
+    
     # Return data
     return dict(TrainData = TrainData, ValidationData = ValidationData, TestData = TestData, ArgsList = ArgsList)
