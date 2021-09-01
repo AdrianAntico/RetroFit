@@ -1,7 +1,7 @@
 # Module: FeatureEngineering
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.0.7
+# Release: retrofit 0.0.8
 # Last modified : 2021-08-31
 
 def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
@@ -881,12 +881,12 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
       ArgsList = dict(CategoricalColumnNames=CategoricalColumnNames)
     
     # Import datatable methods
-    if Processing.lower == 'datatable' or OutputFrame.lower == 'datatable' or InputFrame.lower == 'datatable':
+    if Processing.lower() == 'datatable' or OutputFrame.lower() == 'datatable' or InputFrame.lower() == 'datatable':
       import datatable as dt
       from datatable import split_into_nhot, str
 
     # Import polars methods
-    if Processing.lower == 'polars' or OutputFrame.lower == 'polars' or InputFrame.lower == 'polars':
+    if Processing.lower() == 'polars' or OutputFrame.lower() == 'polars' or InputFrame.lower() == 'polars':
       import polars as pl
       from polars import col
       from polars.lazy import col
@@ -896,9 +896,9 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
       CategoricalColumnNames = [CategoricalColumnNames]
 
     # Convert to datatable
-    if InputFrame.lower == 'pandas' and Processing.lower == 'datatable': 
+    if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
       data = dt.Frame(data)
-    elif InputFrame.lower == 'pandas' and Processing.lower == 'polars':
+    elif InputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
       data = pl.from_pandas(data)
 
     # Create dummies
@@ -910,19 +910,22 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
         data_new.cbind(df_ohe)
     elif Processing.lower() == 'polars':
       for column in CategoricalColumnNames:
-        data = data.hstack(pl.get_dummies(data['MarketingSegments']))
+        data = data.hstack(pl.get_dummies(data[column]))
 
     # Convert Frame
-    if OutputFrame.lower == 'pandas' and Processing.lower == 'datatable': 
+    if OutputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
       data = data.to_pandas()
-    elif OutputFrame.lower == 'pandas' and Processing.lower == 'polars':
+    elif OutputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
       data = data.to_pandas()
-    elif OutputFrame.lower == 'datatable' and Processing.lower == 'polars':
+    elif OutputFrame.lower() == 'datatable' and Processing.lower() == 'polars':
       data = data.to_pandas()
       data = dt.Frame(data)
 
     # Return data
-    return dict(data = data_new, ArgsList = ArgsList)
+    if Processing.lower() == 'datatable':
+      return dict(data = data_new, ArgsList = ArgsList)
+    elif Processing.lower() == 'polars':
+      return dict(data = data, ArgsList = ArgsList)
 
 def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, PartitionType='random', Ratios=None, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     
@@ -1007,27 +1010,27 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     from retrofit import utils as u
 
     # Import datatable methods
-    if Processing.lower == 'datatable' or OutputFrame.lower == 'datatable' or InputFrame.lower == 'datatable':
+    if Processing.lower() == 'datatable' or OutputFrame.lower() == 'datatable' or InputFrame.lower() == 'datatable':
       import datatable as dt
       from datatable import f, by, sort
 
     # Import polars methods
-    if Processing.lower == 'polars' or OutputFrame.lower == 'polars' or InputFrame.lower == 'polars':
+    if Processing.lower() == 'polars' or OutputFrame.lower() == 'polars' or InputFrame.lower() == 'polars':
       import polars as pl
       from polars import col
       from polars.lazy import col
 
     # Convert to datatable
-    if InputFrame.lower == 'pandas' and Processing.lower == 'datatable':
+    if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable':
       data = dt.Frame(data)
-    elif InputFrame.lower == 'pandas' and Processing.lower == 'polars':
+    elif InputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
       data = pl.from_pandas(data)
 
     # Accumulate Ratios
     Ratios = u.cumsum(Ratios)
 
     # Random partitioning
-    if PartitionType.lower == 'random':
+    if PartitionType.lower() == 'random':
 
       # Add random number column
       data = data[:, f[:].extend({"ID": np.random.uniform(0,1, size = data.shape[0])})]
@@ -1048,12 +1051,12 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         TestData = None
 
     # Time base partitioning
-    if PartitionType.lower == 'time':
+    if PartitionType.lower() == 'time':
       
       # Sort data
-      if Sort == True and Processing.lower == 'datatable':
+      if Sort == True and Processing.lower() == 'datatable':
         data = data[:, :, sort(f[DateColumnName], reverse = False)]
-      elif Sort == True and Processing.lower == 'polars':
+      elif Sort == True and Processing.lower() == 'polars':
         data = (data.sort(f[DateColumnName], reverse = False))
 
       # Grab row number boundaries
@@ -1073,12 +1076,12 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         TestData = None
 
     # Convert Frame
-    if OutputFrame.lower == 'pandas' and (Processing.lower == 'datatable' or Processing.lower == 'polars'):
+    if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
       TrainData = TrainData.to_pandas()
       ValidationData = ValidationData.to_pandas()
       if len(Ratios) == 3:
         TestData = TestData.to_pandas()
-    elif OutputFrame.lower == 'datatable' and Processing.lower == 'polars':
+    elif OutputFrame.lower() == 'datatable' and Processing.lower() == 'polars':
       TrainData = TrainData.to_pandas()
       TrainData = dt.Frame(TrainData)
       ValidationData = ValidationData.to_pandas()

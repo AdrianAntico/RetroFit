@@ -1,4 +1,4 @@
-![Version: 0.0.7](https://img.shields.io/static/v1?label=Version&message=0.0.7&color=blue&?style=plastic)
+![Version: 0.0.8](https://img.shields.io/static/v1?label=Version&message=0.0.8&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![License: MPL 2.0](https://img.shields.io/badge/License-MPL%202.0-brightgreen.svg)](https://opensource.org/licenses/MPL-2.0)
@@ -17,7 +17,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.7
+pip install retrofit==0.0.8
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -252,10 +252,13 @@ data.names
 <p>
 
 ```
+# Example: datatable
+import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+t_start = timeit.default_timer()
 Output = fe.FE1_DummyVariables(
   data=data, 
   ArgsList=None, 
@@ -263,6 +266,27 @@ Output = fe.FE1_DummyVariables(
   Processing='datatable', 
   InputFrame='datatable', 
   OutputFrame='datatable')
+t_end = timeit.default_timer()
+t_end - t_start
+data = Output['data']
+ArgsList = Output['ArgsList']
+
+
+# Example: polars
+import retrofit
+from retrofit import FeatureEngineering as fe
+import polars as pl
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+t_start = timeit.default_timer()
+Output = fe.FE1_DummyVariables(
+  data=data, 
+  ArgsList=None, 
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
+  Processing='polars', 
+  InputFrame='polars', 
+  OutputFrame='polars')
+t_end = timeit.default_timer()
+t_end - t_start
 data = Output['data']
 ArgsList = Output['ArgsList']
 ```

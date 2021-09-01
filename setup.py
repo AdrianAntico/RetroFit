@@ -1,5 +1,5 @@
-# Copyright (C) 2019-2020 Moez Ali <moez.ali@queensu.ca>
-# License: MIT, moez.ali@queensu.ca
+# Copyright (C) 2019-2020 Adrian Antico <adrianantico@gmail.com>
+# License: MIT, adrianantico@gmail.com
 
 import pathlib
 from setuptools import setup, find_packages
@@ -15,7 +15,7 @@ with open(os.path.join(HERE, "requirements.txt")) as f:
 
 setup(
     name="retrofit",
-    version="0.0.7",
+    version="0.0.8",
     description="AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.",
     long_description=README,
     long_description_content_type="text/markdown",
