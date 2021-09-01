@@ -845,12 +845,21 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
     InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
     OutputFrame:            'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
     
-    # Example
+    # Example: datatable
     import datatable as dt
     import retrofit
     from retrofit import FeatureEngineering as fe
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    data = Output['data']
+    ArgsList = Output['ArgsList']
+    
+    # Example: polars
+    import retrofit
+    from retrofit import FeatureEngineering as fe
+    import polars as pl
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='polars', InputFrame='polars', OutputFrame='polars')
     data = Output['data']
     ArgsList = Output['ArgsList']
     
@@ -861,6 +870,9 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
     InputFrame='datatable'
     OutputFrame='datatable'
     
+    Processing='polars'
+    InputFrame='polars'
+    OutputFrame='polars'
     """
     # ArgsList Collection
     if not ArgsList is None:
@@ -890,11 +902,15 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
       data = pl.from_pandas(data)
 
     # Create dummies
-    data_new = data.copy()
-    for column in CategoricalColumnNames:
-      df_ohe = str.split_into_nhot(data_new[column])
-      df_ohe.names = [f'{column}_{col}' for col in df_ohe.names]
-      data_new.cbind(df_ohe)
+    if Processing.lower() == 'datatable':
+      data_new = data.copy()
+      for column in CategoricalColumnNames:
+        df_ohe = dt.str.split_into_nhot(data_new[column])
+        df_ohe.names = [f'{column}_{col}' for col in df_ohe.names]
+        data_new.cbind(df_ohe)
+    elif Processing.lower() == 'polars':
+      for column in CategoricalColumnNames:
+        data = data.hstack(pl.get_dummies(data['MarketingSegments']))
 
     # Convert Frame
     if OutputFrame.lower == 'pandas' and Processing.lower == 'datatable': 

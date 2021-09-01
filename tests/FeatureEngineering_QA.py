@@ -367,17 +367,46 @@ print(data.names)
 #########################################################################################################
 #########################################################################################################
 
+import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-Output = fe.FE1_DummyVariables(
+t_start = timeit.default_timer()
+Output = FE1_DummyVariables(
   data=data, 
   ArgsList=None, 
   CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
   Processing='datatable', 
   InputFrame='datatable', 
   OutputFrame='datatable')
+t_end = timeit.default_timer()
+t_end - t_start
+data = Output['data']
+ArgsList = Output['ArgsList']
+
+
+# Example: datatable
+import datatable as dt
+import retrofit
+from retrofit import FeatureEngineering as fe
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+Output = FE1_DummyVariables(
+  data=data, 
+  ArgsList=None, 
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
+  Processing='polars', 
+  InputFrame='polars', 
+  OutputFrame='polars')
+data = Output['data']
+ArgsList = Output['ArgsList']
+
+# Example: polars
+import retrofit
+from retrofit import FeatureEngineering as fe
+import polars as pl
+data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
 data = Output['data']
 ArgsList = Output['ArgsList']
 
