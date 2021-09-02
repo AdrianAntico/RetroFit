@@ -1149,7 +1149,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       if PartitionType.lower() == 'time':
         
         # Sort data
-        if Sort == True and Processing.lower() == 'datatable':
+        if Sort == True:
           data = data[:, :, sort(f[DateColumnName], reverse = False)]
         
         # Grab row number boundaries
@@ -1194,10 +1194,6 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
 
       # Time base partitioning
       if PartitionType.lower() == "time":
-
-        # Date conversion
-        if not isinstance(data[DateColumnName], pl.Date32):
-          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
         
         # Sort data
         if Sort == True:
