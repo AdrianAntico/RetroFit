@@ -978,7 +978,7 @@ def FE1_DummyVariables(data=None, ArgsList=None, CategoricalColumnNames=None, Pr
     elif Processing.lower() == 'polars':
       return dict(data = data, ArgsList = ArgsList)
 
-def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, PartitionType='random', Ratios=None, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
+def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, PartitionType='random', Ratios=None, ByVariables=None, Sort=False, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     
     """
     # Goal:
@@ -993,6 +993,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     DateColumnName: Scalar. Primary date column used for sorting
     PartitionType:  Scalar. Columns to partition over
     Ratios:         List. Use ths for PartitionType 'random'. List of decimal values for determining how many data goes into each data frame.
+    Sort:           Sort data before creating time based partitions
     ByVariables:    None or List. Stratify the data paritioning using ByVariables
     Processing:     'datatable' or 'polars'. Choose the package you want to do your processing
     InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
@@ -1008,7 +1009,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     # random
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1019,7 +1020,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     # time
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1039,7 +1040,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     data = pl.read_csv('https://www.dropbox.com/s/2str3ek4f4cheqi/walmart_train.csv?dl=1')
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1051,7 +1052,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1194,9 +1195,12 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       # Time base partitioning
       if PartitionType.lower() == "time":
 
-        # Sort data
-        if Processing.lower() == 'polars':
+        # Date conversion
+        if not isinstance(data[DateColumnName], pl.Date32):
           data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        
+        # Sort data
+        if Sort == True:
           data.sort(DateColumnName, reverse = False, in_place = True)
 
         # Grab row number boundaries
@@ -1207,11 +1211,11 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         TrainData = data[range(int(TrainRowsMax))]
         
         # ValidationData
-        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax)), ...]
+        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax))]
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), data.nrows), ...]
+          TestData = data[range(int(ValidRowsMax), data.nrows)]
         else:
           TestData = None
     
