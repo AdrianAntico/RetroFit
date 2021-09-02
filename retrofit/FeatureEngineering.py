@@ -1142,13 +1142,16 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       # Time base partitioning
       if PartitionType.lower() == 'time':
         
+        # Number of rows
+        NumRows = data.nrows
+        
         # Sort data
         if Sort == True:
           data = data[:, :, sort(f[DateColumnName], reverse = False)]
         
         # Grab row number boundaries
-        TrainRowsMax = data.nrows * Ratios[0]
-        ValidRowsMax = data.nrows * Ratios[1]
+        TrainRowsMax = NumRows * Ratios[0]
+        ValidRowsMax = NumRows * Ratios[1]
         
         # TrainData
         TrainData = data[range(int(TrainRowsMax)), ...]
@@ -1158,7 +1161,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), data.nrows), ...]
+          TestData = data[range(int(ValidRowsMax), NumRows), ...]
         else:
           TestData = None
 
@@ -1189,13 +1192,16 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       # Time base partitioning
       if PartitionType.lower() == "time":
         
+        # Number of rows
+        NumRows = data.shape[0]
+        
         # Sort data
         if Sort == True:
           data.sort(DateColumnName, reverse = False, in_place = True)
 
         # Grab row number boundaries
-        TrainRowsMax = data.shape[0] * Ratios[0]
-        ValidRowsMax = data.shape[0] * Ratios[1]
+        TrainRowsMax = NumRows * Ratios[0]
+        ValidRowsMax = NumRows * Ratios[1]
         
         # TrainData
         TrainData = data[range(int(TrainRowsMax))]
@@ -1205,7 +1211,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), data.shape[0])]
+          TestData = data[range(int(ValidRowsMax), NumRows)]
         else:
           TestData = None
     
