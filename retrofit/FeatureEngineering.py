@@ -139,9 +139,13 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        data = data.sort(SortCols, reverse = rev)
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(SortCols, reverse = rev, in_place = True)
       else:
-        data = data.sort(DateColumnName, reverse = True)
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(DateColumnName, reverse = True, in_place = True)
 
     # Ensure List
     if not LagColumnNames is None and not isinstance(LagColumnNames, list):
@@ -349,9 +353,13 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        data = data[:, :, sort(SortCols, reverse=rev)]
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(SortCols, reverse = rev, in_place = True)
       else:
-        data = (data.sort(DateColumnName, reverse = True))
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(DateColumnName, reverse = True, in_place = True)
 
     # Prepare column and value references
     if not RollColumnNames is None and not isinstance(RollColumnNames, list):
@@ -592,9 +600,13 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        data = data[:, :, sort(SortCols, reverse=rev)]
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(SortCols, reverse = rev, in_place = True)
       else:
-        data = (data.sort(DateColumnName, reverse = True))
+        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+        data.sort(DateColumnName, reverse = True, in_place = True)
 
     # DiffNumericVariables
     if not DiffNumericVariables is None:
@@ -1023,9 +1035,11 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     from retrofit import utils as u
     
     # random
+    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/RemixAutoML/tests/QA_DataSets/ThreeGroup-FC-Walmart-XREG3.csv")
+    data = pl.read_csv('https://www.dropbox.com/s/2str3ek4f4cheqi/walmart_train.csv?dl=1')
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1037,7 +1051,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
     t_end = timeit.default_timer()
     t_end - t_start
     TrainData = DataSets['TrainData']
@@ -1095,7 +1109,6 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     # Import polars methods
     if Processing.lower() == 'polars' or OutputFrame.lower() == 'polars' or InputFrame.lower() == 'polars':
       import polars as pl
-      from polars import col
       from polars.lazy import col
 
     # Convert to datatable
@@ -1137,9 +1150,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         # Sort data
         if Sort == True and Processing.lower() == 'datatable':
           data = data[:, :, sort(f[DateColumnName], reverse = False)]
-        elif Sort == True and Processing.lower() == 'polars':
-          data = (data.sort(f[DateColumnName], reverse = False))
-  
+        
         # Grab row number boundaries
         TrainRowsMax = data.nrows * Ratios[0]
         ValidRowsMax = data.nrows * Ratios[1]
@@ -1177,6 +1188,30 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         if len(Ratios) == 3:
           TestData = data[data['ID'] > Ratios[1]]
           TestData.drop_in_place('ID')
+        else:
+          TestData = None
+
+      # Time base partitioning
+      if PartitionType.lower() == "time":
+
+        # Sort data
+        if Processing.lower() == 'polars':
+          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+          data.sort(DateColumnName, reverse = False, in_place = True)
+
+        # Grab row number boundaries
+        TrainRowsMax = data.shape[0] * Ratios[0]
+        ValidRowsMax = data.shape[1] * Ratios[1]
+        
+        # TrainData
+        TrainData = data[range(int(TrainRowsMax))]
+        
+        # ValidationData
+        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax)), ...]
+        
+        # TestData
+        if len(Ratios) == 3:
+          TestData = data[range(int(ValidRowsMax), data.nrows), ...]
         else:
           TestData = None
     

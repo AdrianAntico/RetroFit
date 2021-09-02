@@ -453,9 +453,9 @@ DataSets = fe.FE2_AutoDataParition(
   PartitionType='random', 
   Ratios=[0.70,0.20,0.10], 
   ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+  Processing='polars', 
+  InputFrame='polars', 
+  OutputFrame='polars')
 t_end = timeit.default_timer()
 t_end - t_start
 TrainData = DataSets['TrainData']
