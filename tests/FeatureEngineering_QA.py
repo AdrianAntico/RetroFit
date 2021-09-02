@@ -436,28 +436,6 @@ ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
 
-# time
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-t_start = timeit.default_timer()
-DataSets = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName='CalendarDateColumn', 
-  PartitionType='time', 
-  Ratios=[0.70,0.20,0.10], 
-  Sort = True,
-  ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
-t_end = timeit.default_timer()
-t_end - t_start
-TrainData = DataSets['TrainData']
-ValidationData = DataSets['ValidationData']
-TestData = DataSets['TestData']
-ArgsList = DataSets['ArgsList']
-
-
 # polars Example
 import timeit
 import polars as pl
@@ -485,7 +463,29 @@ TrainData = DataSets['TrainData']
 ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
-    
+
+# time
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+t_start = timeit.default_timer()
+DataSets = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName='CalendarDateColumn', 
+  PartitionType='time', 
+  Ratios=[0.70,0.20,0.10], 
+  Sort = True,
+  ByVariables=None, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+t_end = timeit.default_timer()
+t_end - t_start
+TrainData = DataSets['TrainData']
+ValidationData = DataSets['ValidationData']
+TestData = DataSets['TestData']
+ArgsList = DataSets['ArgsList']
+
+
 # time
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()

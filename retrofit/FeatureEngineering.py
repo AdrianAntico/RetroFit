@@ -139,8 +139,6 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
         if not isinstance(data[DateColumnName].dtype(), pl.Date32):
@@ -353,8 +351,6 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
         if not isinstance(data[DateColumnName].dtype(), pl.Date32):
@@ -600,8 +596,6 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
         SortCols = copy.copy(ByVariables)
         SortCols.append(DateColumnName)
         rev = [True for t in range(len(SortCols))]
-        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
         if not isinstance(data[DateColumnName].dtype(), pl.Date32):
@@ -1201,7 +1195,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
 
         # Grab row number boundaries
         TrainRowsMax = data.shape[0] * Ratios[0]
-        ValidRowsMax = data.shape[1] * Ratios[1]
+        ValidRowsMax = data.shape[0] * Ratios[1]
         
         # TrainData
         TrainData = data[range(int(TrainRowsMax))]
@@ -1211,7 +1205,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), data.nrows)]
+          TestData = data[range(int(ValidRowsMax), data.shape[0])]
         else:
           TestData = None
     
