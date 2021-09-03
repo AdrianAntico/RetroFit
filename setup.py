@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2020 Adrian Antico <adrianantico@gmail.com>
+# Copyright (C) 2021 Adrian Antico <adrianantico@gmail.com>
 # License: MIT, adrianantico@gmail.com
 
 import pathlib
@@ -15,7 +15,7 @@ with open(os.path.join(HERE, "requirements.txt")) as f:
 
 setup(
     name="retrofit",
-    version="0.0.8",
+    version="0.0.9",
     description="AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.",
     long_description=README,
     long_description_content_type="text/markdown",

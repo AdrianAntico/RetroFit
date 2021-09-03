@@ -1,4 +1,4 @@
-![Version: 0.0.8](https://img.shields.io/static/v1?label=Version&message=0.0.8&color=blue&?style=plastic)
+![Version: 0.0.9](https://img.shields.io/static/v1?label=Version&message=0.0.9&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -16,7 +16,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.8
+pip install retrofit==0.0.9
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -647,7 +647,7 @@ ArgsList = DataSets['ArgsList']
 </details>
 
 
-### S3 Feature Engineering: Model-Based
+### FE3 Feature Engineering: Model-Based
 
 <details><summary>Expand to view content</summary>
 <p>
