@@ -535,7 +535,7 @@ DataSets = fe.FE2_AutoDataParition(
   InputFrame='polars', 
   OutputFrame='polars')
 t_end = timeit.default_timer()
-t_end - t_start
+print(t_end - t_start)
 TrainData = DataSets['TrainData']
 ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
@@ -551,3 +551,9 @@ ArgsList = DataSets['ArgsList']
 # Processing='polars'
 # InputFrame='polars'
 # OutputFrame='polars'
+
+for i in data.shape[1]:
+  if  not isinstance(data[i].dtype, pl.Categorical)
+  data[i] = data[i].cast(pl.Categorical)
+
+data.sort(DateColumnName, reverse = False, in_place = True)

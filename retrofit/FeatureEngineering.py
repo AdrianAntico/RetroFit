@@ -1114,59 +1114,41 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
 
     # Accumulate Ratios
     Ratios = u.cumsum(Ratios)
-    
+
     # datatable
     if Processing.lower() == 'datatable':
-      
+
       # Random partitioning
       if PartitionType.lower() == 'random':
-        
+
         # Add random number column
         data = data[:, f[:].extend({"ID": np.random.uniform(0,1, size = data.shape[0])})]
-        
-        # Sort data
-        data = data[:, :, sort(f['ID'])]
-        
-        # TrainData
-        TrainData = data[f['ID'] <= Ratios[0], ...]
-        del TrainData['ID']
-        
-        # ValidationData
-        ValidationData = data[(f['ID'] <= Ratios[1]) & (f['ID'] > Ratios[0]), ...]
-        del ValidationData['ID']
-        
-        # TestData
-        if len(Ratios) == 3:
-          TestData = data[f['ID'] > Ratios[1], ...]
-          del TestData['ID']
-        else:
-          TestData = None
 
       # Time base partitioning
       if PartitionType.lower() == 'time':
-        
-        # Number of rows
-        NumRows = data.nrows
-        
+
         # Sort data
         if Sort == True:
           data = data[:, :, sort(f[DateColumnName], reverse = False)]
+
+      # Number of rows
+      NumRows = data.nrows
+          
+      # Grab row number boundaries
+      TrainRowsMax = NumRows * Ratios[0]
+      ValidRowsMax = NumRows * Ratios[1]
         
-        # Grab row number boundaries
-        TrainRowsMax = NumRows * Ratios[0]
-        ValidRowsMax = NumRows * Ratios[1]
+      # TrainData
+      TrainData = data[:int(TrainRowsMax), ...]
         
-        # TrainData
-        TrainData = data[range(int(TrainRowsMax)), ...]
+      # ValidationData
+      ValidationData = data[int(TrainRowsMax+1):int(ValidRowsMax), ...]
         
-        # ValidationData
-        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax)), ...]
-        
-        # TestData
-        if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), NumRows), ...]
-        else:
-          TestData = None
+      # TestData
+      if len(Ratios) == 3:
+        TestData = data[int(ValidRowsMax):, ...]
+      else:
+        TestData = None
 
     # polars
     if Processing.lower() == 'polars':
@@ -1174,52 +1156,36 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
       # Random partitioning
       if PartitionType.lower() == 'random':
         
-        # Add random number column
+        # Prepare data
         data['ID'] = np.random.uniform(0,1, size = data.shape[0])
-        
-        # Sort data
         data = data.sort('ID')
+        data.drop_in_place('ID')
         
-        # TrainData
-        TrainData = data[data['ID'] <= Ratios[0]]
-        TrainData.drop_in_place('ID')
-        
-        # ValidationData
-        ValidationData = data[(data['ID'] <= Ratios[1]) & (data['ID'] > Ratios[0])]
-        ValidationData.drop_in_place('ID')
-        
-        # TestData
-        if len(Ratios) == 3:
-          TestData = data[data['ID'] > Ratios[1]]
-          TestData.drop_in_place('ID')
-        else:
-          TestData = None
-
       # Time base partitioning
       if PartitionType.lower() == "time":
         
-        # Number of rows
-        NumRows = data.shape[0]
-        
-        # Sort data
+        # Prepare data
         if Sort == True:
           data.sort(DateColumnName, reverse = False, in_place = True)
-
-        # Grab row number boundaries
-        TrainRowsMax = NumRows * Ratios[0]
-        ValidRowsMax = NumRows * Ratios[1]
+      
+      # Number of rows
+      NumRows = data.shape[0]
+          
+      # Grab row number boundaries
+      TrainRowsMax = NumRows * Ratios[0]
+      ValidRowsMax = NumRows * Ratios[1]
         
-        # TrainData
-        TrainData = data[:int(TrainRowsMax)]
+      # TrainData
+      TrainData = data[:int(TrainRowsMax)]
 
-        # ValidationData
-        ValidationData = data[int(TrainRowsMax + 1):int(ValidRowsMax)]
+      # ValidationData
+      ValidationData = data[int(TrainRowsMax + 1):int(ValidRowsMax)]
         
-        # TestData
-        if len(Ratios) == 3:
-          TestData = data[int(ValidRowsMax + 1):]
-        else:
-          TestData = None
+      # TestData
+      if len(Ratios) == 3:
+        TestData = data[int(ValidRowsMax + 1):]
+      else:
+        TestData = None
     
     # Convert Frame
     if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
