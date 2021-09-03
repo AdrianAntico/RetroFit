@@ -1215,7 +1215,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         ValidRowsMax = NumRows * Ratios[1]
         
         # TrainData
-        TrainData = data[data['index'] <= TrainRowsMax]
+        TrainData = data[data['index'] <= int(TrainRowsMax)]
         TrainData.drop_in_place('index')
         
         # ValidationData
