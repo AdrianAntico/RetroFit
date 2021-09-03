@@ -411,39 +411,45 @@ ArgsList = Output['ArgsList']
 # FE2_AutoDataParition
 import timeit
 import datatable as dt
-import retrofit
-from retrofit import FeatureEngineering as fe
-from retrofit import utils as u
-    
-# random
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-t_start = timeit.default_timer()
-DataSets = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName='CalendarDateColumn', 
-  PartitionType='random', 
-  Ratios=[0.70,0.20,0.10], 
-  Sort = False,
-  ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
-t_end = timeit.default_timer()
-t_end - t_start
-TrainData = DataSets['TrainData']
-ValidationData = DataSets['ValidationData']
-TestData = DataSets['TestData']
-ArgsList = DataSets['ArgsList']
-
-# polars Example
-import timeit
 import polars as pl
 import retrofit
 from retrofit import FeatureEngineering as fe
 from retrofit import utils as u
+    
+# datatable random Example
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+t_start = timeit.default_timer()
+DataSets = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName='CalendarDateColumn', 
+  PartitionType='random', 
+  Ratios=[0.70,0.20,0.10], 
+  Sort = False,
+  ByVariables=None, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+t_end = timeit.default_timer()
+t_end - t_start
+TrainData = DataSets['TrainData']
+ValidationData = DataSets['ValidationData']
+TestData = DataSets['TestData']
+ArgsList = DataSets['ArgsList']
 
-# random
+# data=data
+# ArgsList=None
+# DateColumnName='CalendarDateColumn'
+# PartitionType='random'
+# Ratios=[0.70,0.20,0.10]
+# Sort = False
+# ByVariables=None
+# Processing='datatable'
+# InputFrame='datatable'
+# OutputFrame='datatable'
+
+
+# polars random Example
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
 DataSets = fe.FE2_AutoDataParition(
@@ -464,7 +470,18 @@ ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
 
-# time
+# data=data
+# ArgsList=None
+# DateColumnName='CalendarDateColumn'
+# PartitionType='random'
+# Ratios=[0.70,0.20,0.10]
+# Sort = False
+# ByVariables=None
+# Processing='polars'
+# InputFrame='polars'
+# OutputFrame='polars'
+
+# datatable time Example
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
 DataSets = fe.FE2_AutoDataParition(
@@ -485,8 +502,19 @@ ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
 
+# data=data
+# ArgsList=None
+# DateColumnName='CalendarDateColumn'
+# PartitionType='time'
+# Ratios=[0.70,0.20,0.10]
+# Sort = False
+# ByVariables=None
+# Processing='datatable'
+# InputFrame='datatable'
+# OutputFrame='datatable'
 
-# time
+
+# polars time Example
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
 DataSets = fe.FE2_AutoDataParition(
@@ -506,3 +534,14 @@ TrainData = DataSets['TrainData']
 ValidationData = DataSets['ValidationData']
 TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
+
+# data=data
+# ArgsList=None
+# DateColumnName='CalendarDateColumn'
+# PartitionType='time'
+# Ratios=[0.70,0.20,0.10]
+# Sort = False
+# ByVariables=None
+# Processing='polars'
+# InputFrame='polars'
+# OutputFrame='polars'

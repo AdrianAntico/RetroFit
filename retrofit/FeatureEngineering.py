@@ -1199,19 +1199,27 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         if Sort == True:
           data.sort(DateColumnName, reverse = False, in_place = True)
 
+        # Add an index to filter by
+        data1 = (data.with_column(
+          pl.arange(0,data.shape[0]).alias("index")
+        ))
+
         # Grab row number boundaries
         TrainRowsMax = NumRows * Ratios[0]
         ValidRowsMax = NumRows * Ratios[1]
         
         # TrainData
-        TrainData = data[range(int(TrainRowsMax))]
+        TrainData = data[data['index'] <= TrainRowsMax]
+        TrainData.drop_in_place('index')
         
         # ValidationData
-        ValidationData = data[range(int(TrainRowsMax+1), int(ValidRowsMax))]
+        ValidationData = data[(data1['index'] > int(TrainRowsMax + 1)) & (data['index'] <= int(ValidRowsMax))]
+        ValidationData.drop_in_place('index')
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[range(int(ValidRowsMax), NumRows)]
+          TestData = data[data['index'] > int(ValidRowsMax + 1)]
+          TestData.drop_in_place('index')
         else:
           TestData = None
     
