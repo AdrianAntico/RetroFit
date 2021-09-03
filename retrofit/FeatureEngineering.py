@@ -1104,7 +1104,6 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     # Import polars methods
     if Processing.lower() == 'polars' or OutputFrame.lower() == 'polars' or InputFrame.lower() == 'polars':
       import polars as pl
-      from polars.lazy import col
 
     # Convert to datatable
     if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable':
