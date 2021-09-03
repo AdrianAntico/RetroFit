@@ -1124,17 +1124,20 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         # Add random number column
         data = data[:, f[:].extend({"ID": np.random.uniform(0,1, size = data.shape[0])})]
         
+        # Sort data
+        data = data[:, :, sort(f['ID'])]
+        
         # TrainData
-        TrainData = data[f.ID <= Ratios[0], ...]
+        TrainData = data[f['ID'] <= Ratios[0], ...]
         del TrainData['ID']
         
         # ValidationData
-        ValidationData = data[(f.ID <= Ratios[1]) & (f.ID > Ratios[0]), ...]
+        ValidationData = data[(f['ID'] <= Ratios[1]) & (f['ID'] > Ratios[0]), ...]
         del ValidationData['ID']
         
         # TestData
         if len(Ratios) == 3:
-          TestData = data[f.ID > Ratios[1], ...]
+          TestData = data[f['ID'] > Ratios[1], ...]
           del TestData['ID']
         else:
           TestData = None
@@ -1174,6 +1177,9 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         # Add random number column
         data['ID'] = np.random.uniform(0,1, size = data.shape[0])
         
+        # Sort data
+        data = data.sort('ID')
+        
         # TrainData
         TrainData = data[data['ID'] <= Ratios[0]]
         TrainData.drop_in_place('ID')
@@ -1200,7 +1206,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
           data.sort(DateColumnName, reverse = False, in_place = True)
 
         # Add an index to filter by
-        data1 = (data.with_column(
+        data = (data.with_column(
           pl.arange(0,data.shape[0]).alias("index")
         ))
 
