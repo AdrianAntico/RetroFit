@@ -1219,7 +1219,7 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         TrainData.drop_in_place('index')
         
         # ValidationData
-        ValidationData = data[(data1['index'] > int(TrainRowsMax + 1)) & (data['index'] <= int(ValidRowsMax))]
+        ValidationData = data[(data['index'] > int(TrainRowsMax + 1)) & (data['index'] <= int(ValidRowsMax))]
         ValidationData.drop_in_place('index')
         
         # TestData
