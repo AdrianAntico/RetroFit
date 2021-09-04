@@ -1,8 +1,8 @@
 # Module: FeatureEngineering
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.0.9
-# Last modified : 2021-09-02
+# Release: retrofit 0.1.0
+# Last modified : 2021-09-03
 
 def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
     """
@@ -1030,8 +1030,6 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
     from retrofit import utils as u
     
     # random
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/RemixAutoML/tests/QA_DataSets/ThreeGroup-FC-Walmart-XREG3.csv")
-    data = pl.read_csv('https://www.dropbox.com/s/2str3ek4f4cheqi/walmart_train.csv?dl=1')
     data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
     t_start = timeit.default_timer()
     DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')

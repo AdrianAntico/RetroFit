@@ -1,8 +1,8 @@
 # Module: MachineLearning
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.0.9
-# Last modified : 2021-09-02
+# Release: retrofit 0.1.0
+# Last modified : 2021-09-03
 
 def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsList=None, TargetColumnName=None, NumericColumnNames=None, CategoricalColumnNames=None, TextColumnNames=None, WeightColumnName=None, Threads=-1, Processing='catboost', InputFrame='datatable'):
     """
@@ -148,13 +148,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       
       # Imports
       from catboost import Pool
-      
-      # label
-      TrainLabel = TrainData[TargetColumnName].to_numpy()
-      if not ValidationData is None:
-        ValidationLabel = ValidationData[TargetColumnName].to_numpy()
-      if not TestData is None:
-        TestLabel = TestData[TargetColumnName].to_numpy()
 
       # data (numeric features)
       if not NumericColumnNames is None:
@@ -218,3 +211,130 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     
       # Return catboost
       return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+
+    # XGBoost
+    if Processing.lower() == 'xgboost':
+      
+      # Imports
+      import xgboost as xgb
+
+      # data (numeric features)
+      if not NumericColumnNames is None:
+        SD = copy.copy(NumericColumnNames)
+      else:
+        SD = []
+      if not CategoricalColumnNames is None:
+        for nam in CategoricalColumnNames:
+          SD.append(nam)
+      if not TextColumnNames is None:
+        for nam in TextColumnNames:
+          SD.append(nam)
+      if not WeightColumnName is None:
+        trainweightdata = TrainData['WeightColumnName'].to_pandas()
+        if not ValidationData is None:
+          validationweightdata = ValidationData['WeightColumnName'].to_pandas()
+        if not TestData is None:
+          testweightdata = TestData['WeightColumnName'].to_pandas()
+      else:
+        weightdata = None
+        
+      # data
+      train = TrainData[:, SD].to_pandas()
+      if not ValidationData is None:
+        validation = ValidationData[:, SD].to_pandas()
+      if not TestData is None:
+        test = TestData[:, SD].to_pandas()
+
+      # label
+      trainlabel = TrainData[:, TargetColumnName].to_pandas()
+      if not ValidationData is None:
+        validationlabel = ValidationData[:, TargetColumnName].to_pandas()
+      if not TestData is None:
+        testlabel = TestData[:, TargetColumnName].to_pandas()
+
+      # TrainData
+      if trainweightdata is None:
+        train_data = xgb.DMatrix(data = train, label = trainlabel)
+      else:
+        train_data = xgb.DMatrix(data = train, label = trainlabel, weight = weightdata)
+      
+      # ValidationData
+      if not ValidationData is None:
+        if validationweightdata is None:
+          validation_data = xgb.DMatrix(data = validation, label = validationlabel)
+        else:
+          validation_data = xgb.DMatrix(data = validation, label = validationlabel, weight = validationweightdata)
+        
+      # TestData
+      if not TestData is None:
+        if testweights is None:
+          test_data = xgb.DMatrix(data = test, label = testlabel)
+        else:
+          test_data = xgb.DMatrix(data = test, label = testlabel, weights = testweightdata)
+    
+      # Return catboost
+      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+    
+    # LightGBM
+    if Processing.lower() == 'lightgbm':
+      
+      # Imports
+      import lightgbm as lgbm
+
+      # data (numeric features)
+      if not NumericColumnNames is None:
+        SD = copy.copy(NumericColumnNames)
+      else:
+        SD = []
+      if not CategoricalColumnNames is None:
+        for nam in CategoricalColumnNames:
+          SD.append(nam)
+      if not TextColumnNames is None:
+        for nam in TextColumnNames:
+          SD.append(nam)
+      if not WeightColumnName is None:
+        trainweightdata = TrainData['WeightColumnName']
+        if not ValidationData is None:
+          validationweightdata = ValidationData['WeightColumnName']
+        if not TestData is None:
+          testweightdata = TestData['WeightColumnName']
+      else:
+        weightdata = None
+        
+      # data
+      train = TrainData[:, SD]
+      if not ValidationData is None:
+        validation = ValidationData[:, SD]
+      if not TestData is None:
+        test = TestData[:, SD]
+
+      # label
+      trainlabel = TrainData[:, TargetColumnName]
+      if not ValidationData is None:
+        validationlabel = ValidationData[:, TargetColumnName]
+      if not TestData is None:
+        testlabel = TestData[:, TargetColumnName]
+
+      # TrainData
+      if trainweightdata is None:
+        train_data = lgbm.Dataset(data = train, label = trainlabel)
+      else:
+        train_data = lgbm.Dataset(data = train, label = trainlabel, weight = weightdata)
+      
+      # ValidationData
+      if not ValidationData is None:
+        if validationweightdata is None:
+          validation_data = lgbm.Dataset(data = validation, label = validationlabel)
+        else:
+          validation_data = lgbm.Dataset(data = validation, label = validationlabel, weight = validationweightdata)
+        
+      # TestData
+      if not TestData is None:
+        if testweights is None:
+          test_data = lgbm.Dataset(data = test, label = testlabel)
+        else:
+          test_data = lgbm.Dataset(data = test, label = testlabel, weights = testweightdata)
+    
+      # Return catboost
+      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+
