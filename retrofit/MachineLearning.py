@@ -236,7 +236,9 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         if not TestData is None:
           testweightdata = TestData['WeightColumnName'].to_pandas()
       else:
-        weightdata = None
+        trainweightdata = None
+        validationweightdata = None
+        testweightdata = None
         
       # data
       train = TrainData[:, SD].to_pandas()
@@ -256,7 +258,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       if trainweightdata is None:
         train_data = xgb.DMatrix(data = train, label = trainlabel)
       else:
-        train_data = xgb.DMatrix(data = train, label = trainlabel, weight = weightdata)
+        train_data = xgb.DMatrix(data = train, label = trainlabel, weight = trainweightdata)
       
       # ValidationData
       if not ValidationData is None:
@@ -267,7 +269,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         
       # TestData
       if not TestData is None:
-        if testweights is None:
+        if testweightdata is None:
           test_data = xgb.DMatrix(data = test, label = testlabel)
         else:
           test_data = xgb.DMatrix(data = test, label = testlabel, weights = testweightdata)
@@ -299,7 +301,9 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         if not TestData is None:
           testweightdata = TestData['WeightColumnName']
       else:
-        weightdata = None
+        trainweightdata = None
+        validationweightdata = None
+        testweightdata = None
         
       # data
       train = TrainData[:, SD]
@@ -319,7 +323,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       if trainweightdata is None:
         train_data = lgbm.Dataset(data = train, label = trainlabel)
       else:
-        train_data = lgbm.Dataset(data = train, label = trainlabel, weight = weightdata)
+        train_data = lgbm.Dataset(data = train, label = trainlabel, weight = trainweightdata)
       
       # ValidationData
       if not ValidationData is None:
@@ -337,4 +341,3 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     
       # Return catboost
       return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
-
