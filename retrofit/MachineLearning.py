@@ -334,7 +334,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         
       # TestData
       if not TestData is None:
-        if testweights is None:
+        if testweightdata is None:
           test_data = lgbm.Dataset(data = test, label = testlabel)
         else:
           test_data = lgbm.Dataset(data = test, label = testlabel, weights = testweightdata)
