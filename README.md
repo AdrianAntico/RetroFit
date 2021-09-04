@@ -1,4 +1,4 @@
-![Version: 0.0.9](https://img.shields.io/static/v1?label=Version&message=0.0.9&color=blue&?style=plastic)
+![Version: 0.0.1](https://img.shields.io/static/v1?label=Version&message=0.1.0&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -16,7 +16,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.0.9
+pip install retrofit==0.1.0
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -314,8 +314,6 @@ print(data.names)
 
 
 
-
- 
 #### **FE0_AutoDiff()**
 <p>
 
@@ -681,7 +679,7 @@ ArgsList = DataSets['ArgsList']
 <details><summary>Function Description</summary>
 <p>
  
-<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm
+<code>ML0_GetModelData()</code> Automatically create data sets chosen ML algorithm. Currently supports catboost, xgboost, and lightgbm.
 
 </p>
 </details>
@@ -696,6 +694,10 @@ from datatable import sort, f, by
 import retrofit
 from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
+
+############################################################################################
+# CatBoost
+############################################################################################
 
 # Load some data
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -737,6 +739,96 @@ DataSets = ml.ML0_GetModelData(
 catboost_train = DataSets['train_data']
 catboost_validation = DataSets['validation_data']
 catboost_test = DataSets['test_data']
+
+############################################################################################
+# XGBoost
+############################################################################################
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    
+# Create partitioned data sets
+DataSets = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName='CalendarDateColumn', 
+  PartitionType='random', 
+  Ratios=[0.70,0.20,0.10], 
+  ByVariables=None, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+
+# Collect partitioned data
+TrainData = DataSets['TrainData']
+ValidationData = DataSets['ValidationData']
+TestData = DataSets['TestData']
+del DataSets
+
+# Create xgboost data sets
+DataSets = ml.ML0_GetModelData(
+  TrainData=TrainData, 
+  ValidationData=ValidationData, 
+  TestData=TestData, 
+  ArgsList=None, 
+  TargetColumnName='Leads', 
+  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+  TextColumnNames=None, 
+  WeightColumnName=None, 
+  Threads=-1, 
+  Processing='xgboost', 
+  InputFrame='datatable')
+  
+# Collect xgboost training data
+xgboost_train = DataSets['train_data']
+xgboost_validation = DataSets['validation_data']
+xgboost_test = DataSets['test_data']
+
+############################################################################################
+# LightGBM
+############################################################################################
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    
+# Create partitioned data sets
+DataSets = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName='CalendarDateColumn', 
+  PartitionType='random', 
+  Ratios=[0.70,0.20,0.10], 
+  ByVariables=None, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+
+# Collect partitioned data
+TrainData = DataSets['TrainData']
+ValidationData = DataSets['ValidationData']
+TestData = DataSets['TestData']
+del DataSets
+
+# Create lightgbm data sets
+DataSets = ml.ML0_GetModelData(
+  TrainData=TrainData, 
+  ValidationData=ValidationData, 
+  TestData=TestData, 
+  ArgsList=None, 
+  TargetColumnName='Leads', 
+  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+  TextColumnNames=None, 
+  WeightColumnName=None, 
+  Threads=-1, 
+  Processing='lightgbm', 
+  InputFrame='datatable')
+  
+# Collect lightgbm training data
+lightgbm_train = DataSets['train_data']
+lightgbm_validation = DataSets['validation_data']
+lightgbm_test = DataSets['test_data']
 ```
 
 </p>

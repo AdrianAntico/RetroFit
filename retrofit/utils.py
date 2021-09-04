@@ -1,3 +1,9 @@
+# Module: utils
+# Author: Adrian Antico <adrianantico@gmail.com>
+# License: MIT
+# Release: retrofit 0.1.0
+# Last modified : 2021-09-03
+
 def cumsum(x):
   """
   Create a list of summed up values from another list

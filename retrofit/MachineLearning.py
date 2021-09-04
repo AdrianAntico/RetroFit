@@ -10,7 +10,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     Create modeling objects for specific algorithms. E.g. create train, valid, and test objects for catboost
     
     # Output
-    Return frames for catboost, xgboost, lightgbm, etc.
+    Return frames for catboost, xgboost, and lightgbm, currently.
     
     # Parameters
     TrainData:              Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
@@ -23,7 +23,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     TextColumnNames:        List of integers for the lookback lengths
     WeightColumnName:       Value to fill the NA's for beginning of series
     Threads:                Number of threads to utilize if available for the algorithm
-    Processing:             'datatable' or 'polars'. Choose the package you want to do your processing
+    Processing:             'catboost', 'xgboost', or 'lightgbm'
     InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
 
     # ML0_GetModelData Example:
