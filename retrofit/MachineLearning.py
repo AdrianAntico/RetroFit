@@ -223,12 +223,12 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         SD = copy.copy(NumericColumnNames)
       else:
         SD = []
-      if not CategoricalColumnNames is None:
-        for nam in CategoricalColumnNames:
-          SD.append(nam)
-      if not TextColumnNames is None:
-        for nam in TextColumnNames:
-          SD.append(nam)
+      # if not CategoricalColumnNames is None:
+      #   for nam in CategoricalColumnNames:
+      #     SD.append(nam)
+      # if not TextColumnNames is None:
+      #   for nam in TextColumnNames:
+      #     SD.append(nam)
       if not WeightColumnName is None:
         trainweightdata = TrainData['WeightColumnName'].to_pandas()
         if not ValidationData is None:
