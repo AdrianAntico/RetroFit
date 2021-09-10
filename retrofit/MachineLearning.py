@@ -555,11 +555,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     # Return
     return MasterArgs
 
-
-x.ML1_Single_Train(Algorithm='Ftrl')
-x.ML1_Single_Train(Algorithm='Ftrl')
-
-
 # RetroFit Class 
 class RetroFit:
     """
@@ -734,18 +729,17 @@ class RetroFit:
         self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
 
     # Score data
-    @classmethod
-    def ML1_Single_Score(cls, DataName=None, ModelName=None, Algorithm=None):
+    def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None):
 
       # Check
-      if len(cls.ModelList) == 0:
+      if len(self.ModelList) == 0:
         return print("No models exist")
 
       # Which Algo
       if not Algorithm is None:
-        TempArgs = cls.ModelArgs[Algorithm]
+        TempArgs = self.ModelArgs[Algorithm]
       else:
-        TempArgs = cls.ModelArgs[[*cls.ModelArgs][0]]
+        TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
       # Setup Environment
       import datatable
@@ -756,13 +750,13 @@ class RetroFit:
         
         # Extract model
         if not ModelName is None:
-          model = cls.ModelList.get(ModelName)
+          model = self.ModelList.get(ModelName)
         else:
-          model = cls.ModelList.get(f"Ftrl_{str(len(cls.FitList))}")
+          model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
 
         # Extract scoring data
-        TargetColumnName = cls.DataSets.get('ArgsList')['TargetColumnName']
-        score_data = cls.DataSets[DataName]
+        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+        score_data = self.DataSets[DataName]
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
@@ -778,8 +772,8 @@ class RetroFit:
 
         # Store data and update names
         if not 'Scored_' + DataName in score_data.names:
-          cls.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
-          cls.DataSetsNames.append('Scored_' + DataName)
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
+          self.DataSetsNames.append('Scored_' + DataName)
         else:
-          cls.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
-          cls.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
+          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
