@@ -555,6 +555,11 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     # Return
     return MasterArgs
 
+
+x.ML1_Single_Train(Algorithm='Ftrl')
+x.ML1_Single_Train(Algorithm='Ftrl')
+
+
 # RetroFit Class 
 class RetroFit:
     """
@@ -650,7 +655,7 @@ class RetroFit:
       TrainMethod="Train")
 
     # Initialize RetroFit
-    x = RetroFit(ModelArgs, DataSets)
+    x = ml.RetroFit(ModelArgs, DataSets)
 
     # Train Model
     x.ML1_Single_Train(Algorithm='Ftrl')
@@ -713,7 +718,7 @@ class RetroFit:
 
         # Setup Environment
         import datatable
-        from datatable.models import Ftrl
+        from datatable.models import Ftrl, f
 
         # Define training data and target variable
         TrainData = self.DataSets.get('train_data')
