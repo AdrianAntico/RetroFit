@@ -613,6 +613,7 @@ class RetroFit:
     # BechmarkData.csv is located is the tests folder
     Path = "./BenchmarkData.csv"
     data = dt.fread(Path)
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 
     # Create partitioned data sets
     Data = fe.FE2_AutoDataParition(
@@ -727,18 +728,19 @@ class RetroFit:
         self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
         self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
 
-    # Score data @staticmethod
-    def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None):
+    # Score data
+    @classmethod
+    def ML1_Single_Score(cls, DataName=None, ModelName=None, Algorithm=None):
 
       # Check
-      if len(self.ModelList) == 0:
+      if len(cls.ModelList) == 0:
         return print("No models exist")
 
       # Which Algo
       if not Algorithm is None:
-        TempArgs = self.ModelArgs[Algorithm]
+        TempArgs = cls.ModelArgs[Algorithm]
       else:
-        TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
+        TempArgs = cls.ModelArgs[[*cls.ModelArgs][0]]
 
       # Setup Environment
       import datatable
@@ -749,13 +751,13 @@ class RetroFit:
         
         # Extract model
         if not ModelName is None:
-          model = self.ModelList.get(ModelName)
+          model = cls.ModelList.get(ModelName)
         else:
-          model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
+          model = cls.ModelList.get(f"Ftrl_{str(len(cls.FitList))}")
 
         # Extract scoring data
-        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        score_data = self.DataSets[DataName]
+        TargetColumnName = cls.DataSets.get('ArgsList')['TargetColumnName']
+        score_data = cls.DataSets[DataName]
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
@@ -771,8 +773,8 @@ class RetroFit:
 
         # Store data and update names
         if not 'Scored_' + DataName in score_data.names:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
-          self.DataSetsNames.append('Scored_' + DataName)
+          cls.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
+          cls.DataSetsNames.append('Scored_' + DataName)
         else:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
-          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
+          cls.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
+          cls.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
