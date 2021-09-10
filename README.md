@@ -900,7 +900,7 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-BechmarkData.csv is located is the tests folder
+# BechmarkData.csv is located is the tests folder
 Path = "./BenchmarkData.csv"
 data = dt.fread(Path)
 

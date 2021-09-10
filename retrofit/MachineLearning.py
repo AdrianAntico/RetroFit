@@ -574,9 +574,28 @@ class RetroFit:
     # Functions
     ####################################
     
-    FUN_Train()
-    FUN_GridTune()
-    FUN_Score()
+    ML1_Single_Train()
+    ML1_Single_Score()
+    
+    ####################################
+    # Attributes
+    ####################################
+    
+    self.ModelArgs = ModelArgs
+    self.ModelArgsNames = [*self.ModelArgs]
+    self.Runs = len(self.ModelArgs)
+    self.DataSets = DataSets
+    self.DataSetsNames = [*self.DataSets]
+    self.ModelList = dict()
+    self.ModelListNames = []
+    self.FitList = dict()
+    self.FitListNames = []
+    self.EvaluationList = dict()
+    self.EvaluationListNames = []
+    self.InterpretationList = dict()
+    self.InterpretationListNames = []
+    self.CompareModelsList = dict()
+    self.CompareModelsListNames = []
     
     ####################################
     # Example Usage
@@ -591,7 +610,9 @@ class RetroFit:
     from retrofit import MachineLearning as ml
     
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    # BechmarkData.csv is located is the tests folder
+    Path = "./BenchmarkData.csv"
+    data = dt.fread(Path)
 
     # Create partitioned data sets
     Data = fe.FE2_AutoDataParition(
