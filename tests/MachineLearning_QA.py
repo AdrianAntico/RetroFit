@@ -1,13 +1,14 @@
-# ML0_GetModelData Example:
+############################################################################################
+# ML0_GetModelData Example
+############################################################################################
+
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
 from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
-############################################################################################
 # CatBoost
-############################################################################################
 
 # Load some data
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -64,9 +65,7 @@ catboost_test = DataSets['test_data']
 # Processing='catboost'
 # InputFrame='datatable'
 
-############################################################################################
 # XGBoost
-############################################################################################
 
 # Load some data
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -123,9 +122,8 @@ xgboost_test = DataSets['test_data']
 # Processing='xgboost'
 # InputFrame='datatable'
 
-############################################################################################
+
 # LightGBM
-############################################################################################
 
 # Load some data
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
@@ -181,3 +179,14 @@ lightgbm_test = DataSets['test_data']
 # Threads=-1
 # Processing='lightgbm'
 # InputFrame='datatable'
+
+
+############################################################################################
+# ML0_Parameters
+############################################################################################
+
+# Ftrl
+Params = ML0_Parameters(Algorithm='Ftrl', TargetType='regression', TrainMethod='gridtune', Model=None)
+
+print(Params)
+print_list(Params)

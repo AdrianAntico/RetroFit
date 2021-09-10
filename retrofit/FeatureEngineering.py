@@ -129,7 +129,7 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
     if Sort == True and Processing.lower() == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data = data[:, :, sort(SortCols, reverse=rev)]
       else:
@@ -137,7 +137,7 @@ def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnNa
     elif Sort == True and Processing.lower() == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
@@ -341,7 +341,7 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
     if Sort == True and Processing.lower() == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data = data[:, :, sort(SortCols, reverse=rev)]
       else:
@@ -349,7 +349,7 @@ def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateCo
     elif Sort == True and Processing.lower() == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
@@ -586,7 +586,7 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
     if Sort == True and Processing.lower() == 'datatable':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data = data[:, :, sort(SortCols, reverse=rev)]
       else:
@@ -594,7 +594,7 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
     elif Sort == True and Processing.lower() == 'polars':
       if ByVariables is not None:
         SortCols = copy.copy(ByVariables)
-        SortCols.append(DateColumnName)
+        SortCols.extend(DateColumnName)
         rev = [True for t in range(len(SortCols))]
         data.sort(SortCols, reverse = rev, in_place = True)
       else:
@@ -1137,13 +1137,16 @@ def FE2_AutoDataParition(data=None, ArgsList=None, DateColumnName=None, Partitio
         
       # TrainData
       TrainData = data[:int(TrainRowsMax), ...]
+      del TrainData[:, 'ID']
         
       # ValidationData
       ValidationData = data[int(TrainRowsMax+1):int(ValidRowsMax), ...]
+      del ValidationData[:, 'ID']
         
       # TestData
       if len(Ratios) == 3:
         TestData = data[int(ValidRowsMax):, ...]
+        del TestData[:, 'ID']
       else:
         TestData = None
 

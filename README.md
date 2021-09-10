@@ -842,12 +842,127 @@ lightgbm_test = DataSets['test_data']
 
 
 
-### ML1 Machine Learning: Modeling
+### ML1 Machine Learning: RetroFit Class
 
 <details><summary>Code Example</summary>
 <p>
 
-##### Coming Soon
+```
+####################################
+# Goals
+####################################
+
+Class Initialization
+Model Initialization
+Training
+Grid Tuning
+Scoring
+Model Evaluation
+Model Interpretation
+
+####################################
+# Functions
+####################################
+
+ML1_Single_Train()
+ML1_Single_Score()
+
+####################################
+# Attributes
+####################################
+
+self.ModelArgs = ModelArgs
+self.ModelArgsNames = [*self.ModelArgs]
+self.Runs = len(self.ModelArgs)
+self.DataSets = DataSets
+self.DataSetsNames = [*self.DataSets]
+self.ModelList = dict()
+self.ModelListNames = []
+self.FitList = dict()
+self.FitListNames = []
+self.EvaluationList = dict()
+self.EvaluationListNames = []
+self.InterpretationList = dict()
+self.InterpretationListNames = []
+self.CompareModelsList = dict()
+self.CompareModelsListNames = []
+
+####################################
+# Example Usage
+####################################
+
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Create partitioned data sets
+Data = FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName=None, 
+  PartitionType='random', 
+  Ratios=[0.7,0.2,0.1], 
+  ByVariables=None, 
+  Sort=False, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+
+# Prepare modeling data sets
+DataSets = ML0_GetModelData(
+  Processing='Ftrl',
+  TrainData=Data['TrainData'],
+  ValidationData=Data['ValidationData'],
+  TestData=Data['TestData'],
+  ArgsList=None,
+  TargetColumnName='Leads',
+  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
+  CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  TextColumnNames=None,
+  WeightColumnName=None,
+  Threads=-1,
+  InputFrame='datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ML0_Parameters(
+  Algorithms='Ftrl', 
+  TargetType="Regression", 
+  TrainMethod="Train")
+
+# Initialize RetroFit
+x = RetroFit(ModelArgs, DataSets)
+
+# Train Model
+x.ML1_Single_Train(Algorithm='Ftrl')
+
+# Score data
+x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='Ftrl')
+
+# Scoring data names
+x.DataSets.keys()
+
+# Check ModelArgs Dict
+x.ModelArgs
+
+# Check the names of data sets collected
+x.DataSetsNames
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
+# List of comparisons
+x.CompareModelsListNames
+```
 
 </p>
 </details>
