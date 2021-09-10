@@ -900,10 +900,12 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+BechmarkData.csv is located is the tests folder
+Path = "./BenchmarkData.csv"
+data = dt.fread(Path)
 
 # Create partitioned data sets
-Data = FE2_AutoDataParition(
+Data = fe.FE2_AutoDataParition(
   data=data, 
   ArgsList=None, 
   DateColumnName=None, 
@@ -916,7 +918,7 @@ Data = FE2_AutoDataParition(
   OutputFrame='datatable')
 
 # Prepare modeling data sets
-DataSets = ML0_GetModelData(
+DataSets = ml.ML0_GetModelData(
   Processing='Ftrl',
   TrainData=Data['TrainData'],
   ValidationData=Data['ValidationData'],
@@ -931,7 +933,7 @@ DataSets = ML0_GetModelData(
   InputFrame='datatable')
 
 # Get args list for algorithm and target type
-ModelArgs = ML0_Parameters(
+ModelArgs = ml.ML0_Parameters(
   Algorithms='Ftrl', 
   TargetType="Regression", 
   TrainMethod="Train")
