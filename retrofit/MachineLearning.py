@@ -33,12 +33,12 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     import retrofit
     from retrofit import FeatureEngineering as fe
     from retrofit import MachineLearning as ml
-    
+
     # Load some data
     data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
         
     # Create partitioned data sets
-    DataSets = fe.S2_AutoDataParition(
+    DataSets = fe.FE2_AutoDataParition(
       data=data, 
       ArgsList=None, 
       DateColumnName='CalendarDateColumn', 
@@ -48,13 +48,13 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       Processing='datatable', 
       InputFrame='datatable', 
       OutputFrame='datatable')
-    
+
     # Collect partitioned data
     TrainData = DataSets['TrainData']
     ValidationData = DataSets['ValidationData']
     TestData = DataSets['TestData']
     del DataSets
-    
+
     # Create catboost data sets
     t_start = timeit.default_timer()
     DataSets = ml.ML0_GetModelData(
@@ -242,10 +242,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         SD = copy.copy(NumericColumnNames)
       else:
         SD = []
-      # if not CategoricalColumnNames is None:
-      #     SD.extend(CategoricalColumnNames)
-      # if not TextColumnNames is None:
-      #     SD.extend(TextColumnNames)
       if not WeightColumnName is None:
         trainweightdata = TrainData['WeightColumnName'].to_pandas()
         if not ValidationData is None:
@@ -358,15 +354,79 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
 
 
-def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=None):
+def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=None, GetModelDataArgs=None):
     """
     # Goal
     Return an ArgsList appropriate for the algorithm selection, target type, and training method
     
     # Parameters
-    Algorithms: Choose from CatBoost, XGBoost, LightGBM, Ftrl
-    TargetType: Choose from 'regression', 'classification', 'multiclass'
-    TrainMethod: Choose from 'train', 'gridtune'
+    Algorithms:       Choose from CatBoost, XGBoost, LightGBM, Ftrl
+    TargetType:       Choose from 'regression', 'classification', 'multiclass'
+    TrainMethod:      Choose from 'train', 'gridtune'
+    GetModelDataArgs: Args passed in from ML0_GetModelData()
+    
+    # ML0_Parameters Example
+    import timeit
+    import datatable as dt
+    from datatable import sort, f, by
+    import retrofit
+    from retrofit import FeatureEngineering as fe
+    from retrofit import MachineLearning as ml
+
+    # Load some data
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        
+    # Create partitioned data sets
+    DataSets = fe.FE2_AutoDataParition(
+      data=data, 
+      ArgsList=None, 
+      DateColumnName='CalendarDateColumn', 
+      PartitionType='random', 
+      Ratios=[0.70,0.20,0.10], 
+      ByVariables=None, 
+      Processing='datatable', 
+      InputFrame='datatable', 
+      OutputFrame='datatable')
+
+    # Collect partitioned data
+    TrainData = DataSets['TrainData']
+    ValidationData = DataSets['ValidationData']
+    TestData = DataSets['TestData']
+    del DataSets
+
+    # Create catboost data sets
+    DataSets = ml.ML0_GetModelData(
+      TrainData=TrainData, 
+      ValidationData=ValidationData, 
+      TestData=TestData, 
+      ArgsList=None, 
+      TargetColumnName='Leads', 
+      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+      CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+      TextColumnNames=None, 
+      WeightColumnName=None, 
+      Threads=-1, 
+      Processing='catboost', 
+      InputFrame='datatable')
+
+    # Collect Args
+    Args = DataSets.get('ArgsList')
+
+    # Create Parameters for Modeling
+    ModelArgs = ml.ML0_Parameters(
+      Algorithms='catboost', 
+      TargetType='regression', 
+      TrainMethod='Train', 
+      Model=None, 
+      GetModelDataArgs=Args)
+
+    # QA
+    Algorithms='catboost'
+    TargetType='regression'
+    TrainMethod='Train'
+    Model=None
+    GetModelDataArgs=Args
+    Algo = 'catboost'
     """
     
     # Ensure Algorithms is a list
@@ -387,39 +447,121 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
       # Algorithm Selection CatBoost
       #############################################
       if Algo.lower() == 'catboost':
-    
+
         # Setup Environment
         import catboost as cb
-        AlgoArgs = dict()
+        import os
 
-        # TrainMethod Train
-        model = Ftrl()
-        AlgoArgs['interactions'] = model.interactions
+        # Initialize AlgoArgs
+        AlgoArgs = dict()
+        AlgoArgs['Train'] = dict()
+        AlgoArgs['Fit'] = dict()
+
+        ###############################
+        # TargetType Parameters
+        ###############################
+        if ArgsList.get('TargetType').lower() == 'classification':
+          AlgoArgs['Train']['auto_class_weights'] = 'Balanced'
+          AlgoArgs['Train']['loss_function'] = 'CrossEntropy'
+          AlgoArgs['Train']['eval_metric'] = 'CrossEntropy'
+        elif ArgsList.get('TargetType').lower() == 'multiclass':
+          AlgoArgs['Train']['classes_count'] = 3
+          AlgoArgs['Train']['loss_function'] = 'MCC'
+          AlgoArgs['Train']['eval_metric'] = 'MCC'
+        elif ArgsList.get('TargetType').lower() == 'regression':
+          AlgoArgs['Train']['loss_function'] = 'RMSE'
+          AlgoArgs['Train']['eval_metric'] = 'RMSE'
+
+        ###############################
+        # Parameters
+        ###############################
+        AlgoArgs['Train']['train_dir'] = os.getcwd()
+        AlgoArgs['Train']['task_type'] = 'GPU'
+        AlgoArgs['Train']['learning_rate'] = None
+        AlgoArgs['Train']['l2_leaf_reg'] = None
+        AlgoArgs['Train']['has_time'] = False
+        AlgoArgs['Train']['best_model_min_trees'] = 10
+        AlgoArgs['Train']['nan_mode'] = 'Min'
+        AlgoArgs['Train']['fold_permutation_block'] = 1
+        AlgoArgs['Train']['boosting_type'] = 'Plain'
+        AlgoArgs['Train']['random_seed'] = None
+        AlgoArgs['Train']['thread_count'] = -1
+        AlgoArgs['Train']['metric_period'] = 10
+
+        ###############################
+        # Gridable Parameters
+        ###############################
         if TrainMethod.lower() == 'train':
-          AlgoArgs['alpha'] = model.alpha
-          AlgoArgs['beta'] = model.beta
-          AlgoArgs['lambda1'] = model.lambda1
-          AlgoArgs['lambda2'] = model.lambda2
-          AlgoArgs['nbins'] = model.nbins
-          AlgoArgs['mantissa_nbits'] = model.mantissa_nbits
-          AlgoArgs['nepochs'] = model.nepochs
+          AlgoArgs['Train']['iterations'] = 1000
+          AlgoArgs['Train']['depth'] = 6
+          AlgoArgs['Train']['langevin'] = True
+          AlgoArgs['Train']['diffusion_temperature'] = 10000
+          AlgoArgs['Train']['grow_policy'] = 'SymmetricTree'
+          AlgoArgs['Train']['model_size_reg'] = 0.5
         else:
-          AlgoArgs['alpha'] = [model.alpha, model.alpha * 2, model.alpha * 3]
-          AlgoArgs['beta'] = [model.beta * 0.50, model.beta, model.beta * 1.5]
-          AlgoArgs['lambda1'] = [model.lambda1, model.lambda1+0.05, model.lambda1+0.10]
-          AlgoArgs['lambda2'] = [model.lambda2, model.lambda2+0.05, model.lambda2+0.10]
-          AlgoArgs['nbins'] = [int(model.nbins*0.5), model.nbins, int(model.nbins*1.5)]
-          AlgoArgs['mantissa_nbits'] = [int(model.mantissa_nbits / 2), model.mantissa_nbits, int(model.mantissa_nbits*1.5)]
-          AlgoArgs['nepochs'] = [model.nepochs, model.nepochs*2, model.nepochs*3]
-    
-        # Target Type Specific Args
-        if TargetType.lower() == 'regression':
-          AlgoArgs['model_type'] = 'regression'
-        elif TargetType.lower() == 'classification':
-          AlgoArgs['model_type'] = 'binomial'
-        elif TargetType.lower() == 'multiclass':
-          AlgoArgs['negative_class'] = model.negative_class
-          AlgoArgs['model_type'] = 'multinomial'
+          AlgoArgs['Train']['iterations'] = [1000, 1500, 2000, 2500, 3000, 3500, 4000]
+          AlgoArgs['Train']['depth'] = [4, 5, 6, 7, 8, 9, 10]
+          AlgoArgs['Train']['langevin'] = [True, False]
+          AlgoArgs['Train']['diffusion_temperature'] = [7500, 10000, 12500]
+          AlgoArgs['Train']['grow_policy'] = ['SymmetricTree', 'Lossguide', 'Depthwise']
+          AlgoArgs['Train']['model_size_reg'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+
+        ###############################
+        # Dependent Model Parameters
+        ###############################
+
+        # task_type dependent
+        if AlgoArgs['Train']['task_type'] == 'GPU':
+          AlgoArgs['Train']['bootstrap_type'] = 'Bayesian'
+          AlgoArgs['Train']['score_function'] = 'L2'
+          AlgoArgs['Train']['border_count'] = 128
+        else:
+          AlgoArgs['Train']['bootstrap_type'] = 'MVS'
+          AlgoArgs['Train']['sampling_frequency'] = 'PerTreeLevel'
+          AlgoArgs['Train']['random_strength'] = 1
+          AlgoArgs['Train']['rsm'] = 0.80
+          AlgoArgs['Train']['posterior_sampling'] = False
+          AlgoArgs['Train']['score_function'] = 'L2'
+          AlgoArgs['Train']['border_count'] = 254
+
+        # Bootstrap dependent
+        if AlgoArgs['Train']['bootstrap_type'] in ['Poisson', 'Bernoulli', 'MVS']:
+          AlgoArgs['Train']['subsample'] = 1
+        elif AlgoArgs['Train']['bootstrap_type'] in ['Bayesian']:
+          AlgoArgs['Train']['bagging_temperature'] = 1
+
+        # grow_policy
+        if AlgoArgs['Train']['grow_policy'] in ['Lossguide', 'Depthwise']:
+          AlgoArgs['Train']['min_data_in_leaf'] = 1
+          if AlgoArgs['Train']['grow_policy'] == 'Lossguide':
+            AlgoArgs['Train']['max_leaves'] = 31
+
+        # boost_from_average
+        if AlgoArgs['Train']['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
+          AlgoArgs['Train']['boost_from_average'] = True
+        else:
+          AlgoArgs['Train']['boost_from_average'] = False
+
+        ###############################
+        # Fit Parameters
+        ###############################
+        AlgoArgs['Fit']['cat_features'] = GetModelDataArgs.get('CategoricalColumnNames')
+        AlgoArgs['Fit']['sample_weight'] = None
+        AlgoArgs['Fit']['baseline'] = None
+        AlgoArgs['Fit']['use_best_model'] = True
+        AlgoArgs['Fit']['eval_set'] = None
+        AlgoArgs['Fit']['verbose'] = None
+        AlgoArgs['Fit']['logging_level'] = None
+        AlgoArgs['Fit']['plot'] = False
+        AlgoArgs['Fit']['column_description'] = None
+        AlgoArgs['Fit']['verbose_eval'] = None
+        AlgoArgs['Fit']['metric_period'] = None
+        AlgoArgs['Fit']['silent'] = None
+        AlgoArgs['Fit']['early_stopping_rounds'] = None
+        AlgoArgs['Fit']['save_snapshot'] = None
+        AlgoArgs['Fit']['snapshot_file'] = None
+        AlgoArgs['Fit']['snapshot_interval'] = None
+        AlgoArgs['Fit']['init_model'] = None
 
         # Return
         ArgsList['AlgoArgs'] = AlgoArgs
@@ -432,36 +574,66 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     
         # Setup Environment
         import xgboost as xgb
+        import os
         AlgoArgs = dict()
-
-        # TrainMethod Train
-        model = Ftrl()
-        AlgoArgs['interactions'] = model.interactions
+        
+        # Performance Params
+        AlgoArgs['nthread'] = os.cpu_count()
+        AlgoArgs['predictor'] = 'auto'
+        AlgoArgs['single_precision_histogram'] = False
+        
+        # Training Params
+        AlgoArgs['tree_method'] = 'gpu_hist'
+        AlgoArgs['max_bin'] = 256
+        
+        ###############################
+        # Gridable Parameters
+        ###############################
         if TrainMethod.lower() == 'train':
-          AlgoArgs['alpha'] = model.alpha
-          AlgoArgs['beta'] = model.beta
-          AlgoArgs['lambda1'] = model.lambda1
-          AlgoArgs['lambda2'] = model.lambda2
-          AlgoArgs['nbins'] = model.nbins
-          AlgoArgs['mantissa_nbits'] = model.mantissa_nbits
-          AlgoArgs['nepochs'] = model.nepochs
+          AlgoArgs['num_parallel_tree'] = 1
+          AlgoArgs['num_boost_round'] = 1000 
+          AlgoArgs['grow_policy'] = 'depthwise'
+          AlgoArgs['eta'] = 0.30
+          AlgoArgs['max_depth'] = 6
+          AlgoArgs['min_child_weight'] = 1
+          AlgoArgs['max_delta_step'] = 0
+          AlgoArgs['subsample'] = 1.0
+          AlgoArgs['colsample_bytree'] = 1.0
+          AlgoArgs['colsample_bylevel'] = 1.0
+          AlgoArgs['colsample_bynode'] = 1.0
+          AlgoArgs['alpha'] = 0
+          AlgoArgs['lambda'] = 1
+          AlgoArgs['gamma'] = 0
         else:
-          AlgoArgs['alpha'] = [model.alpha, model.alpha * 2, model.alpha * 3]
-          AlgoArgs['beta'] = [model.beta * 0.50, model.beta, model.beta * 1.5]
-          AlgoArgs['lambda1'] = [model.lambda1, model.lambda1+0.05, model.lambda1+0.10]
-          AlgoArgs['lambda2'] = [model.lambda2, model.lambda2+0.05, model.lambda2+0.10]
-          AlgoArgs['nbins'] = [int(model.nbins*0.5), model.nbins, int(model.nbins*1.5)]
-          AlgoArgs['mantissa_nbits'] = [int(model.mantissa_nbits / 2), model.mantissa_nbits, int(model.mantissa_nbits*1.5)]
-          AlgoArgs['nepochs'] = [model.nepochs, model.nepochs*2, model.nepochs*3]
-    
-        # Target Type Specific Args
-        if TargetType.lower() == 'regression':
-          AlgoArgs['model_type'] = 'regression'
-        elif TargetType.lower() == 'classification':
-          AlgoArgs['model_type'] = 'binomial'
-        elif TargetType.lower() == 'multiclass':
-          AlgoArgs['negative_class'] = model.negative_class
-          AlgoArgs['model_type'] = 'multinomial'
+          AlgoArgs['num_parallel_tree'] = [1, 5, 10]
+          AlgoArgs['num_boost_round'] = [500, 1000, 1500, 2000, 2500]
+          AlgoArgs['grow_policy'] = ['depthwise', 'lossguide']
+          AlgoArgs['eta'] = [0.10, 0.20, 0.30]
+          AlgoArgs['max_depth'] = [4, 5, 6, 7, 8]
+          AlgoArgs['min_child_weight'] = [1, 5, 10]
+          AlgoArgs['max_delta_step'] = [0, 1, 5, 10]
+          AlgoArgs['subsample'] = [0.615, 0.8, 1]
+          AlgoArgs['colsample_bytree'] = [0.615, 0.8, 1]
+          AlgoArgs['colsample_bylevel'] = [0.615, 0.8, 1]
+          AlgoArgs['colsample_bynode'] = [0.615, 0.8, 1]
+          AlgoArgs['alpha'] = [0, 0.1, 0.2]
+          AlgoArgs['lambda'] = [0.80, 0.90, 1.0]
+          AlgoArgs['gamma'] = [0, 0.1, 0.5]
+
+        # GPU Dependent
+        if AlgoArgs['tree_method'] == 'gpu_hist':
+          AlgoArgs['sampling_method'] = 'uniform'
+
+        # Classification
+        if ArgsList.get('TargetType').lower() == 'classification':
+          AlgoArgs['sampling_method'] = 'binary:logistic'
+          AlgoArgs['eval_metric'] = 'auc'
+        elif ArgsList.get('TargetType').lower() == 'regression':
+          AlgoArgs['sampling_method'] = 'reg:squarederror'
+          AlgoArgs['eval_metric'] = 'rmse'
+        elif ArgsList.get('TargetType').lower() == 'multiclass':
+          AlgoArgs['sampling_method'] = 'multi:softprob'
+          AlgoArgs['eval_metric'] = 'mlogloss'
 
         # Return
         ArgsList['AlgoArgs'] = AlgoArgs
@@ -475,35 +647,95 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
         # Setup Environment
         import lightgbm as lgbm
         AlgoArgs = dict()
-
-        # TrainMethod Train
-        model = Ftrl()
-        AlgoArgs['interactions'] = model.interactions
+        
+        # Tuning Args
         if TrainMethod.lower() == 'train':
-          AlgoArgs['alpha'] = model.alpha
-          AlgoArgs['beta'] = model.beta
-          AlgoArgs['lambda1'] = model.lambda1
-          AlgoArgs['lambda2'] = model.lambda2
-          AlgoArgs['nbins'] = model.nbins
-          AlgoArgs['mantissa_nbits'] = model.mantissa_nbits
-          AlgoArgs['nepochs'] = model.nepochs
-        else:
-          AlgoArgs['alpha'] = [model.alpha, model.alpha * 2, model.alpha * 3]
-          AlgoArgs['beta'] = [model.beta * 0.50, model.beta, model.beta * 1.5]
-          AlgoArgs['lambda1'] = [model.lambda1, model.lambda1+0.05, model.lambda1+0.10]
-          AlgoArgs['lambda2'] = [model.lambda2, model.lambda2+0.05, model.lambda2+0.10]
-          AlgoArgs['nbins'] = [int(model.nbins*0.5), model.nbins, int(model.nbins*1.5)]
-          AlgoArgs['mantissa_nbits'] = [int(model.mantissa_nbits / 2), model.mantissa_nbits, int(model.mantissa_nbits*1.5)]
-          AlgoArgs['nepochs'] = [model.nepochs, model.nepochs*2, model.nepochs*3]
-    
-        # Target Type Specific Args
-        if TargetType.lower() == 'regression':
-          AlgoArgs['model_type'] = 'regression'
-        elif TargetType.lower() == 'classification':
-          AlgoArgs['model_type'] = 'binomial'
-        elif TargetType.lower() == 'multiclass':
-          AlgoArgs['negative_class'] = model.negative_class
-          AlgoArgs['model_type'] = 'multinomial'
+          AlgoArgs['num_iterations'] = 1000
+          AlgoArgs['learning_rate'] = None
+          AlgoArgs['num_leaves'] = 31
+          AlgoArgs['bagging_freq'] = 0
+          AlgoArgs['bagging_fraction'] = 1.0
+          AlgoArgs['feature_fraction'] = 1.0
+          AlgoArgs['feature_fraction_bynode'] = 1.0
+          AlgoArgs['max_delta_step'] = 0.0
+        else :
+          AlgoArgs['num_iterations'] = [500, 1000, 1500, 2000, 2500]
+          AlgoArgs['learning_rate'] = [0.05, 0.10, 0.15, 0.20, 0.25]
+          AlgoArgs['num_leaves'] = [20, 25, 31, 36, 40]
+          AlgoArgs['bagging_freq'] = [0.615, 0.80, 1.0]
+          AlgoArgs['bagging_fraction'] = [0.615, 0.80, 1.0]
+          AlgoArgs['feature_fraction'] = [0.615, 0.80, 1.0]
+          AlgoArgs['feature_fraction_bynode'] = [0.615, 0.80, 1.0]
+          AlgoArgs['max_delta_step'] = [0.0, 0.10 , 0.20]
+        
+        # Args
+        AlgoArgs['task'] = 'train'
+        AlgoArgs['device_type'] = 'CPU'
+        AlgoArgs['threads'] = os.cpu_count()
+        AlgoArgs['objective'] = 'regression'
+        AlgoArgs['metric'] = 'rmse'
+        AlgoArgs['boosting'] = 'gbdt'
+        AlgoArgs['lambda_l1'] = 0.0
+        AlgoArgs['lambda_l2'] = 0.0
+        AlgoArgs['LinearTree'] = False
+        AlgoArgs['deterministic'] = True
+        AlgoArgs['force_col_wise'] = False
+        AlgoArgs['force_row_wise'] = False
+        AlgoArgs['max_depth'] = None
+        AlgoArgs['min_data_in_leaf'] = 20
+        AlgoArgs['min_sum_hessian_in_leaf'] = 0.001
+        AlgoArgs['extra_trees'] = False
+        AlgoArgs['early_stopping_round'] = 10
+        AlgoArgs['first_metric_only'] = True
+        AlgoArgs['linear_lambda'] = 0.0
+        AlgoArgs['min_gain_to_split'] = 0
+        AlgoArgs['drop_rate_dart'] = 0.10
+        AlgoArgs['max_drop_dart'] = 50
+        AlgoArgs['skip_drop_dart'] = 0.50
+        AlgoArgs['uniform_drop_dart'] = False
+        AlgoArgs['top_rate_goss'] = False
+        AlgoArgs['other_rate_goss'] = False
+        AlgoArgs['monotone_constraints'] = None
+        AlgoArgs['monotone_constraints_method'] = 'advanced'
+        AlgoArgs['monotone_penalty'] = 0.0
+        AlgoArgs['forcedsplits_filename'] = None
+        AlgoArgs['refit_decay_rate'] = 0.90
+        AlgoArgs['path_smooth'] = 0.0
+
+        # IO Dataset Parameters
+        AlgoArgs['max_bin'] = 255
+        AlgoArgs['min_data_in_bin'] = 3
+        AlgoArgs['data_random_seed'] = 1
+        AlgoArgs['is_enable_sparse'] = True
+        AlgoArgs['enable_bundle'] = True
+        AlgoArgs['use_missing'] = True
+        AlgoArgs['zero_as_missing'] = False
+        AlgoArgs['two_round'] = False
+
+        # Convert Parameters
+        AlgoArgs['convert_model'] = None
+        AlgoArgs['convert_model_language'] = 'cpp'
+
+        # Objective Parameters
+        AlgoArgs['boost_from_average'] = True
+        AlgoArgs['alpha'] = 0.90
+        AlgoArgs['fair_c'] = 1.0
+        AlgoArgs['poisson_max_delta_step'] = 0.70
+        AlgoArgs['tweedie_variance_power'] = 1.5
+        AlgoArgs['lambdarank_truncation_level'] = 30
+
+        # Metric Parameters (metric is in Core)
+        AlgoArgs['is_provide_training_metric'] = True
+        AlgoArgs['eval_at'] = [1,2,3,4,5]
+
+        # Network Parameters
+        AlgoArgs['num_machines'] = 1
+
+        # GPU Parameters
+        AlgoArgs['gpu_platform_id'] = -1
+        AlgoArgs['gpu_device_id'] = -1
+        AlgoArgs['gpu_use_dp'] = True
+        AlgoArgs['num_gpu'] = 1
 
         # Return
         ArgsList['AlgoArgs'] = AlgoArgs
@@ -554,6 +786,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
 
     # Return
     return MasterArgs
+
 
 # RetroFit Class 
 class RetroFit:
@@ -630,7 +863,7 @@ class RetroFit:
 
     # Prepare modeling data sets
     DataSets = ml.ML0_GetModelData(
-      Processing='Ftrl',
+      Processing='CatBoost',
       TrainData=Data['TrainData'],
       ValidationData=Data['ValidationData'],
       TestData=Data['TestData'],
@@ -645,9 +878,10 @@ class RetroFit:
 
     # Get args list for algorithm and target type
     ModelArgs = ml.ML0_Parameters(
-      Algorithms='Ftrl', 
-      TargetType="Regression", 
-      TrainMethod="Train")
+      Algorithms='CatBoost',
+      TargetType='Regression',
+      TrainMethod='Train',
+      GetModelDataArgs = DataSets['ArgsList'])
 
     # Initialize RetroFit
     x = ml.RetroFit(ModelArgs, DataSets)
