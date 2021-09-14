@@ -6,11 +6,11 @@
 
 
 class FeatureEngineering(object):
-    def __init__(self, library = "Pandas") -> None:
-        """Which 
+    def __init__(self, library = "pandas") -> None:
+        """Which library to process data with.
 
         Args:
-            library ([type]): [description]
+            library (str): 'datatable', 'polars', or 'pandas'
         """
         super().__init__()
         self.library = library
@@ -19,9 +19,24 @@ class FeatureEngineering(object):
         self.diff_args = {}
 
 
+        # Import datatable methods
+        if self.library == 'datatable':
+            import datatable as dt
+            from datatable import sort, f, by, ifelse
+
+        # Import polars methods
+        if self.library == 'polars':
+            import polars as pl
+            from polars import col
+            from polars.lazy import col as lazy_col
+
+        if self.library == 'pandas':
+            import pandas as pd
+
+
 
     @classmethod
-    def FE0_AutoLags(self, data = None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True):
+    def FE0_AutoLags(self, data = None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, use_saved_args = False):
         """
         # Goal:
         Automatically generate lags for multiple periods for multiple variables and by variables
@@ -102,7 +117,7 @@ class FeatureEngineering(object):
         
         
         # ArgsList Collection
-        if self.lag_args:
+        if use_saved_args:
             LagColumnNames = self.lag_args.get("LagColumnNames")
             DateColumnName = self.lag_args.get("DateColumnName")
             ByVariables = self.lag_args.get("ByVariables")
@@ -117,16 +132,6 @@ class FeatureEngineering(object):
         # For making copies of lists so originals aren't modified
         import copy
         
-        # Import datatable methods
-        if self.library == 'datatable':
-            import datatable as dt
-            from datatable import sort, f, by, ifelse
-
-        # Import polars methods
-        if self.library == 'polars':
-            import polars as pl
-            from polars import col
-            from polars.lazy import col
 
 
         # Ensure List
@@ -134,42 +139,42 @@ class FeatureEngineering(object):
             ByVariables = [ByVariables]
 
         # Sort data
-        if Sort == True and Processing.lower() == 'datatable':
-        if ByVariables is not None:
-            SortCols = copy.copy(ByVariables)
-            SortCols.extend(DateColumnName)
-            rev = [True for t in range(len(SortCols))]
-            data = data[:, :, sort(SortCols, reverse=rev)]
-        else:
-            data = data[:, :, sort(DateColumnName, reverse=True)]
-        elif Sort == True and Processing.lower() == 'polars':
-        if ByVariables is not None:
-            SortCols = copy.copy(ByVariables)
-            SortCols.extend(DateColumnName)
-            rev = [True for t in range(len(SortCols))]
-            data.sort(SortCols, reverse = rev, in_place = True)
-        else:
-            if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-            data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
-            data.sort(DateColumnName, reverse = True, in_place = True)
+        if self.library == 'datatable':
+            if ByVariables is not None:
+                SortCols = copy.copy(ByVariables)
+                SortCols.extend(DateColumnName)
+                rev = [True for t in range(len(SortCols))]
+                data = data[:, :, sort(SortCols, reverse=rev)]
+            else:
+                data = data[:, :, sort(DateColumnName, reverse=True)]
+        elif self.library == 'polars':
+            if ByVariables is not None:
+                SortCols = copy.copy(ByVariables)
+                SortCols.extend(DateColumnName)
+                rev = [True for t in range(len(SortCols))]
+                data.sort(SortCols, reverse = rev, in_place = True)
+            else:
+                if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+                    data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+                    data.sort(DateColumnName, reverse = True, in_place = True)
 
         # Ensure List
         if not LagColumnNames is None and not isinstance(LagColumnNames, list):
-        LagColumnNames = [LagColumnNames]
+            LagColumnNames = [LagColumnNames]
 
         # Ensure List
         if not LagPeriods is None and not isinstance(LagPeriods, list):
-        LagPeriods = [LagPeriods]
+            LagPeriods = [LagPeriods]
 
         # Build lags
         if Processing.lower() == 'datatable':
-        for lcn in LagColumnNames:
-            for lp in LagPeriods:
-            
-            # New Column Name
-            Ref1 = "Lag_" + str(lp) + "_" + lcn
-            
-            # Generate lags
+            for lcn in LagColumnNames:
+                for lp in LagPeriods:
+                
+                # New Column Name
+                Ref1 = "Lag_" + str(lp) + "_" + lcn
+                
+                # Generate lags
             if ByVariables is not None:
                 data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
             else:
@@ -180,13 +185,13 @@ class FeatureEngineering(object):
                 data[Ref1] = data[:, ifelse(f[Ref1] == None, -1, f[Ref1])]
 
         elif Processing.lower() == 'polars':
-        for lcn in LagColumnNames:
-            for lp in LagPeriods:
-            
-            # New Column Name
-            Ref1 = "Lag_" + str(lp) + "_" + lcn
-            
-            # Generate lags
+            for lcn in LagColumnNames:
+                for lp in LagPeriods:
+                
+                # New Column Name
+                Ref1 = "Lag_" + str(lp) + "_" + lcn
+                
+                # Generate lags
             if ByVariables is not None:
                 if not ImputeValue is None:
                 data = (data.select([
