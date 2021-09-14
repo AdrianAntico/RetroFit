@@ -52,6 +52,7 @@ https://github.com/AdrianAntico/RemixAutoML
 
 
 ### FE0 Feature Engineering: Row-Dependence
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -406,6 +407,7 @@ print(data.names)
 
 
 ### FE1 Feature Engineering: Row-Independence
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -521,6 +523,7 @@ ArgsList = Output['ArgsList']
 
 
 ### FE2 Feature Engineering: Full-Data-Set
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -646,6 +649,7 @@ ArgsList = DataSets['ArgsList']
 
 
 ### FE3 Feature Engineering: Model-Based
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -668,6 +672,7 @@ ArgsList = DataSets['ArgsList']
 
 
 ### ML0 Machine Learning: Prepare for Modeling
+<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -1149,7 +1154,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>XGBoost Example:</summary>
+<details><summary>XGBoost Example</summary>
 <p>
 
 ```
@@ -1235,7 +1240,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>LightGBM Example:</summary>
+<details><summary>LightGBM Example</summary>
 <p>
 
 ```
