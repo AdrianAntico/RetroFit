@@ -1175,7 +1175,7 @@ class RetroFit:
     # Function: Score data 
     #################################################
     #################################################
-    def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None):
+    def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None, NewData=None):
 
       # Check
       if len(self.ModelList) == 0:
@@ -1202,9 +1202,14 @@ class RetroFit:
         else:
           Model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
 
-        # Grab dataframe data
+        # Grab scoring data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        score_data = self.DataSets[DataName]
+        if NewData is None:
+          score_data = self.DataSets[DataName]
+        else:
+          score_data = NewData
+        
+        # Split frames
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
@@ -1235,12 +1240,15 @@ class RetroFit:
 
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if DataName == 'test_data':
-          ScoreData = self.DataFrames.get('TestData')
-        elif DataName == 'validation_data':
-          ScoreData = self.DataFrames.get('ValidationData')
-        elif DataName == 'train_data':
-          ScoreData = self.DataFrames.get('TrainData')
+        if NewData is None:
+          if DataName == 'test_data':
+            ScoreData = self.DataFrames.get('TestData')
+          elif DataName == 'validation_data':
+            ScoreData = self.DataFrames.get('ValidationData')
+          elif DataName == 'train_data':
+            ScoreData = self.DataFrames.get('TrainData')
+        else:
+          score_data = NewData
 
         # Generate preds and add to datatable frame
         if TempArgs.get('TargetType').lower() == 'regression':
@@ -1270,12 +1278,15 @@ class RetroFit:
 
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if DataName == 'test_data':
-          ScoreData = self.DataFrames.get('TestData')
-        elif DataName == 'validation_data':
-          ScoreData = self.DataFrames.get('ValidationData')
-        elif DataName == 'train_data':
-          ScoreData = self.DataFrames.get('TrainData')
+        if NewData is None:
+          if DataName == 'test_data':
+            ScoreData = self.DataFrames.get('TestData')
+          elif DataName == 'validation_data':
+            ScoreData = self.DataFrames.get('ValidationData')
+          elif DataName == 'train_data':
+            ScoreData = self.DataFrames.get('TrainData')
+        else:
+          score_data = NewData
 
         # Generate preds and add to datatable frame
         ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
