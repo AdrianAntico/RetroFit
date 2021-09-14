@@ -1102,12 +1102,8 @@ class RetroFit:
         score_data.cbind(TargetData)
 
         # Store data and update names
-        if not 'Scored_' + DataName in score_data.names:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}"] = score_data
-          self.DataSetsNames.append('Scored_' + DataName)
-        else:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}"] = score_data
-          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}")
+        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = score_data
+        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
 
       #################################################
       # CatBoost Method
@@ -1133,10 +1129,6 @@ class RetroFit:
         ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName])
 
         # Store data and update names
-        if not 'Scored_' + DataName in ScoreData.names:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}"] = ScoreData
-          self.DataSetsNames.append('Scored_' + DataName)
-        else:
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}"] = ScoreData
-          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)+1}")
+        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
 
