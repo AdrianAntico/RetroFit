@@ -1,8 +1,8 @@
 # Module: utils
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.1.2
-# Last modified : 2021-09-13
+# Release: retrofit 0.1.3
+# Last modified : 2021-09-14
 
 def cumsum(x):
     """

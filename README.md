@@ -1,4 +1,4 @@
-![Version: 0.1.2](https://img.shields.io/static/v1?label=Version&message=0.1.2&color=blue&?style=plastic)
+![Version: 0.1.3](https://img.shields.io/static/v1?label=Version&message=0.1.3&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -16,7 +16,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.1.2
+pip install retrofit==0.1.3
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -1042,7 +1042,7 @@ x = RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='Ftrl')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='Ftrl')
+x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='Ftrl', NewData=None)
 
 # Scoring data names
 x.DataSetsNames
@@ -1127,7 +1127,7 @@ x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='CatBoost')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost')
+x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost', NewData=None)
 
 # Scoring data names
 x.DataSetsNames
@@ -1212,7 +1212,7 @@ x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='XGBoost')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='XGBoost')
+x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='XGBoost', NewData=None)
 
 # Scoring data names
 x.DataSetsNames
