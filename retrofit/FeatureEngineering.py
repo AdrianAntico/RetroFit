@@ -4,209 +4,217 @@
 # Release: retrofit 0.1.2
 # Last modified : 2021-09-13
 
-def FE0_AutoLags(data = None, ArgsList=None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
-    """
-    # Goal:
-    Automatically generate lags for multiple periods for multiple variables and by variables
-    
-    # Output
-    Return a datatable, polars frame, or pandas frame with new lag columns
-    
-    # Parameters
-    data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ArgsList:       If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    LagColumnNames: A list of columns that will be lagged
-    DateColumnName: Primary date column used for sorting
-    ByVariables:    Columns to partition over
-    LagPeriods:     List of integers for the lookback lengths
-    ImputeValue:    Value to fill the NA's for beginning of series
-    Sort:           Sort the Frame before computing the lags - if you're data is sorted set this to False
-    Processing:     'datatable' or 'polars'. Choose the package you want to do your processing
-    InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
-    
-    # QA: Test AutoLags
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
 
-    ## Group Example:
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
+class FeatureEngineering(object):
+    def __init__(self, library = "Pandas") -> None:
+        """Which 
 
-    ## Group and Multiple Periods and LagColumnNames:
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
+        Args:
+            library ([type]): [description]
+        """
+        super().__init__()
+        self.library = library
+        self.lag_args = {}
+        self.roll_args = {}
+        self.diff_args = {}
 
-    ## No Group Example:
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-    
-    # QA: No Group Case: Step through function
-    Processing='datatable'
-    InputFrame='datatable'
-    OutputFrame='datatable'
-    LagPeriods = [1, 3, 5]
-    LagColumnNames = ['Leads','XREGS1','XREGS2']
-    scns = 'Leads'
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = None
-    lp = 1
-    ImputeValue = -1
-    Sort = True
-    
-    # QA: Group Case: Step through function
-    Processing='datatable'
-    InputFrame='datatable'
-    OutputFrame='datatable'
-    LagPeriods = 1
-    LagColumnNames = 'Leads'
-    scns = 'Leads'
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-    lp = 1
-    ImputeValue = -1
-    Sort = True
-    """
-    
-    # ArgsList Collection
-    if not ArgsList is None:
-      LagColumnNames = ArgsList['LagColumnNames']
-      DateColumnName = ArgsList['DateColumnName']
-      ByVariables = ArgsList['ByVariables']
-      LagPeriods = ArgsList['LagPeriods']
-      ImputeValue = ArgsList['ImputeValue']
-    else:
-      ArgsList = dict(
-        LagColumnNames = LagColumnNames,
-        DateColumnName = DateColumnName,
-        ByVariables = ByVariables,
-        LagPeriods = LagPeriods,
-        ImputeValue = ImputeValue)
 
-    # For making copies of lists so originals aren't modified
-    import copy
-    
-    # Import datatable methods
-    if Processing.lower() == 'datatable' or OutputFrame.lower() == 'datatable' or InputFrame.lower() == 'datatable':
-      import datatable as dt
-      from datatable import sort, f, by, ifelse
 
-    # Import polars methods
-    if Processing.lower() == 'polars' or OutputFrame.lower() == 'polars' or InputFrame.lower() == 'polars':
-      import polars as pl
-      from polars import col
-      from polars.lazy import col
+    @classmethod
+    def FE0_AutoLags(self, data = None, LagColumnNames = None, DateColumnName = None, ByVariables = None, LagPeriods = 1, ImputeValue = -1, Sort = True):
+        """
+        # Goal:
+        Automatically generate lags for multiple periods for multiple variables and by variables
+        
+        # Output
+        Return a datatable, polars frame, or pandas frame with new lag columns
+        
+        # Parameters
+        data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+        LagColumnNames: A list of columns that will be lagged
+        DateColumnName: Primary date column used for sorting
+        ByVariables:    Columns to partition over
+        LagPeriods:     List of integers for the lookback lengths
+        ImputeValue:    Value to fill the NA's for beginning of series
+        Sort:           Sort the Frame before computing the lags - if you're data is sorted set this to False
 
-    # Convert to datatable
-    if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
-      data = dt.Frame(data)
-    elif InputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
-      data = pl.from_pandas(data)
+        
+        # QA: Test AutoLags
+        import timeit
+        import datatable as dt
+        from datatable import sort, f, by
+        import retrofit
+        from retrofit import FeatureEngineering as fe
 
-    # Ensure List
-    if not ByVariables is None and not isinstance(ByVariables, list):
-      ByVariables = [ByVariables]
+        ## Group Example:
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5,7], LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
 
-    # Sort data
-    if Sort == True and Processing.lower() == 'datatable':
-      if ByVariables is not None:
-        SortCols = copy.copy(ByVariables)
-        SortCols.extend(DateColumnName)
-        rev = [True for t in range(len(SortCols))]
-        data = data[:, :, sort(SortCols, reverse=rev)]
-      else:
-        data = data[:, :, sort(DateColumnName, reverse=True)]
-    elif Sort == True and Processing.lower() == 'polars':
-      if ByVariables is not None:
-        SortCols = copy.copy(ByVariables)
-        SortCols.extend(DateColumnName)
-        rev = [True for t in range(len(SortCols))]
-        data.sort(SortCols, reverse = rev, in_place = True)
-      else:
-        if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-          data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
-        data.sort(DateColumnName, reverse = True, in_place = True)
+        ## Group and Multiple Periods and LagColumnNames:
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoLags(data=data, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
 
-    # Ensure List
-    if not LagColumnNames is None and not isinstance(LagColumnNames, list):
-      LagColumnNames = [LagColumnNames]
+        ## No Group Example:
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoLags(data=data, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+        
+        # QA: No Group Case: Step through function
+        Processing='datatable'
+        InputFrame='datatable'
+        OutputFrame='datatable'
+        LagPeriods = [1, 3, 5]
+        LagColumnNames = ['Leads','XREGS1','XREGS2']
+        scns = 'Leads'
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = None
+        lp = 1
+        ImputeValue = -1
+        Sort = True
+        
+        # QA: Group Case: Step through function
+        Processing='datatable'
+        InputFrame='datatable'
+        OutputFrame='datatable'
+        LagPeriods = 1
+        LagColumnNames = 'Leads'
+        scns = 'Leads'
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
+        lp = 1
+        ImputeValue = -1
+        Sort = True
+        """
+        
+        
+        # ArgsList Collection
+        if self.lag_args:
+            LagColumnNames = self.lag_args.get("LagColumnNames")
+            DateColumnName = self.lag_args.get("DateColumnName")
+            ByVariables = self.lag_args.get("ByVariables")
+            LagPeriods = self.lag_args.get("LagPeriods")
+            ImputeValue = self.lag_args.get("ImputeValue")
+        if not self.lag_args:
+            self.lag_args = locals()
+             
 
-    # Ensure List
-    if not LagPeriods is None and not isinstance(LagPeriods, list):
-      LagPeriods = [LagPeriods]
 
-    # Build lags
-    if Processing.lower() == 'datatable':
-      for lcn in LagColumnNames:
-        for lp in LagPeriods:
-          
-          # New Column Name
-          Ref1 = "Lag_" + str(lp) + "_" + lcn
-          
-          # Generate lags
-          if ByVariables is not None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
-          else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
 
-          # Impute NA
-          if not ImputeValue is None:
-            data[Ref1] = data[:, ifelse(f[Ref1] == None, -1, f[Ref1])]
+        # For making copies of lists so originals aren't modified
+        import copy
+        
+        # Import datatable methods
+        if self.library == 'datatable':
+            import datatable as dt
+            from datatable import sort, f, by, ifelse
 
-    elif Processing.lower() == 'polars':
-      for lcn in LagColumnNames:
-        for lp in LagPeriods:
-          
-          # New Column Name
-          Ref1 = "Lag_" + str(lp) + "_" + lcn
-          
-          # Generate lags
-          if ByVariables is not None:
-            if not ImputeValue is None:
-              data = (data.select([
-                pl.all(),
-                col(lcn).shift_and_fill(lp, ImputeValue).over(ByVariables).explode().alias(Ref1)]))
+        # Import polars methods
+        if self.library == 'polars':
+            import polars as pl
+            from polars import col
+            from polars.lazy import col
+
+
+        # Ensure List
+        if isinstance(ByVariables, str):
+            ByVariables = [ByVariables]
+
+        # Sort data
+        if Sort == True and Processing.lower() == 'datatable':
+        if ByVariables is not None:
+            SortCols = copy.copy(ByVariables)
+            SortCols.extend(DateColumnName)
+            rev = [True for t in range(len(SortCols))]
+            data = data[:, :, sort(SortCols, reverse=rev)]
+        else:
+            data = data[:, :, sort(DateColumnName, reverse=True)]
+        elif Sort == True and Processing.lower() == 'polars':
+        if ByVariables is not None:
+            SortCols = copy.copy(ByVariables)
+            SortCols.extend(DateColumnName)
+            rev = [True for t in range(len(SortCols))]
+            data.sort(SortCols, reverse = rev, in_place = True)
+        else:
+            if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+            data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+            data.sort(DateColumnName, reverse = True, in_place = True)
+
+        # Ensure List
+        if not LagColumnNames is None and not isinstance(LagColumnNames, list):
+        LagColumnNames = [LagColumnNames]
+
+        # Ensure List
+        if not LagPeriods is None and not isinstance(LagPeriods, list):
+        LagPeriods = [LagPeriods]
+
+        # Build lags
+        if Processing.lower() == 'datatable':
+        for lcn in LagColumnNames:
+            for lp in LagPeriods:
+            
+            # New Column Name
+            Ref1 = "Lag_" + str(lp) + "_" + lcn
+            
+            # Generate lags
+            if ByVariables is not None:
+                data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)}), by(ByVariables)]
             else:
-              data = (data.select([
-                pl.all(),
-                col(lcn).shift(lp).over(ByVariables).explode().alias(Ref1)]))
-          else:
-            if not ImputeValue is None:
-              data = (data.select([
-                pl.all(),
-                col(lcn).shift_and_fill(lp, ImputeValue).alias(Ref1)]))
-            else:
-              data = (data.select([
-                pl.all(),
-                col(lcn).shift(lp).alias(Ref1)]))
+                data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n = lp)})]
 
-    # Convert Frame
-    if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
-      data = data.to_pandas()
-    elif OutputFrame.lower() == 'datatable' and Processing.lower() == 'polars':
-      data = data.to_pandas()
-      data = dt.Frame(data)
-    
-    # Return data
-    return dict(data = data, ArgsList = ArgsList)
+            # Impute NA
+            if not ImputeValue is None:
+                data[Ref1] = data[:, ifelse(f[Ref1] == None, -1, f[Ref1])]
+
+        elif Processing.lower() == 'polars':
+        for lcn in LagColumnNames:
+            for lp in LagPeriods:
+            
+            # New Column Name
+            Ref1 = "Lag_" + str(lp) + "_" + lcn
+            
+            # Generate lags
+            if ByVariables is not None:
+                if not ImputeValue is None:
+                data = (data.select([
+                    pl.all(),
+                    col(lcn).shift_and_fill(lp, ImputeValue).over(ByVariables).explode().alias(Ref1)]))
+                else:
+                data = (data.select([
+                    pl.all(),
+                    col(lcn).shift(lp).over(ByVariables).explode().alias(Ref1)]))
+            else:
+                if not ImputeValue is None:
+                data = (data.select([
+                    pl.all(),
+                    col(lcn).shift_and_fill(lp, ImputeValue).alias(Ref1)]))
+                else:
+                data = (data.select([
+                    pl.all(),
+                    col(lcn).shift(lp).alias(Ref1)]))
+
+        # Convert Frame
+        if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
+        data = data.to_pandas()
+        elif OutputFrame.lower() == 'datatable' and Processing.lower() == 'polars':
+        data = data.to_pandas()
+        data = dt.Frame(data)
+        
+        # Return data
+        return dict(data = data, ArgsList = ArgsList)
 
 
 def FE0_AutoRollStats(data = None, ArgsList=None, RollColumnNames = None, DateColumnName = None, ByVariables = None, MovingAvg_Periods = None, MovingSD_Periods = None, MovingMin_Periods = None, MovingMax_Periods = None, ImputeValue = -1, Sort = True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable'):
