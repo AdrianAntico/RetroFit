@@ -1,4 +1,4 @@
-![Version: 0.1.1](https://img.shields.io/static/v1?label=Version&message=0.1.1&color=blue&?style=plastic)
+![Version: 0.1.2](https://img.shields.io/static/v1?label=Version&message=0.1.2&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -16,7 +16,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.1.1
+pip install retrofit==0.1.2
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -980,7 +980,7 @@ self.CompareModelsListNames = []
 </details>
 
 
-<details><summary>Ftrl Example (follow the regularization leader)</summary>
+<details><summary>Ftrl Example</summary>
 <p>
 
 ```
