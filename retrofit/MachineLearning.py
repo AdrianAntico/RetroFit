@@ -870,6 +870,9 @@ class RetroFit:
 
     # Scoring data colnames
     x.DataSets['Scored_test_data'].names
+    
+    # Scoring data
+    x.DataSets.get('Scored_test_data_Ftrl_1')
 
     # Check ModelArgs Dict
     x.ModelArgs
@@ -943,6 +946,9 @@ class RetroFit:
     
     # Scoring data colnames
     x.DataSets['Scored_test_data'].names
+    
+    # Scoring data
+    x.DataSets.get('Scored_test_data_CatBoost_1')
 
     # Check ModelArgs Dict
     x.ModelArgs
@@ -984,7 +990,7 @@ class RetroFit:
     #################################################
     def PrintAlgoArgs(Algo=None):
       from retrofit import utils
-      print(utils.printdict(x.ModelArgs[Algo]['AlgoArgs']))
+      print(utils.printdict(self.ModelArgs[Algo]['AlgoArgs']))
     
     #################################################
     #################################################

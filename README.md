@@ -1040,22 +1040,19 @@ x.ML1_Single_Train(Algorithm='Ftrl')
 x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='Ftrl')
 
 # Scoring data names
-x.DataSets.keys()
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_Ftrl_1')
 
 # Check ModelArgs Dict
-x.ModelArgs
-
-# Check the names of data sets collected
-x.DataSetsNames
+x.PrintAlgoArgs(Algo='Ftrl')
 
 # List of model names
 x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
-
-# List of comparisons
-x.CompareModelsListNames
 ```
 
 </p>
@@ -1127,14 +1124,14 @@ x.ML1_Single_Train(Algorithm='CatBoost')
 # Score data
 x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost')
 
-# Scoring data colnames
-x.ModelData['Scored_test_data'].names
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_CatBoost_1')
 
 # Check ModelArgs Dict
-x.ModelArgs
-
-# Check the names of data sets collected
-x.DataSetsNames
+x.PrintAlgoArgs(Algo='CatBoost')
 
 # List of model names
 x.ModelListNames
