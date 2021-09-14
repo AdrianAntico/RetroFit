@@ -907,6 +907,11 @@ lightgbm_test = DataSets['test_data']
 
 
 ### ML1 Machine Learning: RetroFit Class
+<p>
+
+<details><summary>Expand to view content</summary>
+<p>
+
 
 <details><summary>Class Goals</summary>
 <p>
