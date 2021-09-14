@@ -1130,6 +1130,9 @@ ModelArgs = ml.ML0_Parameters(
   TargetType="Regression", 
   TrainMethod="Train")
 
+# Update iterations to run quickly
+ModelArgs['CatBoost']['AlgoArgs']['iterations'] = 50
+
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 

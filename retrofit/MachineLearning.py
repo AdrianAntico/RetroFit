@@ -1085,7 +1085,7 @@ class RetroFit:
         else:
           Model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
 
-        # Extract scoring data
+        # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
         score_data = self.DataSets[DataName]
         if TargetColumnName in score_data.names:
@@ -1121,6 +1121,7 @@ class RetroFit:
           Model = self.ModelList.get(f"CatBoost_{str(len(self.FitList))}")
 
         # Grab dataframe data
+        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
         if DataName == 'test_data':
           ScoreData = self.DataFrames.get('TestData')
         elif DataName == 'validation_data':
