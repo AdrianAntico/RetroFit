@@ -556,6 +556,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
         AlgoArgs['nthread'] = os.cpu_count()
         AlgoArgs['predictor'] = 'auto'
         AlgoArgs['single_precision_histogram'] = False
+        AlgoArgs['early_stopping_rounds'] = 50
         
         # Training Params
         AlgoArgs['tree_method'] = 'gpu_hist'
@@ -601,13 +602,13 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
 
         # Classification
         if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['sampling_method'] = 'binary:logistic'
+          AlgoArgs['objective'] = 'binary:logistic'
           AlgoArgs['eval_metric'] = 'auc'
         elif ArgsList.get('TargetType').lower() == 'regression':
-          AlgoArgs['sampling_method'] = 'reg:squarederror'
+          AlgoArgs['objective'] = 'reg:squarederror'
           AlgoArgs['eval_metric'] = 'rmse'
         elif ArgsList.get('TargetType').lower() == 'multiclass':
-          AlgoArgs['sampling_method'] = 'multi:softprob'
+          AlgoArgs['objective'] = 'multi:softprob'
           AlgoArgs['eval_metric'] = 'mlogloss'
 
         # Return
@@ -1044,6 +1045,7 @@ class RetroFit:
           from catboost import CatBoostClassifier
         else:
           from catboost import CatBoostRegressor
+          from catboost import 
 
         # Define training data and target variable
         TrainData = self.DataSets.get('train_data')
@@ -1051,13 +1053,46 @@ class RetroFit:
         TestData = self.DataSets.get('test_data')
         
         # Initialize model
-        Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
+        if TempArgs.get('TargetType').lower() == 'regression':
+          Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
+        else:
+          Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
+        
+        # Store Model
         self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"CatBoost{str(len(self.ModelList))}")
 
         # Train Model
         self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
         self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
+        
+      #################################################
+      # XGBoost Method
+      #################################################
+      if TempArgs.get('Algorithms').lower() == 'xgboost':
+
+        # Setup Environment
+        import xgboost as xgb
+        from xgboost import train
+        
+        # Define training data and target variable
+        TrainData = self.DataSets.get('train_data')
+        ValidationData = self.DataSets.get('validation_data')
+        TestData = self.DataSets.get('test_data')
+        #TrainData = DataSets.get('train_data')
+        #ValidationData = DataSets.get('validation_data')
+        #TestData = DataSets.get('test_data')
+        
+        # Initialize model
+        Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
+          
+        # Store Model
+        self.ModelList[f"XGBoost{str(len(self.ModelList) + 1)}"] = Model
+        self.ModelListNames.append(f"XGBoost{str(len(self.ModelList))}")
+
+        # Train Model
+        self.FitList[f"XGBoost{str(len(self.FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
+        self.FitListNames.append(f"XGBoost{str(len(self.FitList))}")
 
     #################################################
     #################################################
@@ -1115,7 +1150,7 @@ class RetroFit:
       # CatBoost Method
       #################################################
       if TempArgs['Algorithms'].lower() == 'catboost':
-        
+
         # Extract Model
         if not ModelName is None:
           Model = self.ModelList.get(ModelName)
@@ -1130,11 +1165,65 @@ class RetroFit:
           ScoreData = self.DataFrames.get('ValidationData')
         elif DataName == 'train_data':
           ScoreData = self.DataFrames.get('TrainData')
-        
+
         # Generate preds and add to datatable frame
-        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName])
+        if TempArgs.get('TargetType').lower() == 'regression':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'RawFormulaVal')
+        elif TempArgs.get('TargetType').lower() == 'classification':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Probability')
+        elif TempArgs.get('TargetType').lower() == 'multiclass':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Class')
 
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
         self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+
+      #################################################
+      # XGBoost Method
+      #################################################
+      if TempArgs['Algorithms'].lower() == 'xgboost':
+        
+        import xgboost as xgb
+        from xgboost import Booster
+
+        # Extract Model
+        if not ModelName is None:
+          Model = self.ModelList.get(ModelName)
+        else:
+          Model = self.ModelList.get(f"CatBoost_{str(len(self.FitList))}")
+
+        # Grab dataframe data
+        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+        if DataName == 'test_data':
+          ScoreData = self.DataFrames.get('TestData')
+        elif DataName == 'validation_data':
+          ScoreData = self.DataFrames.get('ValidationData')
+        elif DataName == 'train_data':
+          ScoreData = self.DataFrames.get('TrainData')
+
+        # Generate preds and add to datatable frame
+        Booster.predict(
+          ScoreData, 
+          output_margin=False, 
+          pred_leaf=False, 
+          pred_contribs=False, # shap values: creates a matrix output
+          approx_contribs=False, 
+          pred_interactions=False, 
+          validate_features=True, 
+          training=False, 
+          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"]), 
+          strict_shape=False)
+        
+        
+        if TempArgs.get('TargetType').lower() == 'regression':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'RawFormulaVal')
+        elif TempArgs.get('TargetType').lower() == 'classification':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Probability')
+        elif TempArgs.get('TargetType').lower() == 'multiclass':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Class')
+
+        # Store data and update names
+        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+
 

@@ -603,121 +603,122 @@ def FE0_AutoDiff(data = None, ArgsList = None, DateColumnName = None, ByVariable
         data.sort(DateColumnName, reverse = True, in_place = True)
 
     # DiffNumericVariables
-    if not DiffNumericVariables is None:
-      for rcn in DiffNumericVariables:
+    if Processing.lower() == 'datatable':
+      if not DiffNumericVariables is None:
+        for rcn in DiffNumericVariables:
         
-        # Numeric Variable Procedure
-        if NLag1 == 0:
+          # Numeric Variable Procedure
+          if NLag1 == 0:
           
-          # Create Lags
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            # Create Lags
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+  
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
+  
+            # Remove temp columns
+            del data[:, f[Ref2]]
+
           else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
-
-          # Remove temp columns
-          del data[:, f[Ref2]]
-
-        else:
           
-          # Create Lags
-          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            # Create Lags
+            Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+            
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
+            
+            # Remove temp columns
+            del data[:, f[Ref1]]
+            del data[:, f[Ref2]]
+
+      # DiffDateVariables
+      if not DiffDateVariables is None:
+        for rcn in DiffDateVariables:
+
+          # Date Variable Procedure
+          if NLag1 == 0:
+            
+            # Create Lags
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
+          
+            # Remove temp columns
+            del data[:, f[Ref2]]
+
           else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-          
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
-          
-          # Remove temp columns
-          del data[:, f[Ref1]]
-          del data[:, f[Ref2]]
+            
+            # Create Lags
+            Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+            
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
+            
+            # Remove temp columns
+            del data[:, f[Ref1]]
+            del data[:, f[Ref2]]
 
-    # DiffDateVariables
-    if not DiffDateVariables is None:
-      for rcn in DiffDateVariables:
-
-        # Date Variable Procedure
-        if NLag1 == 0:
+      # DiffGroupVariables
+      if not DiffGroupVariables is None:
+        for rcn in DiffGroupVariables:
           
-          # Create Lags
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+          # Date Variable Procedure
+          if NLag1 == 0:
+            
+            # Create Lags
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+  
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
+            
+            # Remove temp columns
+            del data[:, f[Ref2]]
+  
           else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
-          
-          # Remove temp columns
-          del data[:, f[Ref2]]
-
-        else:
-          
-          # Create Lags
-          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
-          else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-          
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
-          
-          # Remove temp columns
-          del data[:, f[Ref1]]
-          del data[:, f[Ref2]]
-
-    # DiffGroupVariables
-    if not DiffGroupVariables is None:
-      for rcn in DiffGroupVariables:
-        
-        # Date Variable Procedure
-        if NLag1 == 0:
-          
-          # Create Lags
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
-          else:
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
-          
-          # Remove temp columns
-          del data[:, f[Ref2]]
-
-        else:
-          
-          # Create Lags
-          Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-          Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-          if not ByVariables is None:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
-          else:
-            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
-            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
-          
-          # Create diffs
-          data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
-          
-          # Remove temp columns
-          del data[:, f[Ref1]]
-          del data[:, f[Ref2]]
+            
+            # Create Lags
+            Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+            Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+            if not ByVariables is None:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)}), by(ByVariables)]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)}), by(ByVariables)]
+            else:
+              data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n = NLag1)})]
+              data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n = NLag2)})]
+            
+            # Create diffs
+            data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
+            
+            # Remove temp columns
+            del data[:, f[Ref1]]
+            del data[:, f[Ref2]]
 
     # Convert Frame
     if OutputFrame.lower() == 'pandas' and (Processing.lower() == 'datatable' or Processing.lower() == 'polars'):
