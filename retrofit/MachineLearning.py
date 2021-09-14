@@ -988,7 +988,7 @@ class RetroFit:
     # Function: Print Algo Args
     #################################################
     #################################################
-    def PrintAlgoArgs(Algo=None):
+    def PrintAlgoArgs(self, Algo=None):
       from retrofit import utils
       print(utils.printdict(self.ModelArgs[Algo]['AlgoArgs']))
     

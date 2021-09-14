@@ -1061,16 +1061,13 @@ x.DataSetsNames
 x.DataSets.get('Scored_test_data_Ftrl_1')
 
 # Check ModelArgs Dict
-x.ModelArgs
+x.PrintAlgoArgs(Algo='Ftrl')
 
 # List of model names
 x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
-
-# List of comparisons
-x.CompareModelsListNames
 ```
 
 </p>
@@ -1149,10 +1146,7 @@ x.DataSetsNames
 x.DataSets.get('Scored_test_data_CatBoost_1')
 
 # Check ModelArgs Dict
-x.ModelArgs
-
-# Check the names of data sets collected
-x.DataSetsNames
+x.PrintAlgoArgs(Algo='CatBoost')
 
 # List of model names
 x.ModelListNames
