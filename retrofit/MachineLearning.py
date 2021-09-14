@@ -354,7 +354,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
 
 
-def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=None, GetModelDataArgs=None):
+def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=None):
     """
     # Goal
     Return an ArgsList appropriate for the algorithm selection, target type, and training method
@@ -417,15 +417,13 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
       Algorithms='catboost', 
       TargetType='regression', 
       TrainMethod='Train', 
-      Model=None, 
-      GetModelDataArgs=Args)
+      Model=None)
 
     # QA
     Algorithms='catboost'
     TargetType='regression'
     TrainMethod='Train'
     Model=None
-    GetModelDataArgs=Args
     Algo = 'catboost'
     """
     
@@ -454,114 +452,91 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
 
         # Initialize AlgoArgs
         AlgoArgs = dict()
-        AlgoArgs['Train'] = dict()
-        AlgoArgs['Fit'] = dict()
 
         ###############################
         # TargetType Parameters
         ###############################
         if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['Train']['auto_class_weights'] = 'Balanced'
-          AlgoArgs['Train']['loss_function'] = 'CrossEntropy'
-          AlgoArgs['Train']['eval_metric'] = 'CrossEntropy'
+          AlgoArgs['auto_class_weights'] = 'Balanced'
+          AlgoArgs['loss_function'] = 'CrossEntropy'
+          AlgoArgs['eval_metric'] = 'CrossEntropy'
         elif ArgsList.get('TargetType').lower() == 'multiclass':
-          AlgoArgs['Train']['classes_count'] = 3
-          AlgoArgs['Train']['loss_function'] = 'MCC'
-          AlgoArgs['Train']['eval_metric'] = 'MCC'
+          AlgoArgs['classes_count'] = 3
+          AlgoArgs['loss_function'] = 'MCC'
+          AlgoArgs['eval_metric'] = 'MCC'
         elif ArgsList.get('TargetType').lower() == 'regression':
-          AlgoArgs['Train']['loss_function'] = 'RMSE'
-          AlgoArgs['Train']['eval_metric'] = 'RMSE'
+          AlgoArgs['loss_function'] = 'RMSE'
+          AlgoArgs['eval_metric'] = 'RMSE'
 
         ###############################
         # Parameters
         ###############################
-        AlgoArgs['Train']['train_dir'] = os.getcwd()
-        AlgoArgs['Train']['task_type'] = 'GPU'
-        AlgoArgs['Train']['learning_rate'] = None
-        AlgoArgs['Train']['l2_leaf_reg'] = None
-        AlgoArgs['Train']['has_time'] = False
-        AlgoArgs['Train']['best_model_min_trees'] = 10
-        AlgoArgs['Train']['nan_mode'] = 'Min'
-        AlgoArgs['Train']['fold_permutation_block'] = 1
-        AlgoArgs['Train']['boosting_type'] = 'Plain'
-        AlgoArgs['Train']['random_seed'] = None
-        AlgoArgs['Train']['thread_count'] = -1
-        AlgoArgs['Train']['metric_period'] = 10
+        AlgoArgs['train_dir'] = os.getcwd()
+        AlgoArgs['task_type'] = 'GPU'
+        AlgoArgs['learning_rate'] = None
+        AlgoArgs['l2_leaf_reg'] = None
+        AlgoArgs['has_time'] = False
+        AlgoArgs['best_model_min_trees'] = 10
+        AlgoArgs['nan_mode'] = 'Min'
+        AlgoArgs['fold_permutation_block'] = 1
+        AlgoArgs['boosting_type'] = 'Plain'
+        AlgoArgs['random_seed'] = None
+        AlgoArgs['thread_count'] = -1
+        AlgoArgs['metric_period'] = 10
 
         ###############################
         # Gridable Parameters
         ###############################
         if TrainMethod.lower() == 'train':
-          AlgoArgs['Train']['iterations'] = 1000
-          AlgoArgs['Train']['depth'] = 6
-          AlgoArgs['Train']['langevin'] = True
-          AlgoArgs['Train']['diffusion_temperature'] = 10000
-          AlgoArgs['Train']['grow_policy'] = 'SymmetricTree'
-          AlgoArgs['Train']['model_size_reg'] = 0.5
+          AlgoArgs['iterations'] = 1000
+          AlgoArgs['depth'] = 6
+          AlgoArgs['langevin'] = True
+          AlgoArgs['diffusion_temperature'] = 10000
+          AlgoArgs['grow_policy'] = 'SymmetricTree'
+          AlgoArgs['model_size_reg'] = 0.5
         else:
-          AlgoArgs['Train']['iterations'] = [1000, 1500, 2000, 2500, 3000, 3500, 4000]
-          AlgoArgs['Train']['depth'] = [4, 5, 6, 7, 8, 9, 10]
-          AlgoArgs['Train']['langevin'] = [True, False]
-          AlgoArgs['Train']['diffusion_temperature'] = [7500, 10000, 12500]
-          AlgoArgs['Train']['grow_policy'] = ['SymmetricTree', 'Lossguide', 'Depthwise']
-          AlgoArgs['Train']['model_size_reg'] = [0.0, 0.25, 0.5, 0.75, 1.0]
+          AlgoArgs['iterations'] = [1000, 1500, 2000, 2500, 3000, 3500, 4000]
+          AlgoArgs['depth'] = [4, 5, 6, 7, 8, 9, 10]
+          AlgoArgs['langevin'] = [True, False]
+          AlgoArgs['diffusion_temperature'] = [7500, 10000, 12500]
+          AlgoArgs['grow_policy'] = ['SymmetricTree', 'Lossguide', 'Depthwise']
+          AlgoArgs['model_size_reg'] = [0.0, 0.25, 0.5, 0.75, 1.0]
 
         ###############################
         # Dependent Model Parameters
         ###############################
 
         # task_type dependent
-        if AlgoArgs['Train']['task_type'] == 'GPU':
-          AlgoArgs['Train']['bootstrap_type'] = 'Bayesian'
-          AlgoArgs['Train']['score_function'] = 'L2'
-          AlgoArgs['Train']['border_count'] = 128
+        if AlgoArgs['task_type'] == 'GPU':
+          AlgoArgs['bootstrap_type'] = 'Bayesian'
+          AlgoArgs['score_function'] = 'L2'
+          AlgoArgs['border_count'] = 128
         else:
-          AlgoArgs['Train']['bootstrap_type'] = 'MVS'
-          AlgoArgs['Train']['sampling_frequency'] = 'PerTreeLevel'
-          AlgoArgs['Train']['random_strength'] = 1
-          AlgoArgs['Train']['rsm'] = 0.80
-          AlgoArgs['Train']['posterior_sampling'] = False
-          AlgoArgs['Train']['score_function'] = 'L2'
-          AlgoArgs['Train']['border_count'] = 254
+          AlgoArgs['bootstrap_type'] = 'MVS'
+          AlgoArgs['sampling_frequency'] = 'PerTreeLevel'
+          AlgoArgs['random_strength'] = 1
+          AlgoArgs['rsm'] = 0.80
+          AlgoArgs['posterior_sampling'] = False
+          AlgoArgs['score_function'] = 'L2'
+          AlgoArgs['border_count'] = 254
 
         # Bootstrap dependent
-        if AlgoArgs['Train']['bootstrap_type'] in ['Poisson', 'Bernoulli', 'MVS']:
-          AlgoArgs['Train']['subsample'] = 1
-        elif AlgoArgs['Train']['bootstrap_type'] in ['Bayesian']:
-          AlgoArgs['Train']['bagging_temperature'] = 1
+        if AlgoArgs['bootstrap_type'] in ['Poisson', 'Bernoulli', 'MVS']:
+          AlgoArgs['subsample'] = 1
+        elif AlgoArgs['bootstrap_type'] in ['Bayesian']:
+          AlgoArgs['bagging_temperature'] = 1
 
         # grow_policy
-        if AlgoArgs['Train']['grow_policy'] in ['Lossguide', 'Depthwise']:
-          AlgoArgs['Train']['min_data_in_leaf'] = 1
-          if AlgoArgs['Train']['grow_policy'] == 'Lossguide':
-            AlgoArgs['Train']['max_leaves'] = 31
+        if AlgoArgs['grow_policy'] in ['Lossguide', 'Depthwise']:
+          AlgoArgs['min_data_in_leaf'] = 1
+          if AlgoArgs['grow_policy'] == 'Lossguide':
+            AlgoArgs['max_leaves'] = 31
 
         # boost_from_average
-        if AlgoArgs['Train']['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
-          AlgoArgs['Train']['boost_from_average'] = True
+        if AlgoArgs['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
+          AlgoArgs['boost_from_average'] = True
         else:
-          AlgoArgs['Train']['boost_from_average'] = False
-
-        ###############################
-        # Fit Parameters
-        ###############################
-        AlgoArgs['Fit']['cat_features'] = GetModelDataArgs.get('CategoricalColumnNames')
-        AlgoArgs['Fit']['sample_weight'] = None
-        AlgoArgs['Fit']['baseline'] = None
-        AlgoArgs['Fit']['use_best_model'] = True
-        AlgoArgs['Fit']['eval_set'] = None
-        AlgoArgs['Fit']['verbose'] = None
-        AlgoArgs['Fit']['logging_level'] = None
-        AlgoArgs['Fit']['plot'] = False
-        AlgoArgs['Fit']['column_description'] = None
-        AlgoArgs['Fit']['verbose_eval'] = None
-        AlgoArgs['Fit']['metric_period'] = None
-        AlgoArgs['Fit']['silent'] = None
-        AlgoArgs['Fit']['early_stopping_rounds'] = None
-        AlgoArgs['Fit']['save_snapshot'] = None
-        AlgoArgs['Fit']['snapshot_file'] = None
-        AlgoArgs['Fit']['snapshot_interval'] = None
-        AlgoArgs['Fit']['init_model'] = None
+          AlgoArgs['boost_from_average'] = False
 
         # Return
         ArgsList['AlgoArgs'] = AlgoArgs
@@ -795,10 +770,10 @@ class RetroFit:
     # Goals
     ####################################
     
-    Class Initialization
-    Model Initialization
     Training
+    Feature Tuning
     Grid Tuning
+    Continued Training
     Scoring
     Model Evaluation
     Model Interpretation
@@ -888,11 +863,12 @@ class RetroFit:
 
     # Train Model
     x.ML1_Single_Train(Algorithm='Ftrl')
+    x.ML1_Single_Train(Algorithm='catboost')
 
     # Score data
     x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0])
 
-    # Scoring data names
+    # Scoring data colnames
     x.DataSets['Scored_test_data'].names
 
     # Check ModelArgs Dict
@@ -906,16 +882,14 @@ class RetroFit:
 
     # List of model fitted names
     x.FitListNames
-
-    # List of comparisons
-    x.CompareModelsListNames
     """
   
     # Define __init__
-    def __init__(self, ModelArgs, DataSets):
+    def __init__(self, ModelArgs, DataSets, Data):
       self.ModelArgs = ModelArgs
       self.ModelArgsNames = [*self.ModelArgs]
       self.Runs = len(self.ModelArgs)
+      self.DataFrames = Data
       self.DataSets = DataSets
       self.DataSetsNames = [*self.DataSets]
       self.ModelList = dict()
@@ -939,6 +913,7 @@ class RetroFit:
       # Which Algo
       if not Algorithm is None:
         TempArgs = self.ModelArgs[Algorithm]
+        #TempArgs = ModelArgs[Algorithm]
       else:
         TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
@@ -947,7 +922,8 @@ class RetroFit:
 
         # Setup Environment
         import datatable
-        from datatable.models import Ftrl, f
+        from datatable import f
+        from datatable.models import Ftrl
 
         # Define training data and target variable
         TrainData = self.DataSets.get('train_data')
@@ -961,6 +937,34 @@ class RetroFit:
         # Train Model
         self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
         self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
+
+      # Train CatBoost
+      if TempArgs.get('Algorithms').lower() == 'catboost':
+
+        # Setup Environment
+        import catboost
+        if TempArgs.get('TargetType').lower() in ['classification', 'multiclass']:
+          from catboost import CatBoostClassifier
+        else:
+          from catboost import CatBoostRegressor
+
+        # Define training data and target variable
+        TrainData = self.DataSets.get('train_data')
+        ValidationData = self.DataSets.get('validation_data')
+        TestData = self.DataSets.get('test_data')
+        #TrainData = DataSets.get('train_data')
+        #ValidationData = DataSets.get('validation_data')
+        #TestData = DataSets.get('test_data')
+
+        # Initialize model
+        Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
+        self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
+        self.ModelListNames.append(f"CatBoost{str(len(self.ModelList))}")
+
+        # Train Model
+        self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
+        FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
+        self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
 
     # Score data
     def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None):
@@ -979,14 +983,14 @@ class RetroFit:
       import datatable
       from datatable.models import Ftrl
 
-      # Score model
+      # Ftrl Score model
       if TempArgs['Algorithms'].lower() == 'ftrl':
         
         # Extract model
         if not ModelName is None:
-          model = self.ModelList.get(ModelName)
+          Model = self.ModelList.get(ModelName)
         else:
-          model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
+          Model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
 
         # Extract scoring data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
@@ -995,8 +999,8 @@ class RetroFit:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
 
-        # Score model and append data set name to scoring data
-        score_data.cbind(model.predict(score_data))
+        # Score Model and append data set name to scoring data
+        score_data.cbind(Model.predict(score_data))
         
         # Update prediction column name
         score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
@@ -1011,3 +1015,32 @@ class RetroFit:
         else:
           self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
           self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
+
+      # CatBoost Score Model
+      if TempArgs['Algorithms'].lower() == 'catboost':
+        
+        # Extract Model
+        if not ModelName is None:
+          Model = self.ModelList.get(ModelName)
+        else:
+          Model = self.ModelList.get(f"CatBoost_{str(len(self.FitList))}")
+
+        # Grab dataframe data
+        if DataName == 'test_data':
+          ScoreData = DataFrames.get('TestData')
+        elif DataName == 'validation_data':
+          ScoreData = DataFrames.get('ValidationData')
+        else:
+          ScoreData = DataFrames.get('TrainData')
+        
+        # Generate preds and add to datatable frame
+        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(DataSets[DataName])
+
+        # Store data and update names
+        if not 'Scored_' + DataName in ScoreData.names:
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = ScoreData
+          self.DataSetsNames.append('Scored_' + DataName)
+        else:
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = ScoreData
+          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
+
