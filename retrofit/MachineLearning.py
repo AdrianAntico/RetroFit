@@ -1045,7 +1045,6 @@ class RetroFit:
           from catboost import CatBoostClassifier
         else:
           from catboost import CatBoostRegressor
-          from catboost import 
 
         # Define training data and target variable
         TrainData = self.DataSets.get('train_data')
@@ -1065,7 +1064,7 @@ class RetroFit:
         # Train Model
         self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
         self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
-        
+
       #################################################
       # XGBoost Method
       #################################################
@@ -1092,6 +1091,7 @@ class RetroFit:
 
         # Train Model
         self.FitList[f"XGBoost{str(len(self.FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
+        #FitList[f"XGBoost{str(len(FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
         self.FitListNames.append(f"XGBoost{str(len(self.FitList))}")
 
     #################################################
@@ -1202,8 +1202,8 @@ class RetroFit:
           ScoreData = self.DataFrames.get('TrainData')
 
         # Generate preds and add to datatable frame
-        Booster.predict(
-          ScoreData, 
+        ScoreData[f"Predict_{TargetColumnName}"] = self.FitList[f"XGBoost{str(len(FitList))}"].predict(
+          data = DataSets[DataName], 
           output_margin=False, 
           pred_leaf=False, 
           pred_contribs=False, # shap values: creates a matrix output
@@ -1211,19 +1211,9 @@ class RetroFit:
           pred_interactions=False, 
           validate_features=True, 
           training=False, 
-          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"]), 
+          iteration_range=(0, self.FitList[f"XGBoost{str(len(FitList))}"].best_iteration), 
           strict_shape=False)
         
-        
-        if TempArgs.get('TargetType').lower() == 'regression':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'RawFormulaVal')
-        elif TempArgs.get('TargetType').lower() == 'classification':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Probability')
-        elif TempArgs.get('TargetType').lower() == 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Class')
-
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
         self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
-
-
