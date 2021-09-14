@@ -784,6 +784,7 @@ class RetroFit:
     
     ML1_Single_Train()
     ML1_Single_Score()
+    PrintAlgoArgs()
     
     ####################################
     # Attributes
@@ -955,7 +956,7 @@ class RetroFit:
     # List of model fitted names
     x.FitListNames
     """
-  
+    
     # Define __init__
     def __init__(self, ModelArgs, ModelData, DataFrames):
       self.ModelArgs = ModelArgs
@@ -975,7 +976,21 @@ class RetroFit:
       self.CompareModelsList = dict()
       self.CompareModelsListNames = []
 
-    # Train Model
+    
+    #################################################
+    #################################################
+    # Function: Print Algo Args
+    #################################################
+    #################################################
+    def PrintAlgoArgs(Algo=None):
+      from retrofit import utils
+      print(utils.printdict(x.ModelArgs[Algo]['AlgoArgs']))
+    
+    #################################################
+    #################################################
+    # Function: Train Model
+    #################################################
+    #################################################
     def ML1_Single_Train(self, Algorithm=None):
       
       # Check
@@ -989,7 +1004,9 @@ class RetroFit:
       else:
         TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
-      # Train Ftrl
+      #################################################
+      # Ftrl Method
+      #################################################
       if TempArgs.get('Algorithms').lower() == 'ftrl':
 
         # Setup Environment
@@ -1010,7 +1027,9 @@ class RetroFit:
         self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
         self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
 
-      # Train CatBoost
+      #################################################
+      # CatBoost Method
+      #################################################
       if TempArgs.get('Algorithms').lower() == 'catboost':
 
         # Setup Environment
@@ -1024,10 +1043,7 @@ class RetroFit:
         TrainData = self.DataSets.get('train_data')
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
-        #TrainData = DataSets.get('train_data')
-        #ValidationData = DataSets.get('validation_data')
-        #TestData = DataSets.get('test_data')
-
+        
         # Initialize model
         Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
         self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
@@ -1035,10 +1051,13 @@ class RetroFit:
 
         # Train Model
         self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
-        FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
         self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
 
-    # Score data
+    #################################################
+    #################################################
+    # Function: Score data 
+    #################################################
+    #################################################
     def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None):
 
       # Check
@@ -1055,7 +1074,9 @@ class RetroFit:
       import datatable
       from datatable.models import Ftrl
 
-      # Ftrl Score model
+      #################################################
+      # Ftrl Method
+      #################################################
       if TempArgs['Algorithms'].lower() == 'ftrl':
         
         # Extract model
@@ -1088,7 +1109,9 @@ class RetroFit:
           self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}"] = score_data
           self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(DataName)+1}")
 
-      # CatBoost Score Model
+      #################################################
+      # CatBoost Method
+      #################################################
       if TempArgs['Algorithms'].lower() == 'catboost':
         
         # Extract Model
@@ -1106,7 +1129,7 @@ class RetroFit:
           ScoreData = self.DataFrames.get('TrainData')
         
         # Generate preds and add to datatable frame
-        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(DataSets[DataName])
+        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName])
 
         # Store data and update names
         if not 'Scored_' + DataName in ScoreData.names:

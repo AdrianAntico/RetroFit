@@ -939,6 +939,7 @@ Model Interpretation
 
 ML1_Single_Train()
 ML1_Single_Score()
+PrintAlgoArgs()
 ```
 
 </p>
