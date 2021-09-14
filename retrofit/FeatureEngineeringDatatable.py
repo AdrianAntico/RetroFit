@@ -5,7 +5,7 @@
 # Last modified : 2021-09-13
 
 
-class FeatureEngineering():
+class FeatureEngineering(object):
     def __init__(self, library = "pandas") -> None:
         """Which library to process data with.
 
