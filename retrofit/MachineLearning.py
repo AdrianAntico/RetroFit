@@ -806,7 +806,7 @@ class RetroFit:
     self.CompareModelsListNames = []
     
     ####################################
-    # Example Usage
+    # Ftrl Example
     ####################################
     
     # Setup Environment
@@ -837,7 +837,7 @@ class RetroFit:
       OutputFrame='datatable')
 
     # Prepare modeling data sets
-    DataSets = ml.ML0_GetModelData(
+    ModelData = ml.ML0_GetModelData(
       Processing='CatBoost',
       TrainData=Data['TrainData'],
       ValidationData=Data['ValidationData'],
@@ -855,11 +855,10 @@ class RetroFit:
     ModelArgs = ml.ML0_Parameters(
       Algorithms='CatBoost',
       TargetType='Regression',
-      TrainMethod='Train',
-      GetModelDataArgs = DataSets['ArgsList'])
+      TrainMethod='Train')
 
     # Initialize RetroFit
-    x = ml.RetroFit(ModelArgs, DataSets)
+    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 
     # Train Model
     x.ML1_Single_Train(Algorithm='Ftrl')
@@ -882,15 +881,88 @@ class RetroFit:
 
     # List of model fitted names
     x.FitListNames
+
+    ####################################
+    # CatBoost Example Usage
+    ####################################
+    
+    # Setup Environment
+    import timeit
+    import datatable as dt
+    from datatable import sort, f, by
+    import retrofit
+    from retrofit import FeatureEngineering as fe
+    from retrofit import MachineLearning as ml
+    
+    # Load some data
+    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    
+    # Create partitioned data sets
+    DataFrames = fe.FE2_AutoDataParition(
+      data=data, 
+      ArgsList=None, 
+      DateColumnName=None, 
+      PartitionType='random', 
+      Ratios=[0.7,0.2,0.1], 
+      ByVariables=None, 
+      Sort=False, 
+      Processing='datatable', 
+      InputFrame='datatable', 
+      OutputFrame='datatable')
+    
+    # Prepare modeling data sets
+    ModelData = ml.ML0_GetModelData(
+      Processing='catboost',
+      TrainData=DataFrames['TrainData'],
+      ValidationData=DataFrames['ValidationData'],
+      TestData=DataFrames['TestData'],
+      ArgsList=None,
+      TargetColumnName='Leads',
+      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
+      CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+      TextColumnNames=None,
+      WeightColumnName=None,
+      Threads=-1,
+      InputFrame='datatable')
+    
+    # Get args list for algorithm and target type
+    ModelArgs = ml.ML0_Parameters(
+      Algorithms='CatBoost', 
+      TargetType="Regression", 
+      TrainMethod="Train")
+    
+    # Initialize RetroFit
+    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+    
+    # Train Model
+    x.ML1_Single_Train(Algorithm='CatBoost')
+    
+    # Score data
+    x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost')
+    
+    # Scoring data colnames
+    x.DataSets['Scored_test_data'].names
+
+    # Check ModelArgs Dict
+    x.ModelArgs
+
+    # Check the names of data sets collected
+    x.DataSetsNames
+
+    # List of model names
+    x.ModelListNames
+
+    # List of model fitted names
+    x.FitListNames
     """
   
     # Define __init__
-    def __init__(self, ModelArgs, DataSets, Data):
+    def __init__(self, ModelArgs, ModelData, DataFrames):
       self.ModelArgs = ModelArgs
       self.ModelArgsNames = [*self.ModelArgs]
       self.Runs = len(self.ModelArgs)
-      self.DataFrames = Data
-      self.DataSets = DataSets
+      self.DataFrames = DataFrames
+      self.DataSets = ModelData
       self.DataSetsNames = [*self.DataSets]
       self.ModelList = dict()
       self.ModelListNames = []
@@ -1027,11 +1099,11 @@ class RetroFit:
 
         # Grab dataframe data
         if DataName == 'test_data':
-          ScoreData = DataFrames.get('TestData')
+          ScoreData = self.DataFrames.get('TestData')
         elif DataName == 'validation_data':
-          ScoreData = DataFrames.get('ValidationData')
-        else:
-          ScoreData = DataFrames.get('TrainData')
+          ScoreData = self.DataFrames.get('ValidationData')
+        elif DataName == 'train_data':
+          ScoreData = self.DataFrames.get('TrainData')
         
         # Generate preds and add to datatable frame
         ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(DataSets[DataName])

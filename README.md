@@ -673,6 +673,70 @@ ArgsList = DataSets['ArgsList']
 <p>
 
 
+#### **ML0_Parameters()**
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>ML0_Parameters()</code> Automatically generate parameters for modeling. User can update the parameters as desired.
+
+</p>
+</details>
+
+<details><summary>Code Example</summary>
+<p>
+
+```
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Create partitioned data sets
+Data = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName=None, 
+  PartitionType='random', 
+  Ratios=[0.7,0.2,0.1], 
+  ByVariables=None, 
+  Sort=False, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+
+# Prepare modeling data sets
+DataSets = ml.ML0_GetModelData(
+  Processing='catboost',
+  TrainData=Data['TrainData'],
+  ValidationData=Data['ValidationData'],
+  TestData=Data['TestData'],
+  ArgsList=None,
+  TargetColumnName='Leads',
+  NumericColumnNames=['XREGS1','XREGS2','XREGS3'],
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'],
+  TextColumnNames=None,
+  WeightColumnName=None,
+  Threads=-1,
+  InputFrame='datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms='CatBoost', 
+  TargetType="Regression", 
+  TrainMethod="Train")
+```
+
+</p>
+</details>
+
+
+
 #### **ML0_GetModelData()**
 <p>
 
@@ -844,7 +908,7 @@ lightgbm_test = DataSets['test_data']
 
 ### ML1 Machine Learning: RetroFit Class
 
-<details><summary>Code Example</summary>
+<details><summary>Class Goals</summary>
 <p>
 
 ```
@@ -855,18 +919,36 @@ lightgbm_test = DataSets['test_data']
 Class Initialization
 Model Initialization
 Training
+Feature Tuning
 Grid Tuning
-Scoring
+Model Scoring
 Model Evaluation
 Model Interpretation
+```
 
+</p>
+</details>
+
+<details><summary>Class Functions</summary>
+<p>
+
+```
 ####################################
 # Functions
 ####################################
 
 ML1_Single_Train()
 ML1_Single_Score()
+```
 
+</p>
+</details>
+
+
+<details><summary>Class Attributes</summary>
+<p>
+
+```
 ####################################
 # Attributes
 ####################################
@@ -886,9 +968,18 @@ self.InterpretationList = dict()
 self.InterpretationListNames = []
 self.CompareModelsList = dict()
 self.CompareModelsListNames = []
+```
 
+</p>
+</details>
+
+
+<details><summary>Ftrl Example (follow the regularization leader)</summary>
+<p>
+
+```
 ####################################
-# Example Usage
+# Ftrl Example
 ####################################
 
 # Setup Environment
@@ -905,7 +996,7 @@ Path = "./BenchmarkData.csv"
 data = dt.fread(Path)
 
 # Create partitioned data sets
-Data = fe.FE2_AutoDataParition(
+DataFrames = fe.FE2_AutoDataParition(
   data=data, 
   ArgsList=None, 
   DateColumnName=None, 
@@ -918,11 +1009,11 @@ Data = fe.FE2_AutoDataParition(
   OutputFrame='datatable')
 
 # Prepare modeling data sets
-DataSets = ml.ML0_GetModelData(
+ModelData = ml.ML0_GetModelData(
   Processing='Ftrl',
-  TrainData=Data['TrainData'],
-  ValidationData=Data['ValidationData'],
-  TestData=Data['TestData'],
+  TrainData=DataFrames['TrainData'],
+  ValidationData=DataFrames['ValidationData'],
+  TestData=DataFrames['TestData'],
   ArgsList=None,
   TargetColumnName='Leads',
   NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
@@ -939,7 +1030,7 @@ ModelArgs = ml.ML0_Parameters(
   TrainMethod="Train")
 
 # Initialize RetroFit
-x = RetroFit(ModelArgs, DataSets)
+x = RetroFit(ModelArgs, ModelData, DataFrames)
 
 # Train Model
 x.ML1_Single_Train(Algorithm='Ftrl')
@@ -970,8 +1061,112 @@ x.CompareModelsListNames
 </details>
 
 
+<details><summary>CatBoost Example</summary>
+<p>
+
+```
+####################################
+# CatBoost Example Usage
+####################################
+
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data=data, 
+  ArgsList=None, 
+  DateColumnName=None, 
+  PartitionType='random', 
+  Ratios=[0.7,0.2,0.1], 
+  ByVariables=None, 
+  Sort=False, 
+  Processing='datatable', 
+  InputFrame='datatable', 
+  OutputFrame='datatable')
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing='catboost',
+  TrainData=DataFrames['TrainData'],
+  ValidationData=DataFrames['ValidationData'],
+  TestData=DataFrames['TestData'],
+  ArgsList=None,
+  TargetColumnName='Leads',
+  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
+  CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  TextColumnNames=None,
+  WeightColumnName=None,
+  Threads=-1,
+  InputFrame='datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms='CatBoost', 
+  TargetType="Regression", 
+  TrainMethod="Train")
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm='CatBoost')
+
+# Score data
+x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost')
+
+# Scoring data colnames
+x.ModelData['Scored_test_data'].names
+
+# Check ModelArgs Dict
+x.ModelArgs
+
+# Check the names of data sets collected
+x.DataSetsNames
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+```
+
 </p>
 </details>
+
+
+<details><summary>XGBoost Example:</summary>
+<p>
+
+```
+```
+
+
+</p>
+</details>
+
+
+<details><summary>LightGBM Example:</summary>
+<p>
+
+```
+```
+
+</p>
+</details>
+
+
+</p>
+</details>
+
 
 
 ## Machine Learning Evaluation
