@@ -1264,9 +1264,9 @@ class RetroFit:
 
         # Extract Model
         if not ModelName is None:
-          Model = self.ModelList.get(ModelName)
+          Model = self.FitList.get(ModelName)
         else:
-          Model = self.ModelList.get(f"CatBoost_{str(len(self.FitList))}")
+          Model = self.FitList.get(f"XGBoost_{str(len(self.FitList))}")
 
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
@@ -1278,8 +1278,8 @@ class RetroFit:
           ScoreData = self.DataFrames.get('TrainData')
 
         # Generate preds and add to datatable frame
-        ScoreData[f"Predict_{TargetColumnName}"] = self.FitList[f"XGBoost{str(len(self.FitList))}"].predict(
-          data = DataSets[DataName], 
+        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+          data = self.DataSets[DataName], 
           output_margin=False, 
           pred_leaf=False, 
           pred_contribs=False, # shap values: creates a matrix output
