@@ -1348,7 +1348,7 @@ class RetroFit:
       #################################################
       # LightGBM Method
       #################################################
-      if TempArgs['Algorithms'].lower() == 'xgboost':
+      if TempArgs['Algorithms'].lower() == 'lightgbm':
         
         # Environment
         import lightgbm as lgbm

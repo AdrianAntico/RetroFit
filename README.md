@@ -1047,7 +1047,11 @@ x = RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='Ftrl')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='Ftrl', NewData=None)
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2], 
+  ModelName = x.ModelListNames[0], 
+  Algorithm = 'Ftrl', 
+  NewData = None)
 
 # Scoring data names
 x.DataSetsNames
@@ -1132,7 +1136,11 @@ x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='CatBoost')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost', NewData=None)
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2], 
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'CatBoost',
+  NewData = None)
 
 # Scoring data names
 x.DataSetsNames
@@ -1217,7 +1225,11 @@ x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 x.ML1_Single_Train(Algorithm='XGBoost')
 
 # Score data
-x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='XGBoost', NewData=None)
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'XGBoost',
+  NewData = None)
 
 # Scoring data names
 x.DataSetsNames
