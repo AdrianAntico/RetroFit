@@ -1127,7 +1127,7 @@ ModelArgs = ml.ML0_Parameters(
   TrainMethod = "Train")
 
 # Update iterations to run quickly
-ModelArgs['CatBoost']['AlgoArgs']['iterations'] = 50
+ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1166,10 +1166,6 @@ x.FitListNames
 <p>
 
 ```
-####################################
-# XGBoost Example Usage
-####################################
-
 # Setup Environment
 import timeit
 import datatable as dt
@@ -1180,6 +1176,17 @@ from retrofit import MachineLearning as ml
 
 # Load some data
 data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'], 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'] for name in data.names]]
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(
@@ -1194,6 +1201,9 @@ DataFrames = fe.FE2_AutoDataParition(
   InputFrame = 'datatable', 
   OutputFrame = 'datatable')
 
+# Features
+Features = ['XREGS1', 'XREGS2', 'XREGS3', 'MarketingSegments_B', 'MarketingSegments_A', 'MarketingSegments_C', 'MarketingSegments2_a', 'MarketingSegments2_b', 'MarketingSegments2_c', 'MarketingSegments3_x', 'MarketingSegments3_z', 'MarketingSegments3_y']
+
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
   Processing = 'xgboost',
@@ -1202,8 +1212,8 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Leads',
-  NumericColumnNames = ['XREGS1', 'XREGS2', 'XREGS3'],
-  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
   TextColumnNames = None,
   WeightColumnName = None,
   Threads = -1,
@@ -1216,7 +1226,7 @@ ModelArgs = ml.ML0_Parameters(
   TrainMethod = "Train")
 
 # Update iterations to run quickly
-ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
+ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1320,7 +1330,7 @@ ModelArgs = ml.ML0_Parameters(
   TrainMethod = "Train")
 
 # Update iterations to run quickly
-ModelArgs['LightGBM']['AlgoArgs']['num_boost_round'] = 50
+ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)

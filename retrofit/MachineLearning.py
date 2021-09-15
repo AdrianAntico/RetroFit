@@ -1262,18 +1262,20 @@ class RetroFit:
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
 
+        # Create modified args
+        import copy
+        temp_args = copy.deepcopy(TempArgs)
+        del temp_args['AlgoArgs']['num_iterations']
+        del temp_args['AlgoArgs']['early_stopping_round']
+        
         # Initialize model
-        Model = LGBMModel(**TempArgs.get('AlgoArgs'))
+        Model = LGBMModel(**temp_args.get('AlgoArgs'))
         
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
 
         # Initialize model
-        import copy
-        temp_args = copy.deepcopy(TempArgs)
-        del temp_args['AlgoArgs']['num_iterations']
-        del temp_args['AlgoArgs']['early_stopping_round']
         self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=temp_args.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_iterations'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_round'))
         self.FitListNames.append(f"LightGBM{str(len(self.FitList))}")
 

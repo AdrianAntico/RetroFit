@@ -274,4 +274,270 @@ x.ModelListNames
 # List of model fitted names
 x.FitListNames
 
+####################################
+# CatBoost Example Usage
+####################################
 
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'catboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Leads',
+  NumericColumnNames = ['XREGS1', 'XREGS2', 'XREGS3'],
+  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'CatBoost', 
+  TargetType = "Regression", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs['CatBoost']['AlgoArgs']['iterations'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'CatBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2], 
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'CatBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_CatBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'CatBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
+
+####################################
+# XGBoost Example Usage
+####################################
+
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'], 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'] for name in data.names]]
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Features
+Features = ['XREGS1', 'XREGS2', 'XREGS3', 'MarketingSegments_B', 'MarketingSegments_A', 'MarketingSegments_C', 'MarketingSegments2_a', 'MarketingSegments2_b', 'MarketingSegments2_c', 'MarketingSegments3_x', 'MarketingSegments3_z', 'MarketingSegments3_y']
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'xgboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Leads',
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'XGBoost', 
+  TargetType = "Regression", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'XGBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'XGBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_XGBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'XGBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
+####################################
+# LightGBM Example Usage
+####################################
+
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'], 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'] for name in data.names]]
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Features
+Features = ['XREGS1', 'XREGS2', 'XREGS3', 'MarketingSegments_B', 'MarketingSegments_A', 'MarketingSegments_C', 'MarketingSegments2_a', 'MarketingSegments2_b', 'MarketingSegments2_c', 'MarketingSegments3_x', 'MarketingSegments3_z', 'MarketingSegments3_y']
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'lightgbm',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Leads',
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'LightGBM', 
+  TargetType = "Regression", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'LightGBM')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'LightGBM')
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_LightGBM_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'LightGBM')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
