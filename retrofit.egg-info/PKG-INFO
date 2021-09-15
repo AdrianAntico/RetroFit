@@ -3,7 +3,7 @@ Name: retrofit
 Version: 0.1.3
 Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
-Author: Adrian Antico
+Author: ['Adrian Antico', 'Sean Benner']
 Author-email: adrianantico@gmail.com
 License: MIT
 Platform: UNKNOWN

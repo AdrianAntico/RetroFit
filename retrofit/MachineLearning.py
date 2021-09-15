@@ -301,10 +301,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         SD = copy.copy(NumericColumnNames)
       else:
         SD = []
-      if not CategoricalColumnNames is None:
-        SD.extend(CategoricalColumnNames)
-      if not TextColumnNames is None:
-        SD.extend(TextColumnNames)
       if not WeightColumnName is None:
         trainweightdata = TrainData['WeightColumnName']
         if not ValidationData is None:
@@ -1181,12 +1177,19 @@ class RetroFit:
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
         
+        # TrainData = DataSets.get('train_data')
+        # ValidationData = DataSets.get('validation_data')
+        # TestData = DataSets.get('test_data')
+        
         # Initialize model
         Model = LGBMModel(**TempArgs.get('AlgoArgs'))
+        Model.fit(X=TrainData.data, y=TrainData.get_label)
         
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
+        
+        lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
         
         # Initialize model
         self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
