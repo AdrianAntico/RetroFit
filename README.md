@@ -1167,7 +1167,7 @@ x.FitListNames
 
 ```
 ####################################
-# CatBoost Example Usage
+# XGBoost Example Usage
 ####################################
 
 # Setup Environment
