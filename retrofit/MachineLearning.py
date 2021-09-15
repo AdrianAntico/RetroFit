@@ -1087,33 +1087,33 @@ class RetroFit:
     
     # Get args list for algorithm and target type
     ModelArgs = ml.ML0_Parameters(
-      Algorithms='XGBoost', 
+      Algorithms='LightGBM', 
       TargetType="Regression", 
       TrainMethod="Train")
     
     # Update iterations to run quickly
-    ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
+    ModelArgs['LightGBM']['AlgoArgs']['num_boost_round'] = 50
     
     # Initialize RetroFit
     x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
     
     # Train Model
-    x.ML1_Single_Train(Algorithm='XGBoost')
+    x.ML1_Single_Train(Algorithm='LightGBM')
     
     # Score data
     x.ML1_Single_Score(
       DataName = x.DataSetsNames[2],
       ModelName = x.ModelListNames[0],
-      Algorithm = 'XGBoost')
+      Algorithm = 'LightGBM')
     
     # Scoring data names
     x.DataSetsNames
     
     # Scoring data
-    x.DataSets.get('Scored_test_data_XGBoost_1')
+    x.DataSets.get('Scored_test_data_LightGBM_1')
     
     # Check ModelArgs Dict
-    x.PrintAlgoArgs(Algo='XGBoost')
+    x.PrintAlgoArgs(Algo='LightGBM')
     
     # List of model names
     x.ModelListNames
@@ -1461,8 +1461,10 @@ class RetroFit:
             ScoreData = self.DataFrames.get('ValidationData')
           elif DataName == 'train_data':
             ScoreData = self.DataFrames.get('TrainData')
+          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumns')]
         else:
           ScoreData = NewData
+          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumns')]
 
         # Generate preds and add to datatable frame
         if NewData is None:
