@@ -1168,22 +1168,20 @@ class RetroFit:
         TrainData = self.DataSets.get('train_data')
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
-        
-        # TrainData = DataSets.get('train_data')
-        # ValidationData = DataSets.get('validation_data')
-        # TestData = DataSets.get('test_data')
-        
+
         # Initialize model
         Model = LGBMModel(**TempArgs.get('AlgoArgs'))
         
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
-        
-        xx = lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
-        
+
         # Initialize model
-        self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
+        import copy
+        temp_args = copy.deepcopy(TempArgs)
+        del temp_args['AlgoArgs']['num_iterations']
+        del temp_args['AlgoArgs']['early_stopping_round']
+        self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=temp_args.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_iterations'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_round'))
         self.FitListNames.append(f"LightGBM{str(len(self.FitList))}")
 
     #################################################
@@ -1229,6 +1227,8 @@ class RetroFit:
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
+          if NewData is None:
+            return Model.predict(score_data)
 
         # Score Model and append data set name to scoring data
         score_data.cbind(Model.predict(score_data))
@@ -1257,6 +1257,7 @@ class RetroFit:
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
         if NewData is None:
+          pred_data = self.DataSets[DataName]
           if DataName == 'test_data':
             ScoreData = self.DataFrames.get('TestData')
           elif DataName == 'validation_data':
@@ -1264,15 +1265,23 @@ class RetroFit:
           elif DataName == 'train_data':
             ScoreData = self.DataFrames.get('TrainData')
         else:
-          score_data = NewData
+          pred_data = NewData
 
         # Generate preds and add to datatable frame
-        if TempArgs.get('TargetType').lower() == 'regression':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'RawFormulaVal')
-        elif TempArgs.get('TargetType').lower() == 'classification':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Probability')
-        elif TempArgs.get('TargetType').lower() == 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(self.DataSets[DataName], prediction_type = 'Class')
+        if NewData is None:
+          if TempArgs.get('TargetType').lower() == 'regression':
+            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
+          elif TempArgs.get('TargetType').lower() == 'classification':
+            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Probability')
+          elif TempArgs.get('TargetType').lower() == 'multiclass':
+            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
+        else:
+          if TempArgs.get('TargetType').lower() == 'regression':
+            return Model.predict(pred_data, prediction_type = 'RawFormulaVal')
+          elif TempArgs.get('TargetType').lower() == 'classification':
+            return Model.predict(pred_data, prediction_type = 'Probability')
+          elif TempArgs.get('TargetType').lower() == 'multiclass':
+            return Model.predict(pred_data, prediction_type = 'Class')
 
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
@@ -1282,9 +1291,9 @@ class RetroFit:
       # XGBoost Method
       #################################################
       if TempArgs['Algorithms'].lower() == 'xgboost':
-        
+
+        # Environment
         import xgboost as xgb
-        from xgboost import Booster
 
         # Extract Model
         if not ModelName is None:
@@ -1295,6 +1304,7 @@ class RetroFit:
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
         if NewData is None:
+          pred_data = self.DataSets[DataName]
           if DataName == 'test_data':
             ScoreData = self.DataFrames.get('TestData')
           elif DataName == 'validation_data':
@@ -1303,19 +1313,90 @@ class RetroFit:
             ScoreData = self.DataFrames.get('TrainData')
         else:
           score_data = NewData
+          pred_data = self.DataSets[DataName]
 
         # Generate preds and add to datatable frame
-        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-          data = self.DataSets[DataName], 
-          output_margin=False, 
-          pred_leaf=False, 
-          pred_contribs=False, # shap values: creates a matrix output
-          approx_contribs=False, 
-          pred_interactions=False, 
-          validate_features=True, 
-          training=False, 
-          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-          strict_shape=False)
+        if NewData is None:
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False, # shap values: creates a matrix output
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False)
+        else:
+          return Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False, # shap values: creates a matrix output
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False)
+        
+        # Store data and update names
+        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+      
+      #################################################
+      # LightGBM Method
+      #################################################
+      if TempArgs['Algorithms'].lower() == 'xgboost':
+        
+        # Environment
+        import lightgbm as lgbm
+        
+        # Extract Model
+        if not ModelName is None:
+          Model = self.FitList.get(ModelName)
+        else:
+          Model = self.FitList.get(f"LightGBM{str(len(self.FitList))}")
+
+        # Grab dataframe data
+        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+        if NewData is None:
+          pred_data = self.DataSets[DataName]
+          if DataName == 'test_data':
+            ScoreData = self.DataFrames.get('TestData')
+          elif DataName == 'validation_data':
+            ScoreData = self.DataFrames.get('ValidationData')
+          elif DataName == 'train_data':
+            ScoreData = self.DataFrames.get('TrainData')
+        else:
+          pred_data = NewData
+
+        # Generate preds and add to datatable frame
+        if NewData is None:
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False, # shap values: creates a matrix output
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"LightGBM{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False)
+        else:
+          return Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False, # shap values: creates a matrix output
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"LightGBM{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False)
         
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
