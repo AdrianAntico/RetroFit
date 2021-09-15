@@ -644,13 +644,11 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
         # Args
         AlgoArgs['task'] = 'train'
         AlgoArgs['device_type'] = 'CPU'
-        AlgoArgs['threads'] = os.cpu_count()
         AlgoArgs['objective'] = 'regression'
         AlgoArgs['metric'] = 'rmse'
         AlgoArgs['boosting'] = 'gbdt'
         AlgoArgs['lambda_l1'] = 0.0
         AlgoArgs['lambda_l2'] = 0.0
-        AlgoArgs['LinearTree'] = False
         AlgoArgs['deterministic'] = True
         AlgoArgs['force_col_wise'] = False
         AlgoArgs['force_row_wise'] = False
@@ -662,12 +660,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
         AlgoArgs['first_metric_only'] = True
         AlgoArgs['linear_lambda'] = 0.0
         AlgoArgs['min_gain_to_split'] = 0
-        AlgoArgs['drop_rate_dart'] = 0.10
-        AlgoArgs['max_drop_dart'] = 50
-        AlgoArgs['skip_drop_dart'] = 0.50
-        AlgoArgs['uniform_drop_dart'] = False
-        AlgoArgs['top_rate_goss'] = False
-        AlgoArgs['other_rate_goss'] = False
         AlgoArgs['monotone_constraints'] = None
         AlgoArgs['monotone_constraints_method'] = 'advanced'
         AlgoArgs['monotone_penalty'] = 0.0
@@ -1183,13 +1175,13 @@ class RetroFit:
         
         # Initialize model
         Model = LGBMModel(**TempArgs.get('AlgoArgs'))
-        Model.fit(X=TrainData.data, y=TrainData.get_label)
+        xx = Model.fit(TrainData)
         
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
         
-        lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
+        xx = lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
         
         # Initialize model
         self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=TempArgs.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
