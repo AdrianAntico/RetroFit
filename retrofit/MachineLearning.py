@@ -1325,7 +1325,7 @@ class RetroFit:
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
-          if NewData is None:
+          if not NewData is None:
             return Model.predict(score_data)
 
         # Score Model and append data set name to scoring data
