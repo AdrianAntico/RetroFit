@@ -1302,7 +1302,12 @@ class RetroFit:
       # Ftrl Method
       #################################################
       if TempArgs['Algorithms'].lower() == 'ftrl':
-        
+
+        # Setup Environment
+        import datatable
+        from datatable import f
+        from datatable.models import Ftrl
+
         # Extract model
         if not ModelName is None:
           Model = self.ModelList.get(ModelName)
