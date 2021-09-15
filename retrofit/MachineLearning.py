@@ -1451,7 +1451,7 @@ class RetroFit:
           Model = self.FitList.get(ModelName)
         else:
           Model = self.FitList.get(f"LightGBM{str(len(self.FitList))}")
-
+          
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
         if NewData is None:
@@ -1461,36 +1461,16 @@ class RetroFit:
             ScoreData = self.DataFrames.get('ValidationData')
           elif DataName == 'train_data':
             ScoreData = self.DataFrames.get('TrainData')
-          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumns')]
+          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
         else:
           ScoreData = NewData
-          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumns')]
+          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
 
         # Generate preds and add to datatable frame
         if NewData is None:
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-            data = ScoreData, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"LightGBM{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False)
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
         else:
-          return Model.predict(
-            data = ScoreData, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"LightGBM{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False)
+          return Model.predict(data = ScoreData)
         
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
