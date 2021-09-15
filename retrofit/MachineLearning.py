@@ -302,29 +302,29 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       else:
         SD = []
       if not WeightColumnName is None:
-        trainweightdata = TrainData['WeightColumnName']
+        trainweightdata = TrainData['WeightColumnName'].to_pandas()
         if not ValidationData is None:
-          validationweightdata = ValidationData['WeightColumnName']
+          validationweightdata = ValidationData['WeightColumnName'].to_pandas()
         if not TestData is None:
-          testweightdata = TestData['WeightColumnName']
+          testweightdata = TestData['WeightColumnName'].to_pandas()
       else:
         trainweightdata = None
         validationweightdata = None
         testweightdata = None
         
       # data
-      train = TrainData[:, SD]
+      train = TrainData[:, SD].to_pandas()
       if not ValidationData is None:
-        validation = ValidationData[:, SD]
+        validation = ValidationData[:, SD].to_pandas()
       if not TestData is None:
-        test = TestData[:, SD]
+        test = TestData[:, SD].to_pandas()
 
       # label
-      trainlabel = TrainData[:, TargetColumnName]
+      trainlabel = TrainData[:, TargetColumnName].to_pandas()
       if not ValidationData is None:
-        validationlabel = ValidationData[:, TargetColumnName]
+        validationlabel = ValidationData[:, TargetColumnName].to_pandas()
       if not TestData is None:
-        testlabel = TestData[:, TargetColumnName]
+        testlabel = TestData[:, TargetColumnName].to_pandas()
 
       # TrainData
       if trainweightdata is None:
@@ -1175,7 +1175,6 @@ class RetroFit:
         
         # Initialize model
         Model = LGBMModel(**TempArgs.get('AlgoArgs'))
-        xx = Model.fit(TrainData)
         
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
