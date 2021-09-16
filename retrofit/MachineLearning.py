@@ -1175,7 +1175,6 @@ class RetroFit:
       # Which Algo
       if not Algorithm is None:
         TempArgs = self.ModelArgs[Algorithm]
-        #TempArgs = ModelArgs[Algorithm]
       else:
         TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
@@ -1324,7 +1323,7 @@ class RetroFit:
         if not ModelName is None:
           Model = self.ModelList.get(ModelName)
         else:
-          Model = self.ModelList.get(f"Ftrl_{str(len(self.FitList))}")
+          Model = self.ModelList.get(f"Ftrl{str(len(self.FitList))}")
 
         # Grab scoring data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
@@ -1362,7 +1361,7 @@ class RetroFit:
         if not ModelName is None:
           Model = self.ModelList.get(ModelName)
         else:
-          Model = self.ModelList.get(f"CatBoost_{str(len(self.FitList))}")
+          Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
 
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
@@ -1409,7 +1408,7 @@ class RetroFit:
         if not ModelName is None:
           Model = self.FitList.get(ModelName)
         else:
-          Model = self.FitList.get(f"XGBoost_{str(len(self.FitList))}")
+          Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
 
         # Grab dataframe data
         TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
@@ -1506,6 +1505,7 @@ class RetroFit:
       from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
       Metrics = dt.Frame([self.FitList[_FitName]])
       Metrics.names = {'C0': 'ModelName'}
+      Metrics['FeatureSet'] = None
       Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
       Metrics['explained_variance_score'] = explained_variance_score(y_true, y_pred)
       Metrics['r2_score'] = r2_score(y_true, y_pred)

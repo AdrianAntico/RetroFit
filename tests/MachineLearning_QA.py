@@ -199,7 +199,7 @@ print_list(Params)
 ############################################################################################
 
 ####################################
-# Ftrl Example
+# Ftrl Regression
 ####################################
 
 # Setup Environment
@@ -208,11 +208,11 @@ import timeit
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import FeatureEngineering_old as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv')
 data = dt.fread(FilePath)
 
 # Create partitioned data sets
@@ -235,9 +235,9 @@ ModelData = ml.ML0_GetModelData(
   ValidationData = DataFrames['ValidationData'],
   TestData = DataFrames['TestData'],
   ArgsList = None,
-  TargetColumnName = 'Leads',
-  NumericColumnNames = ['XREGS1', 'XREGS2', 'XREGS3'],
-  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = list(data.names[1:11]),
+  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
   Threads = -1,
@@ -246,11 +246,13 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'Ftrl', 
-  TargetType = "Regression", 
+  TargetType = "Classification", 
   TrainMethod = "Train")
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+x.FitList
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'Ftrl')
