@@ -4,8 +4,11 @@ README.md
 pyproject.toml
 requirements.txt
 setup.py
+retrofit/DatatableFE.py
 retrofit/FeatureEngineering.py
 retrofit/MachineLearning.py
+retrofit/PandasFE.py
+retrofit/PolarsFE.py
 retrofit/__init__.py
 retrofit/utils.py
 retrofit.egg-info/PKG-INFO
