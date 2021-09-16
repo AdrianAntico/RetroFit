@@ -252,16 +252,14 @@ ModelArgs = ml.ML0_Parameters(
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 
-x.FitList
-
 # Train Model
 x.ML1_Single_Train(Algorithm = 'Ftrl')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2], 
-  ModelName = x.ModelListNames[0], 
-  Algorithm = 'Ftrl', 
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'Ftrl',
   NewData = None)
 
 # Scoring data names

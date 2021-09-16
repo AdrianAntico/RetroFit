@@ -1315,10 +1315,8 @@ class RetroFit:
       if TempArgs['Algorithms'].lower() == 'ftrl':
 
         # Setup Environment
-        import datatable
         from datatable import f
-        from datatable.models import Ftrl
-
+        
         # Extract model
         if not ModelName is None:
           Model = self.ModelList.get(ModelName)
@@ -1340,10 +1338,13 @@ class RetroFit:
             return Model.predict(score_data)
 
         # Score Model and append data set name to scoring data
-        score_data.cbind(Model.predict(score_data))
-        
-        # Update prediction column name
-        score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
+        if self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'regression':
+          score_data.cbind(Model.predict(score_data))
+          score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
+        elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'classification':
+          score_data.cbind(Model.predict(score_data))
+          score_data.names = {'True': 'p1'}
+          score_data.names = {'False': 'p0'}
         
         # cbind Target column back to score_data
         score_data.cbind(TargetData)
