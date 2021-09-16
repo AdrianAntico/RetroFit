@@ -263,7 +263,7 @@ x.ML1_Single_Score(
 x.DataSetsNames
 
 # Scoring data
-x.DataSets.get('Scored_test_data_Ftrl_1')
+temp = x.DataSets.get('Scored_test_data_Ftrl_1')
 
 # Check ModelArgs Dict
 x.PrintAlgoArgs(Algo='Ftrl')
