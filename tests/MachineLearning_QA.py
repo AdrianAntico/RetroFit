@@ -203,6 +203,7 @@ print_list(Params)
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -211,9 +212,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-# BechmarkData.csv is located is the tests folder
-Path = "C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv"
-data = dt.fread(Path)
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(
@@ -266,7 +266,7 @@ x.ML1_Single_Score(
 x.DataSetsNames
 
 # Scoring data
-temp = x.DataSets.get('Scored_test_data_Ftrl_1')
+x.DataSets.get('Scored_test_data_Ftrl_1')
 
 # Check ModelArgs Dict
 x.PrintAlgoArgs(Algo='Ftrl')

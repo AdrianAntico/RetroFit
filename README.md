@@ -1010,7 +1010,11 @@ self.CompareModelsListNames = []
 </details>
 
 
-<details><summary>Ftrl Example</summary>
+<details><summary>Ftrl Examples</summary>
+<p>
+
+
+<details><summary>Regression</summary>
 <p>
 
 ```
@@ -1028,9 +1032,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-# BechmarkData.csv is located is the tests folder
-Path = "./BenchmarkData.csv"
-data = dt.fread(Path)
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(
@@ -1094,6 +1097,14 @@ x.ModelListNames
 # List of model fitted names
 x.FitListNames
 ```
+
+</p>
+</details>
+
+
+
+
+
 
 </p>
 </details>
