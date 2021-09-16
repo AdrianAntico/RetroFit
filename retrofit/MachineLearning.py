@@ -27,6 +27,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
 
     # ML0_GetModelData Example:
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -35,7 +36,8 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     from retrofit import MachineLearning as ml
 
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
         
     # Create partitioned data sets
     DataSets = fe.FE2_AutoDataParition(
@@ -362,6 +364,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     GetModelDataArgs: Args passed in from ML0_GetModelData()
     
     # ML0_Parameters Example
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -370,7 +373,8 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     from retrofit import MachineLearning as ml
 
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
         
     # Create partitioned data sets
     DataSets = fe.FE2_AutoDataParition(
@@ -801,6 +805,7 @@ class RetroFit:
     ####################################
     
     # Setup Environment
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -810,9 +815,8 @@ class RetroFit:
     
     # Load some data
     # BechmarkData.csv is located is the tests folder
-    Path = "./BenchmarkData.csv"
-    data = dt.fread(Path)
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
 
     # Create partitioned data sets
     Data = fe.FE2_AutoDataParition(
@@ -881,6 +885,7 @@ class RetroFit:
     ####################################
     
     # Setup Environment
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -889,7 +894,8 @@ class RetroFit:
     from retrofit import MachineLearning as ml
     
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
     
     # Create partitioned data sets
     DataFrames = fe.FE2_AutoDataParition(
@@ -957,6 +963,7 @@ class RetroFit:
     ####################################
     
     # Setup Environment
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -965,7 +972,8 @@ class RetroFit:
     from retrofit import MachineLearning as ml
     
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
     
     # Create partitioned data sets
     DataFrames = fe.FE2_AutoDataParition(
@@ -1036,6 +1044,7 @@ class RetroFit:
     ####################################
     
     # Setup Environment
+    import pkg_resources
     import timeit
     import datatable as dt
     from datatable import sort, f, by
@@ -1044,7 +1053,8 @@ class RetroFit:
     from retrofit import MachineLearning as ml
     
     # Load some data
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+    data = dt.fread(FilePath)
     
     # Dummify
     Output = fe.FE1_DummyVariables(

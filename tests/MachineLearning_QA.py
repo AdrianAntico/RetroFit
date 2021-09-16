@@ -11,7 +11,8 @@ from retrofit import MachineLearning as ml
 # CatBoost
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -68,7 +69,8 @@ catboost_test = DataSets['test_data']
 # XGBoost
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -126,7 +128,8 @@ xgboost_test = DataSets['test_data']
 # LightGBM
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -287,7 +290,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(
@@ -368,7 +372,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Dummify
 Output = fe.FE1_DummyVariables(
@@ -462,7 +467,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Dummify
 Output = fe.FE1_DummyVariables(

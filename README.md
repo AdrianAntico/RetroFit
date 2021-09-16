@@ -74,6 +74,7 @@ https://github.com/AdrianAntico/RemixAutoML
 
 ```
 # QA: Test FE0_AutoLags
+import pkg_resources
 import timeit
 import datatable as dt
 import polars as pl
@@ -81,7 +82,8 @@ import retrofit
 from retrofit import FeatureEngineering as fe
 
 ## No Group Example: datatable
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 Output = fe.FE0_AutoLags(
   data=data, 
@@ -127,7 +129,8 @@ print(data2.columns)
 print(ArgsList)
 
 ## Group Example, Single Lag: datatable
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 Output = fe.FE0_AutoLags(
   data=data, 
@@ -173,7 +176,8 @@ print(data2.columns)
 print(ArgsList)
 
 ## Group and Multiple Periods and LagColumnNames: datatable
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 Output = fe.FE0_AutoLags(
   data=data, 
@@ -241,13 +245,15 @@ print(ArgsList)
 
 ```
 # Test Function
+import pkg_resources
 import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
 
 ## Group Example:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoRollStats(
   data=data, 
@@ -268,7 +274,8 @@ print(t_end - t_start)
 print(data.names)
     
 ## Group and Multiple Periods and RollColumnNames:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoRollStats(
   data=data, 
@@ -289,7 +296,8 @@ print(t_end - t_start)
 print(data.names)
 
 ## No Group Example:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoRollStats(
   data=data, 
@@ -331,13 +339,15 @@ print(data.names)
 
 ```
 # Test Function
+import pkg_resources
 import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
 
 ## Group Example:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoDiff(
   data=data, 
@@ -357,7 +367,8 @@ print(t_end - t_start)
 print(data.names)
     
 ## Group and Multiple Periods and RollColumnNames:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoDiff(
   data=data, 
@@ -377,7 +388,8 @@ print(t_end - t_start)
 print(data.names)
 
 ## No Group Example:
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.FE0_AutoDiff(
   data=data, 
@@ -428,13 +440,15 @@ print(data.names)
 
 ```
 # Test Function
+import pkg_resources
 import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
  
 # Data can be created using the R package RemixAutoML and function FakeDataGenerator
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = fe.AutoCalendarVariables(
   data=data, 
@@ -472,11 +486,13 @@ data.names
 
 ```
 # Example: datatable
+import pkg_resources
 import timeit
 import datatable as dt
 import retrofit
 from retrofit import FeatureEngineering as fe
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 Output = fe.FE1_DummyVariables(
   data=data, 
@@ -546,6 +562,7 @@ ArgsList = Output['ArgsList']
 
 ```
 # FE2_AutoDataParition
+import pkg_resources
 import timeit
 import datatable as dt
 import polars as pl
@@ -554,7 +571,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import utils as u
 
 # datatable random Example
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 DataSets = fe.FE2_AutoDataParition(
   data=data, 
@@ -596,7 +614,8 @@ TestData = DataSets['TestData']
 ArgsList = DataSets['ArgsList']
 
 # datatable time Example
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 DataSets = fe.FE2_AutoDataParition(
   data=data, 
@@ -692,6 +711,7 @@ ArgsList = DataSets['ArgsList']
 
 ```
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -700,7 +720,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Create partitioned data sets
 Data = fe.FE2_AutoDataParition(
@@ -758,6 +779,7 @@ ModelArgs = ml.ML0_Parameters(
 
 ```
 # ML0_GetModelData Example:
+import pkg_resources
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
@@ -769,7 +791,8 @@ from retrofit import MachineLearning as ml
 ############################################################################################
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -814,7 +837,8 @@ catboost_test = DataSets['test_data']
 ############################################################################################
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -859,7 +883,8 @@ xgboost_test = DataSets['test_data']
 ############################################################################################
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
@@ -994,6 +1019,7 @@ self.CompareModelsListNames = []
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -1082,6 +1108,7 @@ x.FitListNames
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -1090,7 +1117,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(
@@ -1167,6 +1195,7 @@ x.FitListNames
 
 ```
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -1175,7 +1204,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Dummify
 Output = fe.FE1_DummyVariables(
@@ -1271,6 +1301,7 @@ x.FitListNames
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -1279,7 +1310,8 @@ from retrofit import FeatureEngineering as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
 
 # Dummify
 Output = fe.FE1_DummyVariables(
