@@ -1383,7 +1383,9 @@ class RetroFit:
           if TempArgs.get('TargetType').lower() == 'regression':
             ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
           elif TempArgs.get('TargetType').lower() == 'classification':
-            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Probability')
+            temp = Model.predict(pred_data, prediction_type = 'Probability')
+            ScoreData['p0'] = temp[:,0]
+            ScoreData['p1'] = temp[:,1]
           elif TempArgs.get('TargetType').lower() == 'multiclass':
             ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
         else:
