@@ -1426,7 +1426,7 @@ class RetroFit:
             if not self.DataSets.get('ArgsList')['MultiClass'] is None:
               from datatable import join
               temp = self.DataSets.get('ArgsList')['MultiClass']
-              #temp.key = f"Predict_{TargetColumnName}"
+              temp.key = f"Predict_{TargetColumnName}"
               ScoreData[:, :, join(temp)]
               temp_x = f"Predict_{TargetColumnName}"
               del ScoreData[:, temp_x]
