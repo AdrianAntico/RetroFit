@@ -1428,7 +1428,7 @@ class RetroFit:
               #temp.key = f"Predict_{TargetColumnName}"
               ScoreData[:, :, join(temp)]
               temp_x = f"Predict_{TargetColumnName}"
-              del ScoreData[, temp_x]
+              del ScoreData[:, temp_x]
               ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
         else:
           if TempArgs.get('TargetType').lower() == 'regression':
