@@ -1253,7 +1253,9 @@ class RetroFit:
         else:
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
             self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-            TempArgs.get('AlgoArgs')['classes_count'] = self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count']
+            TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+            print(self.DataSets.get('ArgsList')['MultiClass'].shape[0])
+            print(TempArgs.get('AlgoArgs')['classes_count'])
           Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
         
         # Store Model
