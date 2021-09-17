@@ -457,9 +457,9 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
         # TargetType Parameters
         ###############################
         if ArgsList.get('TargetType').lower() == 'classification':
+          AlgoArgs['loss_function'] = 'Logloss'
+          AlgoArgs['eval_metric'] = 'Logloss'
           AlgoArgs['auto_class_weights'] = 'Balanced'
-          AlgoArgs['loss_function'] = 'CrossEntropy'
-          AlgoArgs['eval_metric'] = 'CrossEntropy'
         elif ArgsList.get('TargetType').lower() == 'multiclass':
           AlgoArgs['classes_count'] = 3
           AlgoArgs['loss_function'] = 'MCC'
@@ -1150,7 +1150,6 @@ class RetroFit:
       self.InterpretationListNames = []
       self.CompareModelsList = dict()
       self.CompareModelsListNames = []
-
     
     #################################################
     #################################################

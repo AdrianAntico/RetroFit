@@ -1208,7 +1208,7 @@ from retrofit import FeatureEngineering_old as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv')
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv')
 data = dt.fread(FilePath)
 
 # Create partitioned data sets
@@ -1233,7 +1233,7 @@ ModelData = ml.ML0_GetModelData(
   ArgsList = None,
   TargetColumnName = 'Adrian',
   NumericColumnNames = list(data.names[1:11]),
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+  CategoricalColumnNames = ['Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
   Threads = -1,
@@ -1241,8 +1241,8 @@ ModelData = ml.ML0_GetModelData(
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'Ftrl', 
-  TargetType = "Classification", 
+  Algorithms = 'Ftrl',
+  TargetType = "MultiClass",
   TrainMethod = "Train")
 
 # Initialize RetroFit
@@ -1262,7 +1262,7 @@ x.ML1_Single_Score(
 x.DataSetsNames
 
 # Scoring data
-x.DataSets.get('Scored_test_data_Ftrl_1')
+x.DataSets.get('Scored_test_data_Ftrl_1').names
 
 # Check ModelArgs Dict
 x.PrintAlgoArgs(Algo='Ftrl')
@@ -1281,25 +1281,27 @@ x.FitListNames
 </details>
 
 
-<details><summary>CatBoost Example</summary>
+<details><summary>CatBoost Examples</summary>
+<p>
+
+<details><summary>Regression</summary>
 <p>
 
 ```
 ####################################
-# CatBoost Example Usage
+# CatBoost Regression
 ####################################
 
 # Setup Environment
-import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import FeatureEngineering_old as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
 
 # Create partitioned data sets
@@ -1322,9 +1324,9 @@ ModelData = ml.ML0_GetModelData(
   ValidationData = DataFrames['ValidationData'],
   TestData = DataFrames['TestData'],
   ArgsList = None,
-  TargetColumnName = 'Leads',
-  NumericColumnNames = ['XREGS1', 'XREGS2', 'XREGS3'],
-  CategoricalColumnNames = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = list(data.names[1:11]),
+  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
   Threads = -1,
@@ -1367,6 +1369,99 @@ x.ModelListNames
 # List of model fitted names
 x.FitListNames
 ```
+
+</p>
+</details>
+
+
+<details><summary>Classification</summary>
+<p>
+
+```
+####################################
+# CatBoost Classification
+####################################
+
+# Setup Environment
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering_old as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'catboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = list(data.names[1:11]),
+  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'CatBoost', 
+  TargetType = "Regression", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'CatBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2], 
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'CatBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_CatBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'CatBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+```
+
+</p>
+</details>
 
 </p>
 </details>
