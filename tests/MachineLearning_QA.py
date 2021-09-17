@@ -482,8 +482,8 @@ ModelData = ml.ML0_GetModelData(
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'CatBoost', 
-  TargetType = 'MultiClass', 
+  Algorithms = 'CatBoost',
+  TargetType = 'MultiClass',
   TrainMethod = 'Train')
 
 # Update iterations to run quickly

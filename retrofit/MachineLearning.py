@@ -220,7 +220,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           TestData = TestData[:, :, join(temp)]
           del TestData[:, TargetColumnName]
           TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        temp.names = {TargetColumnName, 'Old'}
+        temp.names = {TargetColumnName: 'Old'}
 
       # Labels
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
