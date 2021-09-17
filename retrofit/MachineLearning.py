@@ -1423,11 +1423,12 @@ class RetroFit:
             ScoreData['p1'] = temp[:,1]
           elif TempArgs.get('TargetType').lower() == 'multiclass':
             ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
-            temp = self.DataSets.get('ArgsList')['MultiClass']
-            #temp.key = f"Predict_{TargetColumnName}"
-            ScoreData[:, :, join(temp)]
-            del ScoreData[, f"Predict_{TargetColumnName}"]
-            ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
+            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+              temp = self.DataSets.get('ArgsList')['MultiClass']
+              #temp.key = f"Predict_{TargetColumnName}"
+              ScoreData[:, :, join(temp)]
+              del ScoreData[, f"Predict_{TargetColumnName}"]
+              ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
         else:
           if TempArgs.get('TargetType').lower() == 'regression':
             return Model.predict(pred_data, prediction_type = 'RawFormulaVal')
