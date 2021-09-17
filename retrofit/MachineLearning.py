@@ -1427,7 +1427,7 @@ class RetroFit:
               from datatable import join
               temp = self.DataSets.get('ArgsList')['MultiClass']
               temp.key = f"Predict_{TargetColumnName}"
-              ScoreData[:, :, join(temp)]
+              ScoreData = ScoreData[:, :, join(temp)]
               temp_x = f"Predict_{TargetColumnName}"
               del ScoreData[:, temp_x]
               ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
