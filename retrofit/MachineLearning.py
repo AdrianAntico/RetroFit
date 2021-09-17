@@ -1424,6 +1424,7 @@ class RetroFit:
           elif TempArgs.get('TargetType').lower() == 'multiclass':
             ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
             if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+              from datatable import join
               temp = self.DataSets.get('ArgsList')['MultiClass']
               #temp.key = f"Predict_{TargetColumnName}"
               ScoreData[:, :, join(temp)]
