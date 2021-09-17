@@ -206,20 +206,21 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         temp = temp[:, TargetColumnName, by(TargetColumnName)]
         del temp[:, temp.names[1]]
         temp = temp.sort(TargetColumnName)
-        temp['New'] = np.arange(0,temp.shape[0], 1)
+        temp[f"Predict_{TargetColumnName}"] = np.arange(0,temp.shape[0], 1)
         temp.key = TargetColumnName
         ArgsList['MultiClass'] = temp
         TrainData = TrainData[:, :, join(temp)]
         del TrainData[:, TargetColumnName]
-        TrainData.names = {'New': TargetColumnName}
+        TrainData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
         if not ValidationData is None:
           ValidationData = ValidationData[:, :, join(temp)]
           del ValidationData[:, TargetColumnName]
-          ValidationData.names = {'New': TargetColumnName}
+          ValidationData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
         if not TestData is None:
           TestData = TestData[:, :, join(temp)]
           del TestData[:, TargetColumnName]
-          TestData.names = {'New': TargetColumnName}
+          TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
+        temp.names = {TargetColumnName, 'Old'}
 
       # Labels
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
@@ -1422,6 +1423,11 @@ class RetroFit:
             ScoreData['p1'] = temp[:,1]
           elif TempArgs.get('TargetType').lower() == 'multiclass':
             ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
+            temp = self.DataSets.get('ArgsList')['MultiClass']
+            #temp.key = f"Predict_{TargetColumnName}"
+            ScoreData[:, :, join(temp)]
+            del ScoreData[, f"Predict_{TargetColumnName}"]
+            ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
         else:
           if TempArgs.get('TargetType').lower() == 'regression':
             return Model.predict(pred_data, prediction_type = 'RawFormulaVal')

@@ -488,7 +488,6 @@ ModelArgs = ml.ML0_Parameters(
 
 # Update iterations to run quickly
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
-ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = 4
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
