@@ -1427,7 +1427,8 @@ class RetroFit:
               temp = self.DataSets.get('ArgsList')['MultiClass']
               #temp.key = f"Predict_{TargetColumnName}"
               ScoreData[:, :, join(temp)]
-              del ScoreData[, f"Predict_{TargetColumnName}"]
+              temp_x = f"Predict_{TargetColumnName}"
+              del ScoreData[, temp_x]
               ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
         else:
           if TempArgs.get('TargetType').lower() == 'regression':
