@@ -206,7 +206,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         temp = temp[:, TargetColumnName, by(TargetColumnName)]
         del temp[:, temp.names[1]]
         temp = temp.sort(TargetColumnName)
-        temp['New'] = np.arange(1,temp.shape[0]+1,1)
+        temp['New'] = np.arange(0,temp.shape[0], 1)
         temp.key = TargetColumnName
         ArgsList['MultiClass'] = temp
         TrainData = TrainData[:, :, join(temp)]
@@ -1253,8 +1253,8 @@ class RetroFit:
         elif TempArgs.get('TargetType').lower() == 'classification':
           Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
         elif TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0] + 1
-          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0] + 1
+          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
           Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
         
         # Store Model
