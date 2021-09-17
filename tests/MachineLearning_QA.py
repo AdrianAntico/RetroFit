@@ -492,9 +492,6 @@ ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 
-x.ModelArgs.get('CatBoost').get('AlgoArgs')['loss_function'] = 'MultiClassOneVsAll'
-x.ModelArgs.get('CatBoost').get('AlgoArgs')['eval_metric'] = 'MultiClassOneVsAll'
-
 # Train Model
 x.ML1_Single_Train(Algorithm = 'CatBoost')
 
