@@ -201,7 +201,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           del temp2
         if not TestData is None:
           temp3 = TestData[:, TargetColumnName, by(TargetColumnName)]
-          temp.rbind(temp2)
+          temp.rbind(temp3)
           del temp3
         temp = temp[:, TargetColumnName, by(TargetColumnName)]
         del temp[:, temp.names[1]]
