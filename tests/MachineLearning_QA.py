@@ -440,6 +440,7 @@ x.FitListNames
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
@@ -448,7 +449,7 @@ from retrofit import FeatureEngineering_old as fe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
 data = dt.fread(FilePath)
 
 # Create partitioned data sets
@@ -473,7 +474,7 @@ ModelData = ml.ML0_GetModelData(
   ArgsList = None,
   TargetColumnName = 'Adrian',
   NumericColumnNames = list(data.names[1:11]),
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+  CategoricalColumnNames = ['Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
   Threads = -1,
@@ -482,7 +483,7 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'CatBoost', 
-  TargetType = 'Classification', 
+  TargetType = 'MultiClass', 
   TrainMethod = 'Train')
 
 # Update iterations to run quickly
@@ -491,8 +492,8 @@ ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 
-x.ModelArgs.get('CatBoost').get('AlgoArgs')['loss_function'] = 'Logloss'
-x.ModelArgs.get('CatBoost').get('AlgoArgs')['eval_metric'] = 'Logloss'
+x.ModelArgs.get('CatBoost').get('AlgoArgs')['loss_function'] = 'MultiClassOneVsAll'
+x.ModelArgs.get('CatBoost').get('AlgoArgs')['eval_metric'] = 'MultiClassOneVsAll'
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'CatBoost')

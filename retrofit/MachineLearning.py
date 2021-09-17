@@ -123,7 +123,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     # Import datatable methods
     if InputFrame.lower() == 'datatable':
       import datatable as dt
-      from datatable import sort, f, by, ifelse
+      from datatable import sort, f, by, ifelse, join
 
     # Import polars methods
     if InputFrame.lower() == 'polars':
@@ -191,7 +191,37 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       if not TestData is None:
         test = TestData[:, SD].to_pandas()
 
-      # label
+      # Categorical target check
+      if TrainData.types[TrainData.colindex(TargetColumnName)] == dt.Type.str32:
+        import numpy as np
+        temp = TrainData[:, TargetColumnName, by(TargetColumnName)]
+        if not ValidationData is None:
+          temp2 = ValidationData[:, TargetColumnName, by(TargetColumnName)]
+          temp.rbind(temp2)
+          del temp2
+        if not TestData is None:
+          temp3 = TestData[:, TargetColumnName, by(TargetColumnName)]
+          temp.rbind(temp2)
+          del temp3
+        temp = temp[:, TargetColumnName, by(TargetColumnName)]
+        del temp[:, temp.names[1]]
+        temp = temp.sort(TargetColumnName)
+        temp['New'] = np.arange(1,temp.shape[0]+1,1)
+        temp.key = TargetColumnName
+        ArgsList['MultiClass'] = temp
+        TrainData = TrainData[:, :, join(temp)]
+        del TrainData[:, TargetColumnName]
+        TrainData.names = {'New': TargetColumnName}
+        if not ValidationData is None:
+          ValidationData = ValidationData[:, :, join(temp)]
+          del ValidationData[:, TargetColumnName]
+          ValidationData.names = {'New': TargetColumnName}
+        if not TestData is None:
+          TestData = TestData[:, :, join(temp)]
+          del TestData[:, TargetColumnName]
+          TestData.names = {'New': TargetColumnName}
+
+      # Labels
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
       if not ValidationData is None:
         validationlabel = ValidationData[:, TargetColumnName].to_pandas()
@@ -462,8 +492,8 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
           AlgoArgs['auto_class_weights'] = 'Balanced'
         elif ArgsList.get('TargetType').lower() == 'multiclass':
           AlgoArgs['classes_count'] = 3
-          AlgoArgs['loss_function'] = 'MCC'
-          AlgoArgs['eval_metric'] = 'MCC'
+          AlgoArgs['loss_function'] = 'MultiClassOneVsAll'
+          AlgoArgs['eval_metric'] = 'MultiClassOneVsAll'
         elif ArgsList.get('TargetType').lower() == 'regression':
           AlgoArgs['loss_function'] = 'RMSE'
           AlgoArgs['eval_metric'] = 'RMSE'
