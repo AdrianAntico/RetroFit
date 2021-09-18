@@ -314,7 +314,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         ArgsList = Output['ArgsList']
 
       # Target label
-      if type(TrainData[:, TargetColumnName]) == dt.Type.str32
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
       if not ValidationData is None:
         validationlabel = ValidationData[:, TargetColumnName].to_pandas()
