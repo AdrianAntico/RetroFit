@@ -665,7 +665,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
         if AlgoArgs['tree_method'] == 'gpu_hist':
           AlgoArgs['sampling_method'] = 'uniform'
 
-        # Classification
+        # Target Dependent Args
         if ArgsList.get('TargetType').lower() == 'classification':
           AlgoArgs['objective'] = 'binary:logistic'
           AlgoArgs['eval_metric'] = 'auc'
@@ -690,6 +690,17 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
         import lightgbm as lgbm
         AlgoArgs = dict()
         
+        # Target Dependent Args
+        if ArgsList.get('TargetType').lower() == 'classification':
+          AlgoArgs['objective'] = 'binary:logistic'
+          AlgoArgs['metric'] = 'auc'
+        elif ArgsList.get('TargetType').lower() == 'regression':
+          AlgoArgs['objective'] = 'regression'
+          AlgoArgs['metric'] = 'rmse'
+        elif ArgsList.get('TargetType').lower() == 'multiclass':
+          AlgoArgs['objective'] = 'multiclassova'
+          AlgoArgs['metric'] = 'multi_logloss'
+
         # Tuning Args
         if TrainMethod.lower() == 'train':
           AlgoArgs['num_iterations'] = 1000
@@ -713,8 +724,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
         # Args
         AlgoArgs['task'] = 'train'
         AlgoArgs['device_type'] = 'CPU'
-        AlgoArgs['objective'] = 'regression'
-        AlgoArgs['metric'] = 'rmse'
         AlgoArgs['boosting'] = 'gbdt'
         AlgoArgs['lambda_l1'] = 0.0
         AlgoArgs['lambda_l2'] = 0.0
