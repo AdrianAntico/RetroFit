@@ -1,3 +1,10 @@
+# Module: PandasFE
+# Author: Adrian Antico <adrianantico@gmail.com>
+# License: MIT
+# Release: retrofit 0.1.4
+# Last modified : 2021-09-15
+
+
 import pandas as pd
 from retrofit.FeatureEngineering import FeatureEngineering
 
