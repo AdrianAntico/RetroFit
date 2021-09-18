@@ -1515,32 +1515,48 @@ class RetroFit:
           pred_data = self.DataSets[DataName]
 
         # Generate preds and add to datatable frame
-        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-          data = pred_data, 
-          output_margin=False, 
-          pred_leaf=False, 
-          pred_contribs=False,
-          approx_contribs=False, 
-          pred_interactions=False, 
-          validate_features=True, 
-          training=False, 
-          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-          strict_shape=False)
+        if TempArgs.get('TargetType').lower() != 'multiclass':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False,
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False)
+          
+          # Classification
+          if TempArgs.get('TargetType').lower() == 'classification':
+            ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+            ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+          
+        else:
+          preds = dt.Frame(Model.predict(
+            data = pred_data, 
+            output_margin=False, 
+            pred_leaf=False, 
+            pred_contribs=False,
+            approx_contribs=False, 
+            pred_interactions=False, 
+            validate_features=True, 
+            training=False, 
+            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+            strict_shape=False))
 
-        # MultiClass Case
-        if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-          from datatable import join
-          temp = self.DataSets.get('ArgsList')['MultiClass']
-          temp.key = f"Predict_{TargetColumnName}"
-          ScoreData = ScoreData[:, :, join(temp)]
-          temp_x = f"Predict_{TargetColumnName}"
-          del ScoreData[:, temp_x]
-          ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
-
-        # Non regression cases
-        if TempArgs.get('TargetType').lower() == 'classification':
-          ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-          ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+          # MultiClass Case
+          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+            from datatable import cbind
+            temp = self.DataSets.get('ArgsList')['MultiClass']
+            counter = 0
+            for val in temp['Old'].to_list()[0]:
+              preds.names = {f"C{counter}": val}
+              counter += 1
+  
+            # Combine ScoreData and preds
+            ScoreData.cbind(preds)
 
         # Return preds
         if not NewData is None:
@@ -1577,24 +1593,31 @@ class RetroFit:
         else:
           ScoreData = NewData
 
-        # Generate preds and add to datatable frame
+        # Subset score data columns
         ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
-        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
         
-        # MultiClass Case
-        if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-          from datatable import join
-          temp = self.DataSets.get('ArgsList')['MultiClass']
-          temp.key = f"Predict_{TargetColumnName}"
-          ScoreData = ScoreData[:, :, join(temp)]
-          temp_x = f"Predict_{TargetColumnName}"
-          del ScoreData[:, temp_x]
-          ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
-        
-        # Non regression cases
-        if TempArgs.get('TargetType').lower() == 'classification':
-          ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-          ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+        # Regression and Classification
+        if TempArgs.get('TargetType').lower() != 'multiclass':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
+          
+          # Non regression cases
+          if TempArgs.get('TargetType').lower() == 'classification':
+            ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+            ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+
+        # MultiClass
+        else:
+          preds = dt.Frame(Model.predict(data = ScoreData))
+          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+            from datatable import cbind
+            temp = self.DataSets.get('ArgsList')['MultiClass']
+            counter = 0
+            for val in temp['Old'].to_list()[0]:
+              preds.names = {f"C{counter}": val}
+              counter += 1
+  
+            # Combine ScoreData and preds
+            ScoreData.cbind(preds)
 
         # Return preds
         if not NewData is None:
