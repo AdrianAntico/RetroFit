@@ -686,6 +686,7 @@ x.FitListNames
 ####################################
 
 # Setup Environment
+import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by

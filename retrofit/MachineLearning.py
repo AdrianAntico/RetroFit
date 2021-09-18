@@ -1485,13 +1485,13 @@ class RetroFit:
           pred_interactions=False, 
           validate_features=True, 
           training=False, 
-          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+          iteration_range=(0, x.FitList[f"XGBoost{str(len(x.FitList))}"].best_iteration), 
           strict_shape=False)
 
         # Non regression cases
         if TempArgs.get('TargetType').lower() == 'classification':
           ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-          ScoreData['p0'] = 1 - ScoreData['p1']
+          ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
 
         # Return preds
         if not NewData is None:
@@ -1534,7 +1534,7 @@ class RetroFit:
         # Non regression cases
         if TempArgs.get('TargetType').lower() == 'classification':
           ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-          ScoreData['p0'] = 1 - ScoreData['p1']
+          ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
 
         # Return preds
         if not NewData is None:
