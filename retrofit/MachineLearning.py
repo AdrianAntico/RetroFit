@@ -1454,6 +1454,7 @@ class RetroFit:
 
         # Environment
         import xgboost as xgb
+        from datatable import f
 
         # Extract Model
         if not ModelName is None:
@@ -1508,6 +1509,7 @@ class RetroFit:
         
         # Environment
         import lightgbm as lgbm
+        from datatable import f
         
         # Extract Model
         if not ModelName is None:
