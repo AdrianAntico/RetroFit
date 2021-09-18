@@ -1248,7 +1248,7 @@ class RetroFit:
       if TempArgs.get('Algorithms').lower() == 'ftrl':
 
         # Setup Environment
-        import datatable
+        import datatable as dt
         from datatable import f
         from datatable.models import Ftrl
 
@@ -1384,7 +1384,7 @@ class RetroFit:
         TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
       # Setup Environment
-      import datatable
+      import datatable as dt
       from datatable.models import Ftrl
 
       #################################################
@@ -1635,7 +1635,7 @@ class RetroFit:
     
     # regression metrics helper
     def _regression_metrics(self, _FitName = None, y_true = None, y_pred = None):
-      import datatable
+      import datatable as dt
       from datetime import datetime
       from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
       Metrics = dt.Frame([self.FitList[_FitName]])
