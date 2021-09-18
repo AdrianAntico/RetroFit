@@ -97,6 +97,20 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     Processing='catboost'
     InputFrame='datatable'
     """
+    
+    # For making copies of lists so originals aren't modified
+    import copy
+    
+    # Import datatable methods
+    if InputFrame.lower() == 'datatable':
+      import datatable as dt
+      from datatable import sort, f, by, ifelse, join
+
+    # Import polars methods
+    if InputFrame.lower() == 'polars':
+      import polars as pl
+      from polars import col
+      from polars.lazy import col
 
     # ArgsList Collection
     if not ArgsList is None:
@@ -151,20 +165,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
           TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
         temp.names = {TargetColumnName: 'Old'}
         return dict(TrainData = TrainData, ValidationData = ValidationData, TestData = TestData, ArgsList = ArgsList)
-
-    # For making copies of lists so originals aren't modified
-    import copy
-    
-    # Import datatable methods
-    if InputFrame.lower() == 'datatable':
-      import datatable as dt
-      from datatable import sort, f, by, ifelse, join
-
-    # Import polars methods
-    if InputFrame.lower() == 'polars':
-      import polars as pl
-      from polars import col
-      from polars.lazy import col
 
     # Convert to datatable
     if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
