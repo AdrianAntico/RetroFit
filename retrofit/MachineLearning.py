@@ -97,7 +97,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     Processing='catboost'
     InputFrame='datatable'
     """
-    
+
     # ArgsList Collection
     if not ArgsList is None:
       TargetColumnName = ArgsList['TargetColumnName']
@@ -116,6 +116,41 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         WeightColumnName=WeightColumnName,
         Threads=Threads,
         Processing=Processing)
+    
+    # Target Variable Conversion for Multiclass
+    if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
+      def MultiClassTargetToInt(TrainData=None, ValidationData=None, TestData=None, TargetColumnName=None, ArgsList=None):
+        import numpy as np
+        import datatable as dt
+        from datatable import f, by, rbind, join
+        temp = TrainData[:, TargetColumnName, by(TargetColumnName)]
+        if not ValidationData is None:
+          temp2 = ValidationData[:, TargetColumnName, by(TargetColumnName)]
+          temp.rbind(temp2)
+          del temp2
+        if not TestData is None:
+          temp3 = TestData[:, TargetColumnName, by(TargetColumnName)]
+          temp.rbind(temp3)
+          del temp3
+        temp = temp[:, TargetColumnName, by(TargetColumnName)]
+        del temp[:, temp.names[1]]
+        temp = temp.sort(TargetColumnName)
+        temp[f"Predict_{TargetColumnName}"] = np.arange(0,temp.shape[0], 1)
+        temp.key = TargetColumnName
+        ArgsList['MultiClass'] = temp
+        TrainData = TrainData[:, :, join(temp)]
+        del TrainData[:, TargetColumnName]
+        TrainData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
+        if not ValidationData is None:
+          ValidationData = ValidationData[:, :, join(temp)]
+          del ValidationData[:, TargetColumnName]
+          ValidationData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
+        if not TestData is None:
+          TestData = TestData[:, :, join(temp)]
+          del TestData[:, TargetColumnName]
+          TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
+        temp.names = {TargetColumnName: 'Old'}
+        return dict(TrainData = TrainData, ValidationData = ValidationData, TestData = TestData, ArgsList = ArgsList)
 
     # For making copies of lists so originals aren't modified
     import copy
@@ -192,35 +227,12 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         test = TestData[:, SD].to_pandas()
 
       # Categorical target check
-      if TrainData.types[TrainData.colindex(TargetColumnName)] == dt.Type.str32:
-        import numpy as np
-        temp = TrainData[:, TargetColumnName, by(TargetColumnName)]
-        if not ValidationData is None:
-          temp2 = ValidationData[:, TargetColumnName, by(TargetColumnName)]
-          temp.rbind(temp2)
-          del temp2
-        if not TestData is None:
-          temp3 = TestData[:, TargetColumnName, by(TargetColumnName)]
-          temp.rbind(temp3)
-          del temp3
-        temp = temp[:, TargetColumnName, by(TargetColumnName)]
-        del temp[:, temp.names[1]]
-        temp = temp.sort(TargetColumnName)
-        temp[f"Predict_{TargetColumnName}"] = np.arange(0,temp.shape[0], 1)
-        temp.key = TargetColumnName
-        ArgsList['MultiClass'] = temp
-        TrainData = TrainData[:, :, join(temp)]
-        del TrainData[:, TargetColumnName]
-        TrainData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        if not ValidationData is None:
-          ValidationData = ValidationData[:, :, join(temp)]
-          del ValidationData[:, TargetColumnName]
-          ValidationData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        if not TestData is None:
-          TestData = TestData[:, :, join(temp)]
-          del TestData[:, TargetColumnName]
-          TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        temp.names = {TargetColumnName: 'Old'}
+      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
+        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
+        TrainData = Output['TrainData']
+        ValidationData = Output['ValidationData']
+        TestData = Output['TestData']
+        ArgsList = Output['ArgsList']
 
       # Labels
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
@@ -285,7 +297,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         trainweightdata = None
         validationweightdata = None
         testweightdata = None
-        
+
       # data
       train = TrainData[:, SD].to_pandas()
       if not ValidationData is None:
@@ -293,7 +305,16 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       if not TestData is None:
         test = TestData[:, SD].to_pandas()
 
-      # label
+      # Categorical target check
+      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
+        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
+        TrainData = Output['TrainData']
+        ValidationData = Output['ValidationData']
+        TestData = Output['TestData']
+        ArgsList = Output['ArgsList']
+
+      # Target label
+      if type(TrainData[:, TargetColumnName]) == dt.Type.str32
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
       if not ValidationData is None:
         validationlabel = ValidationData[:, TargetColumnName].to_pandas()
@@ -351,6 +372,14 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
         validation = ValidationData[:, SD].to_pandas()
       if not TestData is None:
         test = TestData[:, SD].to_pandas()
+
+      # Categorical target check
+      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
+        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
+        TrainData = Output['TrainData']
+        ValidationData = Output['ValidationData']
+        TestData = Output['TestData']
+        ArgsList = Output['ArgsList']
 
       # label
       trainlabel = TrainData[:, TargetColumnName].to_pandas()
@@ -1489,6 +1518,16 @@ class RetroFit:
           iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
           strict_shape=False)
 
+        # MultiClass Case
+        if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+          from datatable import join
+          temp = self.DataSets.get('ArgsList')['MultiClass']
+          temp.key = f"Predict_{TargetColumnName}"
+          ScoreData = ScoreData[:, :, join(temp)]
+          temp_x = f"Predict_{TargetColumnName}"
+          del ScoreData[:, temp_x]
+          ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
+
         # Non regression cases
         if TempArgs.get('TargetType').lower() == 'classification':
           ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
@@ -1532,6 +1571,16 @@ class RetroFit:
         # Generate preds and add to datatable frame
         ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
         ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
+        
+        # MultiClass Case
+        if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+          from datatable import join
+          temp = self.DataSets.get('ArgsList')['MultiClass']
+          temp.key = f"Predict_{TargetColumnName}"
+          ScoreData = ScoreData[:, :, join(temp)]
+          temp_x = f"Predict_{TargetColumnName}"
+          del ScoreData[:, temp_x]
+          ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
         
         # Non regression cases
         if TempArgs.get('TargetType').lower() == 'classification':

@@ -682,7 +682,7 @@ x.ModelListNames
 x.FitListNames
 
 ####################################
-# XGBoost Example Usage
+# XGBoost Regression
 ####################################
 
 # Setup Environment
@@ -776,6 +776,295 @@ x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
+
+####################################
+# XGBoost Regression
+####################################
+
+# Setup Environment
+import pkg_resources
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering_old as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Features
+Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'xgboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'XGBoost', 
+  TargetType = "Regression", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'XGBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'XGBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_XGBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'XGBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
+####################################
+# XGBoost Classification
+####################################
+
+# Setup Environment
+import pkg_resources
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering_old as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
+data = dt.fread(FilePath)
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Features
+Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'xgboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'XGBoost', 
+  TargetType = "Classification", 
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'XGBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'XGBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_XGBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'XGBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
+####################################
+# XGBoost MultiClass
+####################################
+
+# Setup Environment
+import pkg_resources
+import timeit
+import datatable as dt
+from datatable import sort, f, by
+import retrofit
+from retrofit import FeatureEngineering_old as fe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
+data = dt.fread(FilePath)
+
+# Dummify
+Output = fe.FE1_DummyVariables(
+  data = data, 
+  ArgsList = None, 
+  CategoricalColumnNames = ['Factor_2','Factor_3'],
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+data = Output['data']
+data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
+
+# Create partitioned data sets
+DataFrames = fe.FE2_AutoDataParition(
+  data = data, 
+  ArgsList = None, 
+  DateColumnName = None, 
+  PartitionType = 'random', 
+  Ratios = [0.7,0.2,0.1], 
+  ByVariables = None, 
+  Sort = False, 
+  Processing = 'datatable', 
+  InputFrame = 'datatable', 
+  OutputFrame = 'datatable')
+
+# Features
+Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
+
+# Prepare modeling data sets
+ModelData = ml.ML0_GetModelData(
+  Processing = 'xgboost',
+  TrainData = DataFrames['TrainData'],
+  ValidationData = DataFrames['ValidationData'],
+  TestData = DataFrames['TestData'],
+  ArgsList = None,
+  TargetColumnName = 'Adrian',
+  NumericColumnNames = Features,
+  CategoricalColumnNames = None,
+  TextColumnNames = None,
+  WeightColumnName = None,
+  Threads = -1,
+  InputFrame = 'datatable')
+
+# Get args list for algorithm and target type
+ModelArgs = ml.ML0_Parameters(
+  Algorithms = 'XGBoost',
+  TargetType = "Classification",
+  TrainMethod = "Train")
+
+# Update iterations to run quickly
+ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
+
+# Initialize RetroFit
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+
+# Train Model
+x.ML1_Single_Train(Algorithm = 'XGBoost')
+
+# Score data
+x.ML1_Single_Score(
+  DataName = x.DataSetsNames[2],
+  ModelName = x.ModelListNames[0],
+  Algorithm = 'XGBoost',
+  NewData = None)
+
+# Scoring data names
+x.DataSetsNames
+
+# Scoring data
+x.DataSets.get('Scored_test_data_XGBoost_1')
+
+# Check ModelArgs Dict
+x.PrintAlgoArgs(Algo = 'XGBoost')
+
+# List of model names
+x.ModelListNames
+
+# List of model fitted names
+x.FitListNames
+
 
 ####################################
 # LightGBM Example Usage
