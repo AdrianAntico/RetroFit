@@ -1353,20 +1353,21 @@ class RetroFit:
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
 
+        # Update args for multiclass
+        if TempArgs.get('TargetType').lower() == 'multiclass':
+          self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          temp_args.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+
         # Create modified args
         import copy
         temp_args = copy.deepcopy(TempArgs)
         del temp_args['AlgoArgs']['num_iterations']
         del temp_args['AlgoArgs']['early_stopping_round']
-        
-        # Update args for multiclass
-        if TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-        
+
         # Initialize model
         Model = LGBMModel(**temp_args.get('AlgoArgs'))
-        
+
         # Store Model
         self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
@@ -1624,7 +1625,7 @@ class RetroFit:
             for val in temp['Old'].to_list()[0]:
               preds.names = {f"C{counter}": val}
               counter += 1
-  
+
             # Combine ScoreData and preds
             ScoreData.cbind(preds)
 
