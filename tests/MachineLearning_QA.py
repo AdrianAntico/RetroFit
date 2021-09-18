@@ -445,6 +445,11 @@ import timeit
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
+
+from retrofit import FeatureEngineering as fe
+x = fe.FeatureEngineering()
+x.FE0_AutoLags()
+
 from retrofit import FeatureEngineering_old as fe
 from retrofit import MachineLearning as ml
 

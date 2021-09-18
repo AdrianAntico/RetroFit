@@ -4,7 +4,7 @@
 # Release: retrofit 0.1.4
 # Last modified : 2021-09-15
 
-from _typeshed import NoneType
+#from _typeshed import NoneType
 import datatable as dt
 from datatable import sort, f, by, ifelse
 import copy
