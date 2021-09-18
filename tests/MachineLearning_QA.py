@@ -1163,7 +1163,7 @@ x.FitListNames
 
 
 ####################################
-# LightGBM Classification
+# LightGBM MultiClass
 ####################################
 
 # Setup Environment
@@ -1256,3 +1256,4 @@ x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
+
