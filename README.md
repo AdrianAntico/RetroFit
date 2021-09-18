@@ -934,7 +934,6 @@ lightgbm_test = DataSets['test_data']
 
 
 
-
 ### ML1 Machine Learning: RetroFit Class
 <p>
 
@@ -942,7 +941,7 @@ lightgbm_test = DataSets['test_data']
 <p>
 
 
-<details><summary>Class Meta</summary>
+<details><summary>Class Meta Information</summary>
 <p>
 
 
