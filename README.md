@@ -2101,7 +2101,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>Classification</summary>
+<details><summary>MultiClass</summary>
 <p>
 
 ```
