@@ -1316,8 +1316,8 @@ class RetroFit:
 
         # Update args for multiclass
         if TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          self.ModelArgs.get('XGBoost').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
 
         # Initialize model
         Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
@@ -1352,8 +1352,8 @@ class RetroFit:
         
         # Update args for multiclass
         if TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
         
         # Initialize model
         Model = LGBMModel(**temp_args.get('AlgoArgs'))
