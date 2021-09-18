@@ -445,17 +445,15 @@ import timeit
 import datatable as dt
 from datatable import sort, f, by
 import retrofit
-
-from retrofit import FeatureEngineering as fe
-x = fe.FeatureEngineering()
-x.FE0_AutoLags()
-
-from retrofit import FeatureEngineering_old as fe
-from retrofit import MachineLearning as ml
+import retrofit.DatatableFE as dtfe
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
+
+# 
+dtfe.
+
 
 # Create partitioned data sets
 DataFrames = fe.FE2_AutoDataParition(

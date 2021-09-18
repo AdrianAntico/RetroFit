@@ -24,8 +24,7 @@ class FE(FeatureEngineering):
         LagPeriods=1,
         ImputeValue=-1,
         Sort=True,
-        use_saved_args=False,
-    ):
+        use_saved_args=False):
         """
         # TODO:  Update doc string and examples.  Only use Datatable in examples.
         # Goal:
@@ -160,637 +159,637 @@ class FE(FeatureEngineering):
 
         return data
 
-
-def FE0_AutoRollStats(
-    self,
-    data=None,
-    RollColumnNames=None,
-    DateColumnName=None,
-    ByVariables=None,
-    MovingAvg_Periods=None,
-    MovingSD_Periods=None,
-    MovingMin_Periods=None,
-    MovingMax_Periods=None,
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False,
-):
-    """
-    # TODO: Update doc strings and examples to only use datatable.
-    # Goal:
-    Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
-
-    # Output
-    Return a datatable, polars frame, or pandas frame with new rolling statistics columns
-
-    # Parameters
-    data:             Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    RollColumnNames:  A list of columns that will be lagged
-    DateColumnName:   Primary date column used for sorting
-    ByVariables:      Columns to partition over
-    Moving*_Periods:  List of integers for look back window
-    ImputeValue:      Value to fill the NA's for beginning of series
-    Sort:             Sort the Frame before computing the lags - if you're data is sorted set this to False
-
-    # QA AutoRollStats
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-
-    ## No Group Example
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    ## Group and Multiple Periods and RollColumnNames:
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    ## No Group Example:
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    # QA: No Group Case: Step through function
-    InputFrame='datatable'
-    OutputFrame='datatable'
-    MovingAvg_Periods = 2
-    MovingSD_Periods = 2
-    MovingMin_Periods = 2
-    MovingMax_Periods = 2
-    RollColumnNames = 'Leads'
-    scns = 'Leads'
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = None
-    ns = 1
-    ImputeValue = -1
-    Sort = True
-
-    # QA: Group Case: Step through function
-    InputFrame='datatable'
-    OutputFrame='datatable'
-    MovingAvg_Periods = 2
-    MovingSD_Periods = 2
-    MovingMin_Periods = 2
-    MovingMax_Periods = 2
-    RollColumnNames = 'Leads'
-    scns = 'Leads'
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-    ns = 1
-    ImputeValue = -1
-    Sort = True
-    """
-
-    # ArgsList Collection
-    if use_saved_args:
-        RollColumnNames = self.roll_args.get("RollColumnNames")
-        DateColumnName = self.roll_args.get("DateColumnName")
-        ByVariables = self.roll_args.get("ByVariables")
-        MovingAvg_Periods = self.roll_args.get("MovingAvg_Periods")
-        MovingSD_Periods = self.roll_args.get("MovingSD_Periods")
-        MovingMin_Periods = self.roll_args.get("MovingMin_Periods")
-        MovingMax_Periods = self.roll_args.get("MovingMax_Periods")
-        ImputeValue = self.roll_args.get("ImputeValue")
-
-    self._last_roll_args = locals()
-
-    # Ensure List
-    if isinstance(ByVariables, str):
-        ByVariables = [ByVariables]
-    elif not isinstance(ByVariables, (list, type(None))):
-        raise Exception("ByVariables should be a string or a list")
-
-    if isinstance(RollColumnNames, str):
-        RollColumnNames = [RollColumnNames]
-    elif not isinstance(ByVariables, (list, type(None))):
-        raise Exception("RollColumnNames should be a string or a list")
-
-    if isinstance(MovingAvg_Periods, str):
-        MovingAvg_Periods = [MovingAvg_Periods]
-    elif isinstance(MovingAvg_Periods, (list, type(None))):
-        raise Exception("MovingAvg_Periods should be a string or a list")
-
-    if isinstance(MovingSD_Periods, str):
-        MovingSD_Periods = [MovingSD_Periods]
-    elif isinstance(MovingSD_Periods, (list, type(None))):
-        raise Exception("MovingSD_Periods should be a string or a list")
-
-    if isinstance(MovingMin_Periods, str):
-        MovingMin_Periods = [MovingMin_Periods]
-    elif isinstance(MovingMin_Periods, (list, type(None))):
-        raise Exception("MovingMin_Periods should be a string or a list")
-
-    if isinstance(MovingMax_Periods, str):
-        MovingMax_Periods = [MovingMax_Periods]
-    elif isinstance(MovingMax_Periods, (list, type(None))):
-        raise Exception("MovingMax_Periods should be a string or a list")
-
-    # Sort data
-    if Sort:
-        if ByVariables:
-            SortCols = copy.copy(ByVariables)
-            SortCols.extend(DateColumnName)
-            rev = [True for t in range(len(SortCols))]
-            data = data[:, :, sort(SortCols, reverse=rev)]
-        else:
-            data = data[:, :, sort(DateColumnName, reverse=True)]
-
-    # Build lags to max window value
-    MaxVal = max(
-        max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)
-    )
-
-    # processing
-    for rcn in RollColumnNames:
-        for ns in range(1, MaxVal + 1):
-
-            # Constants
-            Ref = str(ns) + "_" + rcn
-            Ref1 = "TEMP__Lag_" + Ref
-
-            # Generate Lags for rowmean, rowsd, rowmin, rowmax
-            if ByVariables:
-                data = data[
-                    :, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)}), by(ByVariables)
-                ]
-            else:
-                data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)})]
-
-            # Rolling Mean
-            if ns in MovingAvg_Periods:
-                Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
-                data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
-
-            # Rolling SD
-            if ns in MovingSD_Periods:
-                Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
-                data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
-
-            # Rolling Min
-            if ns in MovingMin_Periods:
-                Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
-                data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
-
-            # Rolling Max
-            if ns in MovingMax_Periods:
-                Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
-                data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
-
-        # Remove Temporary Lagged Columns
-        del data[:, [zzz for zzz in data.names if "TEMP__Lag_" in zzz]]
-
-    # Return data
-    return data
-
-
-def FE0_AutoDiff(
-    data=None,
-    ArgsList=None,
-    DateColumnName=None,
-    ByVariables=None,
-    DiffNumericVariables=None,
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    Processing="datatable",
-    InputFrame="datatable",
-    OutputFrame="datatable",
-):
-
-    """
-    # Goal:
-    Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
-
-    # Output
-    Return a datatable, polars frame, or pandas frame with new difference columns
-
-    # Parameters
-    data:                 Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    DateColumnName:       Primary date column used for sorting
-    ByVariables:          Columns to partition over
-    DiffNumericVariables: Numeric variable name scalar or list
-    DiffDateVariables:    Date variable name scalar or list
-    DiffGroupVariables:   Categorical variable name scalar or list
-    NLag1:                Default 0. 0 means the current value - NLag2_Current_Value, otherwise NLag1_Current_Value - NLag2_Current_Value
-    NLag2:                Default 1. 1 means a lag1 of the current value
-    Sort:                 True or False
-    Processing:           'datatable' or 'polars'. Choose the package you want to do your processing
-    InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
-
-    # QA AutoDiff
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-
-    ## Group Example:
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    ## Group and Multiple Periods and RollColumnNames:
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    ## No Group Example:
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    print(data.names)
-
-    # QA: No Group Case: Step through function
-    data=data
-    ArgsList=None
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = None
-    DiffNumericVariables = 'Leads'
-    DiffDateVariables = 'CalendarDateColumn'
-    DiffGroupVariables = None
-    NLag1 = 0
-    NLag2 = 1
-    Sort=True
-    InputFrame = 'datatable'
-    OutputFrame = 'datatable'
-    rcn = 'Leads'
-
-    # QA: Group Case: Step through function
-    data=data
-    ArgsList=None
-    DateColumnName = 'CalendarDateColumn'
-    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-    DiffNumericVariables = 'Leads'
-    DiffDateVariables = 'CalendarDateColumn'
-    DiffGroupVariables = None
-    NLag1 = 0
-    NLag2 = 1
-    Sort=True
-    InputFrame = 'datatable'
-    OutputFrame = 'datatable'
-    rcn = 'Leads'
-    """
-
-    # ArgsList Collection
-    if not ArgsList is None:
-        DateColumnName = ArgsList["DateColumnName"]
-        ByVariables = ArgsList["ByVariables"]
-        DiffNumericVariables = ArgsList["DiffNumericVariables"]
-        DiffDateVariables = ArgsList["DiffDateVariables"]
-        DiffGroupVariables = ArgsList["DiffGroupVariables"]
-        NLag1 = ArgsList["NLag1"]
-        NLag2 = ArgsList["NLag2"]
-    else:
-        ArgsList = dict(
-            DateColumnName=DateColumnName,
-            ByVariables=ByVariables,
-            DiffNumericVariables=DiffNumericVariables,
-            DiffDateVariables=DiffDateVariables,
-            DiffGroupVariables=DiffGroupVariables,
-            NLag1=NLag1,
-            NLag2=NLag2,
-        )
-
-    # For making copies of lists so originals aren't modified
-    import copy
-
-    # Import datatable methods
-    if (
-        Processing.lower() == "datatable"
-        or OutputFrame.lower() == "datatable"
-        or InputFrame.lower() == "datatable"
+    # in class
+    def FE0_AutoRollStats(
+        self,
+        data=None,
+        RollColumnNames=None,
+        DateColumnName=None,
+        ByVariables=None,
+        MovingAvg_Periods=None,
+        MovingSD_Periods=None,
+        MovingMin_Periods=None,
+        MovingMax_Periods=None,
+        ImputeValue=-1,
+        Sort=True,
+        use_saved_args=False,
     ):
+        """
+        # TODO: Update doc strings and examples to only use datatable.
+        # Goal:
+        Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
+    
+        # Output
+        Return a datatable, polars frame, or pandas frame with new rolling statistics columns
+    
+        # Parameters
+        data:             Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+        RollColumnNames:  A list of columns that will be lagged
+        DateColumnName:   Primary date column used for sorting
+        ByVariables:      Columns to partition over
+        Moving*_Periods:  List of integers for look back window
+        ImputeValue:      Value to fill the NA's for beginning of series
+        Sort:             Sort the Frame before computing the lags - if you're data is sorted set this to False
+    
+        # QA AutoRollStats
+        import timeit
         import datatable as dt
-        from datatable import sort, f, by, ifelse
+        from datatable import sort, f, by
+        import retrofit
+        from retrofit import FeatureEngineering as fe
+    
+        ## No Group Example
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        ## Group and Multiple Periods and RollColumnNames:
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoRollStats(data=data, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        ## No Group Example:
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoRollStats(data=data, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True)
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        # QA: No Group Case: Step through function
+        InputFrame='datatable'
+        OutputFrame='datatable'
+        MovingAvg_Periods = 2
+        MovingSD_Periods = 2
+        MovingMin_Periods = 2
+        MovingMax_Periods = 2
+        RollColumnNames = 'Leads'
+        scns = 'Leads'
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = None
+        ns = 1
+        ImputeValue = -1
+        Sort = True
+    
+        # QA: Group Case: Step through function
+        InputFrame='datatable'
+        OutputFrame='datatable'
+        MovingAvg_Periods = 2
+        MovingSD_Periods = 2
+        MovingMin_Periods = 2
+        MovingMax_Periods = 2
+        RollColumnNames = 'Leads'
+        scns = 'Leads'
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
+        ns = 1
+        ImputeValue = -1
+        Sort = True
+        """
+    
+        # ArgsList Collection
+        if use_saved_args:
+            RollColumnNames = self.roll_args.get("RollColumnNames")
+            DateColumnName = self.roll_args.get("DateColumnName")
+            ByVariables = self.roll_args.get("ByVariables")
+            MovingAvg_Periods = self.roll_args.get("MovingAvg_Periods")
+            MovingSD_Periods = self.roll_args.get("MovingSD_Periods")
+            MovingMin_Periods = self.roll_args.get("MovingMin_Periods")
+            MovingMax_Periods = self.roll_args.get("MovingMax_Periods")
+            ImputeValue = self.roll_args.get("ImputeValue")
+    
+        self._last_roll_args = locals()
+    
+        # Ensure List
+        if isinstance(ByVariables, str):
+            ByVariables = [ByVariables]
+        elif not isinstance(ByVariables, (list, type(None))):
+            raise Exception("ByVariables should be a string or a list")
+    
+        if isinstance(RollColumnNames, str):
+            RollColumnNames = [RollColumnNames]
+        elif not isinstance(ByVariables, (list, type(None))):
+            raise Exception("RollColumnNames should be a string or a list")
+    
+        if isinstance(MovingAvg_Periods, str):
+            MovingAvg_Periods = [MovingAvg_Periods]
+        elif isinstance(MovingAvg_Periods, (list, type(None))):
+            raise Exception("MovingAvg_Periods should be a string or a list")
+    
+        if isinstance(MovingSD_Periods, str):
+            MovingSD_Periods = [MovingSD_Periods]
+        elif isinstance(MovingSD_Periods, (list, type(None))):
+            raise Exception("MovingSD_Periods should be a string or a list")
+    
+        if isinstance(MovingMin_Periods, str):
+            MovingMin_Periods = [MovingMin_Periods]
+        elif isinstance(MovingMin_Periods, (list, type(None))):
+            raise Exception("MovingMin_Periods should be a string or a list")
+    
+        if isinstance(MovingMax_Periods, str):
+            MovingMax_Periods = [MovingMax_Periods]
+        elif isinstance(MovingMax_Periods, (list, type(None))):
+            raise Exception("MovingMax_Periods should be a string or a list")
+    
+        # Sort data
+        if Sort:
+            if ByVariables:
+                SortCols = copy.copy(ByVariables)
+                SortCols.extend(DateColumnName)
+                rev = [True for t in range(len(SortCols))]
+                data = data[:, :, sort(SortCols, reverse=rev)]
+            else:
+                data = data[:, :, sort(DateColumnName, reverse=True)]
+    
+        # Build lags to max window value
+        MaxVal = max(
+            max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)
+        )
+    
+        # processing
+        for rcn in RollColumnNames:
+            for ns in range(1, MaxVal + 1):
+    
+                # Constants
+                Ref = str(ns) + "_" + rcn
+                Ref1 = "TEMP__Lag_" + Ref
+    
+                # Generate Lags for rowmean, rowsd, rowmin, rowmax
+                if ByVariables:
+                    data = data[
+                        :, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)}), by(ByVariables)
+                    ]
+                else:
+                    data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)})]
+    
+                # Rolling Mean
+                if ns in MovingAvg_Periods:
+                    Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
+                    data = data[:, f[:].extend({"RollMean_" + Ref: dt.rowmean(f[Ref2])})]
+    
+                # Rolling SD
+                if ns in MovingSD_Periods:
+                    Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
+                    data = data[:, f[:].extend({"RollSD_" + Ref: dt.rowsd(f[Ref2])})]
+    
+                # Rolling Min
+                if ns in MovingMin_Periods:
+                    Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
+                    data = data[:, f[:].extend({"RollMin_" + Ref: dt.rowmin(f[Ref2])})]
+    
+                # Rolling Max
+                if ns in MovingMax_Periods:
+                    Ref2 = [zzz for zzz in data.names if "TEMP__Lag_" in zzz]
+                    data = data[:, f[:].extend({"RollMax_" + Ref: dt.rowmax(f[Ref2])})]
+    
+            # Remove Temporary Lagged Columns
+            del data[:, [zzz for zzz in data.names if "TEMP__Lag_" in zzz]]
+    
+        # Return data
+        return data
 
-    # Import polars methods
-    if (
-        Processing.lower() == "polars"
-        or OutputFrame.lower() == "polars"
-        or InputFrame.lower() == "polars"
+    # in class
+    def FE0_AutoDiff(
+        data=None,
+        ArgsList=None,
+        DateColumnName=None,
+        ByVariables=None,
+        DiffNumericVariables=None,
+        DiffDateVariables=None,
+        DiffGroupVariables=None,
+        NLag1=0,
+        NLag2=1,
+        Sort=True,
+        Processing="datatable",
+        InputFrame="datatable",
+        OutputFrame="datatable",
     ):
-        import polars as pl
-        from polars import col
-        from polars.lazy import col
-
-    # Convert to datatable
-    if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
-        data = dt.Frame(data)
-    elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
-        data = pl.from_pandas(data)
-
-    # Ensure List
-    if not ByVariables is None and not isinstance(ByVariables, list):
-        ByVariables = [ByVariables]
-
-    # Ensure DiffNumericVariables is a list
-    if not DiffNumericVariables is None and not isinstance(DiffNumericVariables, list):
-        DiffNumericVariables = [DiffNumericVariables]
-
-    # Ensure DiffDateVariables is a list
-    if not DiffDateVariables is None and not isinstance(DiffDateVariables, list):
-        DiffDateVariables = [DiffDateVariables]
-
-    # Ensure DiffGroupVariables is a list
-    if not DiffGroupVariables is None and not isinstance(DiffGroupVariables, list):
-        DiffGroupVariables = [DiffGroupVariables]
-
-    # Sort data
-    if Sort == True and Processing.lower() == "datatable":
-        if ByVariables is not None:
-            SortCols = copy.copy(ByVariables)
-            SortCols.extend(DateColumnName)
-            rev = [True for t in range(len(SortCols))]
-            data = data[:, :, sort(SortCols, reverse=rev)]
+    
+        """
+        # Goal:
+        Automatically generate rolling averages, standard deviations, mins and maxes for multiple periods for multiple variables and by variables
+    
+        # Output
+        Return a datatable, polars frame, or pandas frame with new difference columns
+    
+        # Parameters
+        data:                 Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+        ArgsList:             If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
+        DateColumnName:       Primary date column used for sorting
+        ByVariables:          Columns to partition over
+        DiffNumericVariables: Numeric variable name scalar or list
+        DiffDateVariables:    Date variable name scalar or list
+        DiffGroupVariables:   Categorical variable name scalar or list
+        NLag1:                Default 0. 0 means the current value - NLag2_Current_Value, otherwise NLag1_Current_Value - NLag2_Current_Value
+        NLag2:                Default 1. 1 means a lag1 of the current value
+        Sort:                 True or False
+        Processing:           'datatable' or 'polars'. Choose the package you want to do your processing
+        InputFrame:           'datatable' or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+        OutputFrame:          'datatable' or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    
+        # QA AutoDiff
+        import timeit
+        import datatable as dt
+        from datatable import sort, f, by
+        import retrofit
+        from retrofit import FeatureEngineering as fe
+    
+        ## Group Example:
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        ## Group and Multiple Periods and RollColumnNames:
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        ## No Group Example:
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        data = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, InputFrame = 'datatable', OutputFrame = 'datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        print(data.names)
+    
+        # QA: No Group Case: Step through function
+        data=data
+        ArgsList=None
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = None
+        DiffNumericVariables = 'Leads'
+        DiffDateVariables = 'CalendarDateColumn'
+        DiffGroupVariables = None
+        NLag1 = 0
+        NLag2 = 1
+        Sort=True
+        InputFrame = 'datatable'
+        OutputFrame = 'datatable'
+        rcn = 'Leads'
+    
+        # QA: Group Case: Step through function
+        data=data
+        ArgsList=None
+        DateColumnName = 'CalendarDateColumn'
+        ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
+        DiffNumericVariables = 'Leads'
+        DiffDateVariables = 'CalendarDateColumn'
+        DiffGroupVariables = None
+        NLag1 = 0
+        NLag2 = 1
+        Sort=True
+        InputFrame = 'datatable'
+        OutputFrame = 'datatable'
+        rcn = 'Leads'
+        """
+    
+        # ArgsList Collection
+        if not ArgsList is None:
+            DateColumnName = ArgsList["DateColumnName"]
+            ByVariables = ArgsList["ByVariables"]
+            DiffNumericVariables = ArgsList["DiffNumericVariables"]
+            DiffDateVariables = ArgsList["DiffDateVariables"]
+            DiffGroupVariables = ArgsList["DiffGroupVariables"]
+            NLag1 = ArgsList["NLag1"]
+            NLag2 = ArgsList["NLag2"]
         else:
-            data = data[:, :, sort(DateColumnName, reverse=True)]
-    elif Sort == True and Processing.lower() == "polars":
-        if ByVariables is not None:
-            SortCols = copy.copy(ByVariables)
-            SortCols.extend(DateColumnName)
-            rev = [True for t in range(len(SortCols))]
-            data.sort(SortCols, reverse=rev, in_place=True)
-        else:
-            if not isinstance(data[DateColumnName].dtype(), pl.Date32):
-                data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
-            data.sort(DateColumnName, reverse=True, in_place=True)
-
-    # DiffNumericVariables
-    if Processing.lower() == "datatable":
-        if not DiffNumericVariables is None:
-            for rcn in DiffNumericVariables:
-
-                # Numeric Variable Procedure
-                if NLag1 == 0:
-
-                    # Create Lags
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
+            ArgsList = dict(
+                DateColumnName=DateColumnName,
+                ByVariables=ByVariables,
+                DiffNumericVariables=DiffNumericVariables,
+                DiffDateVariables=DiffDateVariables,
+                DiffGroupVariables=DiffGroupVariables,
+                NLag1=NLag1,
+                NLag2=NLag2,
+            )
+    
+        # For making copies of lists so originals aren't modified
+        import copy
+    
+        # Import datatable methods
+        if (
+            Processing.lower() == "datatable"
+            or OutputFrame.lower() == "datatable"
+            or InputFrame.lower() == "datatable"
+        ):
+            import datatable as dt
+            from datatable import sort, f, by, ifelse
+    
+        # Import polars methods
+        if (
+            Processing.lower() == "polars"
+            or OutputFrame.lower() == "polars"
+            or InputFrame.lower() == "polars"
+        ):
+            import polars as pl
+            from polars import col
+            from polars.lazy import col
+    
+        # Convert to datatable
+        if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
+            data = dt.Frame(data)
+        elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
+            data = pl.from_pandas(data)
+    
+        # Ensure List
+        if not ByVariables is None and not isinstance(ByVariables, list):
+            ByVariables = [ByVariables]
+    
+        # Ensure DiffNumericVariables is a list
+        if not DiffNumericVariables is None and not isinstance(DiffNumericVariables, list):
+            DiffNumericVariables = [DiffNumericVariables]
+    
+        # Ensure DiffDateVariables is a list
+        if not DiffDateVariables is None and not isinstance(DiffDateVariables, list):
+            DiffDateVariables = [DiffDateVariables]
+    
+        # Ensure DiffGroupVariables is a list
+        if not DiffGroupVariables is None and not isinstance(DiffGroupVariables, list):
+            DiffGroupVariables = [DiffGroupVariables]
+    
+        # Sort data
+        if Sort == True and Processing.lower() == "datatable":
+            if ByVariables is not None:
+                SortCols = copy.copy(ByVariables)
+                SortCols.extend(DateColumnName)
+                rev = [True for t in range(len(SortCols))]
+                data = data[:, :, sort(SortCols, reverse=rev)]
+            else:
+                data = data[:, :, sort(DateColumnName, reverse=True)]
+        elif Sort == True and Processing.lower() == "polars":
+            if ByVariables is not None:
+                SortCols = copy.copy(ByVariables)
+                SortCols.extend(DateColumnName)
+                rev = [True for t in range(len(SortCols))]
+                data.sort(SortCols, reverse=rev, in_place=True)
+            else:
+                if not isinstance(data[DateColumnName].dtype(), pl.Date32):
+                    data[DateColumnName] = data[DateColumnName].cast(pl.Date32)
+                data.sort(DateColumnName, reverse=True, in_place=True)
+    
+        # DiffNumericVariables
+        if Processing.lower() == "datatable":
+            if not DiffNumericVariables is None:
+                for rcn in DiffNumericVariables:
+    
+                    # Numeric Variable Procedure
+                    if NLag1 == 0:
+    
+                        # Create Lags
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
                         data = data[
                             :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: f[rcn]
+                                    - f[Ref2]
+                                }
+                            ),
                         ]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref2]]
+    
                     else:
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
-
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: f[rcn]
-                                - f[Ref2]
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref2]]
-
-                else:
-
-                    # Create Lags
-                    Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
+    
+                        # Create Lags
+                        Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
+                                by(ByVariables),
+                            ]
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
                         data = data[
                             :,
-                            f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
-                            by(ByVariables),
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: f[Ref1]
+                                    - f[Ref2]
+                                }
+                            ),
                         ]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref1]]
+                        del data[:, f[Ref2]]
+    
+            # DiffDateVariables
+            if not DiffDateVariables is None:
+                for rcn in DiffDateVariables:
+    
+                    # Date Variable Procedure
+                    if NLag1 == 0:
+    
+                        # Create Lags
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
                         data = data[
                             :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: dt.as_type(f[rcn], int)
+                                    - dt.as_type(f[Ref2], int)
+                                }
+                            ),
                         ]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref2]]
+    
                     else:
-                        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
-
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: f[Ref1]
-                                - f[Ref2]
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref1]]
-                    del data[:, f[Ref2]]
-
-        # DiffDateVariables
-        if not DiffDateVariables is None:
-            for rcn in DiffDateVariables:
-
-                # Date Variable Procedure
-                if NLag1 == 0:
-
-                    # Create Lags
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
+    
+                        # Create Lags
+                        Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
+                                by(ByVariables),
+                            ]
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
                         data = data[
                             :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: dt.as_type(f[rcn], int)
+                                    - dt.as_type(f[Ref2], int)
+                                }
+                            ),
                         ]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref1]]
+                        del data[:, f[Ref2]]
+    
+            # DiffGroupVariables
+            if not DiffGroupVariables is None:
+                for rcn in DiffGroupVariables:
+    
+                    # Date Variable Procedure
+                    if NLag1 == 0:
+    
+                        # Create Lags
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
+                        data = data[
+                            :,
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: dt.ifelse(
+                                        f[rcn] == f[Ref2],
+                                        "NoDiff",
+                                        "New=" + f[rcn] + "Old=" + f[Ref2],
+                                    )
+                                }
+                            ),
+                        ]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref2]]
+    
                     else:
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
-
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.as_type(f[rcn], int)
-                                - dt.as_type(f[Ref2], int)
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref2]]
-
-                else:
-
-                    # Create Lags
-                    Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
+    
+                        # Create Lags
+                        Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
+                        Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
+                        if not ByVariables is None:
+                            data = data[
+                                :,
+                                f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
+                                by(ByVariables),
+                            ]
+                            data = data[
+                                :,
+                                f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
+                                by(ByVariables),
+                            ]
+                        else:
+                            data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
+                            data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Create diffs
                         data = data[
                             :,
-                            f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
-                            by(ByVariables),
+                            f[:].extend(
+                                {
+                                    "Diff_"
+                                    + str(NLag1)
+                                    + "_"
+                                    + str(NLag2)
+                                    + "_"
+                                    + rcn: dt.ifelse(
+                                        f[rcn] == f[Ref2],
+                                        "NoDiff",
+                                        "New=" + f[rcn] + "Old=" + f[Ref2],
+                                    )
+                                }
+                            ),
                         ]
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
-                    else:
-                        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
+    
+                        # Remove temp columns
+                        del data[:, f[Ref1]]
+                        del data[:, f[Ref2]]
+    
+        # Convert Frame
+        if OutputFrame.lower() == "pandas" and (
+            Processing.lower() == "datatable" or Processing.lower() == "polars"
+        ):
+            data = data.to_pandas()
+        elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
+            data = data.to_pandas()
+            data = dt.Frame(data)
+    
+        # Return data
+        return dict(data=data, ArgsList=ArgsList)
 
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.as_type(f[rcn], int)
-                                - dt.as_type(f[Ref2], int)
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref1]]
-                    del data[:, f[Ref2]]
-
-        # DiffGroupVariables
-        if not DiffGroupVariables is None:
-            for rcn in DiffGroupVariables:
-
-                # Date Variable Procedure
-                if NLag1 == 0:
-
-                    # Create Lags
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
-                    else:
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
-
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.ifelse(
-                                    f[rcn] == f[Ref2],
-                                    "NoDiff",
-                                    "New=" + f[rcn] + "Old=" + f[Ref2],
-                                )
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref2]]
-
-                else:
-
-                    # Create Lags
-                    Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
-                    Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
-                    if not ByVariables is None:
-                        data = data[
-                            :,
-                            f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
-                            by(ByVariables),
-                        ]
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
-                    else:
-                        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
-                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
-
-                    # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.ifelse(
-                                    f[rcn] == f[Ref2],
-                                    "NoDiff",
-                                    "New=" + f[rcn] + "Old=" + f[Ref2],
-                                )
-                            }
-                        ),
-                    ]
-
-                    # Remove temp columns
-                    del data[:, f[Ref1]]
-                    del data[:, f[Ref2]]
-
-    # Convert Frame
-    if OutputFrame.lower() == "pandas" and (
-        Processing.lower() == "datatable" or Processing.lower() == "polars"
-    ):
-        data = data.to_pandas()
-    elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
-        data = data.to_pandas()
-        data = dt.Frame(data)
-
-    # Return data
-    return dict(data=data, ArgsList=ArgsList)
-
-
+# in class
 def FE1_AutoCalendarVariables(
     data=None,
     ArgsList=None,
@@ -982,385 +981,385 @@ def FE1_AutoCalendarVariables(
     return dict(data=data, ArgsList=ArgsList)
 
 
-def FE1_DummyVariables(
-    data=None,
-    ArgsList=None,
-    CategoricalColumnNames=None,
-    Processing="datatable",
-    InputFrame="datatable",
-    OutputFrame="datatable",
-):
-    """
-    # Goal:
-    Automatically generate dummy variables for CategoricalColumnNames provided by user
-
-    # Output
-    Return a datatable
-
-    # Parameters
-    data:                   Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ArgsList:               None or Dict. If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    CategoricalColumnNames: Scalar. Primary date column used for sorting
-    Processing:             'datatable' or 'polars'. Choose the package you want to do your processing
-    InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:            'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
-
-    # Example: datatable
-    import timeit
-    import datatable as dt
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    data = Output['data']
-    ArgsList = Output['ArgsList']
-
-    # Example: polars
-    import timeit
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    import polars as pl
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='polars', InputFrame='polars', OutputFrame='polars')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    data = Output['data']
-    ArgsList = Output['ArgsList']
-
-    # QA
-    ArgsList=None
-    CategoricalColumnNames=['MarketingSegments','MarketingSegments2']
-    Processing='datatable'
-    InputFrame='datatable'
-    OutputFrame='datatable'
-
-    Processing='polars'
-    InputFrame='polars'
-    OutputFrame='polars'
-    """
-    # ArgsList Collection
-    if not ArgsList is None:
-        CategoricalColumnNames = ArgsList["CategoricalColumnNames"]
-    else:
-        ArgsList = dict(CategoricalColumnNames=CategoricalColumnNames)
-
-    # Import datatable methods
-    if (
-        Processing.lower() == "datatable"
-        or OutputFrame.lower() == "datatable"
-        or InputFrame.lower() == "datatable"
+    def FE1_DummyVariables(
+        data=None,
+        ArgsList=None,
+        CategoricalColumnNames=None,
+        Processing="datatable",
+        InputFrame="datatable",
+        OutputFrame="datatable",
     ):
+        """
+        # Goal:
+        Automatically generate dummy variables for CategoricalColumnNames provided by user
+    
+        # Output
+        Return a datatable
+    
+        # Parameters
+        data:                   Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+        ArgsList:               None or Dict. If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
+        CategoricalColumnNames: Scalar. Primary date column used for sorting
+        Processing:             'datatable' or 'polars'. Choose the package you want to do your processing
+        InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+        OutputFrame:            'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    
+        # Example: datatable
+        import timeit
         import datatable as dt
-        from datatable import split_into_nhot, str
-
-    # Import polars methods
-    if (
-        Processing.lower() == "polars"
-        or OutputFrame.lower() == "polars"
-        or InputFrame.lower() == "polars"
-    ):
+        import retrofit
+        from retrofit import FeatureEngineering as fe
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        data = Output['data']
+        ArgsList = Output['ArgsList']
+    
+        # Example: polars
+        import timeit
+        import retrofit
+        from retrofit import FeatureEngineering as fe
         import polars as pl
-        from polars import col
-        from polars.lazy import col
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        Output = fe.FE1_DummyVariables(data=data, ArgsList=None, CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], Processing='polars', InputFrame='polars', OutputFrame='polars')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        data = Output['data']
+        ArgsList = Output['ArgsList']
+    
+        # QA
+        ArgsList=None
+        CategoricalColumnNames=['MarketingSegments','MarketingSegments2']
+        Processing='datatable'
+        InputFrame='datatable'
+        OutputFrame='datatable'
+    
+        Processing='polars'
+        InputFrame='polars'
+        OutputFrame='polars'
+        """
+        # ArgsList Collection
+        if not ArgsList is None:
+            CategoricalColumnNames = ArgsList["CategoricalColumnNames"]
+        else:
+            ArgsList = dict(CategoricalColumnNames=CategoricalColumnNames)
+    
+        # Import datatable methods
+        if (
+            Processing.lower() == "datatable"
+            or OutputFrame.lower() == "datatable"
+            or InputFrame.lower() == "datatable"
+        ):
+            import datatable as dt
+            from datatable import split_into_nhot, str
+    
+        # Import polars methods
+        if (
+            Processing.lower() == "polars"
+            or OutputFrame.lower() == "polars"
+            or InputFrame.lower() == "polars"
+        ):
+            import polars as pl
+            from polars import col
+            from polars.lazy import col
+    
+        # Ensure List
+        if not CategoricalColumnNames is None and not isinstance(
+            CategoricalColumnNames, list
+        ):
+            CategoricalColumnNames = [CategoricalColumnNames]
+    
+        # Convert to datatable
+        if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
+            data = dt.Frame(data)
+        elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
+            data = pl.from_pandas(data)
+    
+        # Create dummies
+        if Processing.lower() == "datatable":
+            data_new = data.copy()
+            for column in CategoricalColumnNames:
+                df_ohe = dt.str.split_into_nhot(data_new[column])
+                df_ohe.names = [f"{column}_{col}" for col in df_ohe.names]
+                data_new.cbind(df_ohe)
+        elif Processing.lower() == "polars":
+            for column in CategoricalColumnNames:
+                data = data.hstack(pl.get_dummies(data[column]))
+    
+        # Convert Frame
+        if OutputFrame.lower() == "pandas" and Processing.lower() == "datatable":
+            data = data.to_pandas()
+        elif OutputFrame.lower() == "pandas" and Processing.lower() == "polars":
+            data = data.to_pandas()
+        elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
+            data = data.to_pandas()
+            data = dt.Frame(data)
+    
+        # Return data
+        if Processing.lower() == "datatable":
+            return dict(data=data_new, ArgsList=ArgsList)
+        elif Processing.lower() == "polars":
+            return dict(data=data, ArgsList=ArgsList)
 
-    # Ensure List
-    if not CategoricalColumnNames is None and not isinstance(
-        CategoricalColumnNames, list
+    # in class
+    def FE2_AutoDataParition(
+        data=None,
+        ArgsList=None,
+        DateColumnName=None,
+        PartitionType="random",
+        Ratios=None,
+        ByVariables=None,
+        Sort=False,
+        Processing="datatable",
+        InputFrame="datatable",
+        OutputFrame="datatable",
     ):
-        CategoricalColumnNames = [CategoricalColumnNames]
-
-    # Convert to datatable
-    if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
-        data = dt.Frame(data)
-    elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
-        data = pl.from_pandas(data)
-
-    # Create dummies
-    if Processing.lower() == "datatable":
-        data_new = data.copy()
-        for column in CategoricalColumnNames:
-            df_ohe = dt.str.split_into_nhot(data_new[column])
-            df_ohe.names = [f"{column}_{col}" for col in df_ohe.names]
-            data_new.cbind(df_ohe)
-    elif Processing.lower() == "polars":
-        for column in CategoricalColumnNames:
-            data = data.hstack(pl.get_dummies(data[column]))
-
-    # Convert Frame
-    if OutputFrame.lower() == "pandas" and Processing.lower() == "datatable":
-        data = data.to_pandas()
-    elif OutputFrame.lower() == "pandas" and Processing.lower() == "polars":
-        data = data.to_pandas()
-    elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
-        data = data.to_pandas()
-        data = dt.Frame(data)
-
-    # Return data
-    if Processing.lower() == "datatable":
-        return dict(data=data_new, ArgsList=ArgsList)
-    elif Processing.lower() == "polars":
-        return dict(data=data, ArgsList=ArgsList)
-
-
-def FE2_AutoDataParition(
-    data=None,
-    ArgsList=None,
-    DateColumnName=None,
-    PartitionType="random",
-    Ratios=None,
-    ByVariables=None,
-    Sort=False,
-    Processing="datatable",
-    InputFrame="datatable",
-    OutputFrame="datatable",
-):
-
-    """
-    # Goal:
-    Automatically generate train, validation, and test data sets for modeling purposes
-
-    # Output
-    Return a datatable, polars frame, or pandas frame with new lag columns
-
-    # Parameters
-    data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ArgsList:       None or Dict. If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    DateColumnName: Scalar. Primary date column used for sorting
-    PartitionType:  Scalar. Columns to partition over
-    Ratios:         List. Use ths for PartitionType 'random'. List of decimal values for determining how many data goes into each data frame.
-    Sort:           Sort data before creating time based partitions
-    ByVariables:    None or List. Stratify the data paritioning using ByVariables
-    Processing:     'datatable' or 'polars'. Choose the package you want to do your processing
-    InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-    OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
-
-    # datatable Example
-    import timeit
-    import datatable as dt
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import utils as u
-
-    # random
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    ArgsList = DataSets['ArgsList']
-
-    # time
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    ArgsList = DataSets['ArgsList']
-
-    # polars Example
-    import timeit
-    import polars as pl
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import utils as u
-
-    # random
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    ArgsList = DataSets['ArgsList']
-
-    # time
-    data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-    t_start = timeit.default_timer()
-    DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
-    t_end = timeit.default_timer()
-    t_end - t_start
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    ArgsList = DataSets['ArgsList']
-
-    # random
-    ArgsList=None
-    DateColumnName='CalendarDateColumn'
-    PartitionType='random'
-    Ratios=[0.70,0.20,0.10]
-    ByVariables=None
-    Processing='datatable'
-    InputFrame='datatable'
-    OutputFrame='datatable'
-
-    Processing='polars'
-    InputFrame='polars'
-    OutputFrame='polars'
-
-    # time
-    ArgsList=None
-    DateColumnName='CalendarDateColumn'
-    PartitionType='time'
-    Ratios=[0.70,0.20,0.10]
-    ByVariables=None
-    Processing='datatable'
-    InputFrame='datatable'
-    OutputFrame='datatable'
-    """
-
-    # ArgsList Collection
-    if not ArgsList is None:
-        DateColumnName = ArgsList["DateColumnName"]
-        PartitionType = ArgsList["PartitionType"]
-        Ratios = ArgsList["Ratios"]
-        ByVariables = ArgsList["ByVariables"]
-    else:
-        ArgsList = dict(
-            DateColumnName=DateColumnName,
-            PartitionType=PartitionType,
-            Ratios=Ratios,
-            ByVariables=ByVariables,
+    
+        """
+        # Goal:
+        Automatically generate train, validation, and test data sets for modeling purposes
+    
+        # Output
+        Return a datatable, polars frame, or pandas frame with new lag columns
+    
+        # Parameters
+        data:           Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+        ArgsList:       None or Dict. If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
+        DateColumnName: Scalar. Primary date column used for sorting
+        PartitionType:  Scalar. Columns to partition over
+        Ratios:         List. Use ths for PartitionType 'random'. List of decimal values for determining how many data goes into each data frame.
+        Sort:           Sort data before creating time based partitions
+        ByVariables:    None or List. Stratify the data paritioning using ByVariables
+        Processing:     'datatable' or 'polars'. Choose the package you want to do your processing
+        InputFrame:     'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+        OutputFrame:    'datatable', 'polars', or 'pandas' If you want the output Frame to be pandas change value to 'pandas'
+    
+        # datatable Example
+        import timeit
+        import datatable as dt
+        import retrofit
+        from retrofit import FeatureEngineering as fe
+        from retrofit import utils as u
+    
+        # random
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        TrainData = DataSets['TrainData']
+        ValidationData = DataSets['ValidationData']
+        TestData = DataSets['TestData']
+        ArgsList = DataSets['ArgsList']
+    
+        # time
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        TrainData = DataSets['TrainData']
+        ValidationData = DataSets['ValidationData']
+        TestData = DataSets['TestData']
+        ArgsList = DataSets['ArgsList']
+    
+        # polars Example
+        import timeit
+        import polars as pl
+        import retrofit
+        from retrofit import FeatureEngineering as fe
+        from retrofit import utils as u
+    
+        # random
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='random', Ratios=[0.70,0.20,0.10], Sort=False, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        TrainData = DataSets['TrainData']
+        ValidationData = DataSets['ValidationData']
+        TestData = DataSets['TestData']
+        ArgsList = DataSets['ArgsList']
+    
+        # time
+        data = dt.fread("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+        t_start = timeit.default_timer()
+        DataSets = fe.FE2_AutoDataParition(data=data, ArgsList=None, DateColumnName='CalendarDateColumn', PartitionType='time', Ratios=[0.70,0.20,0.10], Sort=True, ByVariables=None, Processing='polars', InputFrame='polars', OutputFrame='polars')
+        t_end = timeit.default_timer()
+        t_end - t_start
+        TrainData = DataSets['TrainData']
+        ValidationData = DataSets['ValidationData']
+        TestData = DataSets['TestData']
+        ArgsList = DataSets['ArgsList']
+    
+        # random
+        ArgsList=None
+        DateColumnName='CalendarDateColumn'
+        PartitionType='random'
+        Ratios=[0.70,0.20,0.10]
+        ByVariables=None
+        Processing='datatable'
+        InputFrame='datatable'
+        OutputFrame='datatable'
+    
+        Processing='polars'
+        InputFrame='polars'
+        OutputFrame='polars'
+    
+        # time
+        ArgsList=None
+        DateColumnName='CalendarDateColumn'
+        PartitionType='time'
+        Ratios=[0.70,0.20,0.10]
+        ByVariables=None
+        Processing='datatable'
+        InputFrame='datatable'
+        OutputFrame='datatable'
+        """
+    
+        # ArgsList Collection
+        if not ArgsList is None:
+            DateColumnName = ArgsList["DateColumnName"]
+            PartitionType = ArgsList["PartitionType"]
+            Ratios = ArgsList["Ratios"]
+            ByVariables = ArgsList["ByVariables"]
+        else:
+            ArgsList = dict(
+                DateColumnName=DateColumnName,
+                PartitionType=PartitionType,
+                Ratios=Ratios,
+                ByVariables=ByVariables,
+            )
+    
+        # For making copies of lists so originals aren't modified
+        import numpy as np
+        from retrofit import utils as u
+    
+        # Import datatable methods
+        if (
+            Processing.lower() == "datatable"
+            or OutputFrame.lower() == "datatable"
+            or InputFrame.lower() == "datatable"
+        ):
+            import datatable as dt
+            from datatable import f, by, sort
+    
+        # Import polars methods
+        if (
+            Processing.lower() == "polars"
+            or OutputFrame.lower() == "polars"
+            or InputFrame.lower() == "polars"
+        ):
+            import polars as pl
+    
+        # Convert to datatable
+        if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
+            data = dt.Frame(data)
+        elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
+            data = pl.from_pandas(data)
+    
+        # Accumulate Ratios
+        Ratios = u.cumsum(Ratios)
+    
+        # datatable
+        if Processing.lower() == "datatable":
+    
+            # Random partitioning
+            if PartitionType.lower() == "random":
+    
+                # Add random number column
+                data = data[
+                    :, f[:].extend({"ID": np.random.uniform(0, 1, size=data.shape[0])})
+                ]
+    
+            # Time base partitioning
+            if PartitionType.lower() == "time":
+    
+                # Sort data
+                if Sort == True:
+                    data = data[:, :, sort(f[DateColumnName], reverse=False)]
+    
+            # Number of rows
+            NumRows = data.nrows
+    
+            # Grab row number boundaries
+            TrainRowsMax = NumRows * Ratios[0]
+            ValidRowsMax = NumRows * Ratios[1]
+    
+            # TrainData
+            TrainData = data[: int(TrainRowsMax), ...]
+            del TrainData[:, "ID"]
+    
+            # ValidationData
+            ValidationData = data[int(TrainRowsMax + 1) : int(ValidRowsMax), ...]
+            del ValidationData[:, "ID"]
+    
+            # TestData
+            if len(Ratios) == 3:
+                TestData = data[int(ValidRowsMax) :, ...]
+                del TestData[:, "ID"]
+            else:
+                TestData = None
+    
+        # polars
+        if Processing.lower() == "polars":
+    
+            # Random partitioning
+            if PartitionType.lower() == "random":
+    
+                # Prepare data
+                data["ID"] = np.random.uniform(0, 1, size=data.shape[0])
+                data = data.sort("ID")
+                data.drop_in_place("ID")
+    
+            # Time base partitioning
+            if PartitionType.lower() == "time":
+    
+                # Prepare data
+                if Sort == True:
+                    data.sort(DateColumnName, reverse=False, in_place=True)
+    
+            # Number of rows
+            NumRows = data.shape[0]
+    
+            # Grab row number boundaries
+            TrainRowsMax = NumRows * Ratios[0]
+            ValidRowsMax = NumRows * Ratios[1]
+    
+            # TrainData
+            TrainData = data[: int(TrainRowsMax)]
+    
+            # ValidationData
+            ValidationData = data[int(TrainRowsMax + 1) : int(ValidRowsMax)]
+    
+            # TestData
+            if len(Ratios) == 3:
+                TestData = data[int(ValidRowsMax + 1) :]
+            else:
+                TestData = None
+    
+        # Convert Frame
+        if OutputFrame.lower() == "pandas" and (
+            Processing.lower() == "datatable" or Processing.lower() == "polars"
+        ):
+            TrainData = TrainData.to_pandas()
+            ValidationData = ValidationData.to_pandas()
+            if len(Ratios) == 3:
+                TestData = TestData.to_pandas()
+        elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
+            TrainData = TrainData.to_pandas()
+            TrainData = dt.Frame(TrainData)
+            ValidationData = ValidationData.to_pandas()
+            ValidationData = dt.Frame(ValidationData)
+            if len(Ratios) == 3:
+                TestData = TestData.to_pandas()
+                TestData = dt.Frame(TestData)
+    
+        # Return data
+        return dict(
+            TrainData=TrainData,
+            ValidationData=ValidationData,
+            TestData=TestData,
+            ArgsList=ArgsList,
         )
-
-    # For making copies of lists so originals aren't modified
-    import numpy as np
-    from retrofit import utils as u
-
-    # Import datatable methods
-    if (
-        Processing.lower() == "datatable"
-        or OutputFrame.lower() == "datatable"
-        or InputFrame.lower() == "datatable"
-    ):
-        import datatable as dt
-        from datatable import f, by, sort
-
-    # Import polars methods
-    if (
-        Processing.lower() == "polars"
-        or OutputFrame.lower() == "polars"
-        or InputFrame.lower() == "polars"
-    ):
-        import polars as pl
-
-    # Convert to datatable
-    if InputFrame.lower() == "pandas" and Processing.lower() == "datatable":
-        data = dt.Frame(data)
-    elif InputFrame.lower() == "pandas" and Processing.lower() == "polars":
-        data = pl.from_pandas(data)
-
-    # Accumulate Ratios
-    Ratios = u.cumsum(Ratios)
-
-    # datatable
-    if Processing.lower() == "datatable":
-
-        # Random partitioning
-        if PartitionType.lower() == "random":
-
-            # Add random number column
-            data = data[
-                :, f[:].extend({"ID": np.random.uniform(0, 1, size=data.shape[0])})
-            ]
-
-        # Time base partitioning
-        if PartitionType.lower() == "time":
-
-            # Sort data
-            if Sort == True:
-                data = data[:, :, sort(f[DateColumnName], reverse=False)]
-
-        # Number of rows
-        NumRows = data.nrows
-
-        # Grab row number boundaries
-        TrainRowsMax = NumRows * Ratios[0]
-        ValidRowsMax = NumRows * Ratios[1]
-
-        # TrainData
-        TrainData = data[: int(TrainRowsMax), ...]
-        del TrainData[:, "ID"]
-
-        # ValidationData
-        ValidationData = data[int(TrainRowsMax + 1) : int(ValidRowsMax), ...]
-        del ValidationData[:, "ID"]
-
-        # TestData
-        if len(Ratios) == 3:
-            TestData = data[int(ValidRowsMax) :, ...]
-            del TestData[:, "ID"]
-        else:
-            TestData = None
-
-    # polars
-    if Processing.lower() == "polars":
-
-        # Random partitioning
-        if PartitionType.lower() == "random":
-
-            # Prepare data
-            data["ID"] = np.random.uniform(0, 1, size=data.shape[0])
-            data = data.sort("ID")
-            data.drop_in_place("ID")
-
-        # Time base partitioning
-        if PartitionType.lower() == "time":
-
-            # Prepare data
-            if Sort == True:
-                data.sort(DateColumnName, reverse=False, in_place=True)
-
-        # Number of rows
-        NumRows = data.shape[0]
-
-        # Grab row number boundaries
-        TrainRowsMax = NumRows * Ratios[0]
-        ValidRowsMax = NumRows * Ratios[1]
-
-        # TrainData
-        TrainData = data[: int(TrainRowsMax)]
-
-        # ValidationData
-        ValidationData = data[int(TrainRowsMax + 1) : int(ValidRowsMax)]
-
-        # TestData
-        if len(Ratios) == 3:
-            TestData = data[int(ValidRowsMax + 1) :]
-        else:
-            TestData = None
-
-    # Convert Frame
-    if OutputFrame.lower() == "pandas" and (
-        Processing.lower() == "datatable" or Processing.lower() == "polars"
-    ):
-        TrainData = TrainData.to_pandas()
-        ValidationData = ValidationData.to_pandas()
-        if len(Ratios) == 3:
-            TestData = TestData.to_pandas()
-    elif OutputFrame.lower() == "datatable" and Processing.lower() == "polars":
-        TrainData = TrainData.to_pandas()
-        TrainData = dt.Frame(TrainData)
-        ValidationData = ValidationData.to_pandas()
-        ValidationData = dt.Frame(ValidationData)
-        if len(Ratios) == 3:
-            TestData = TestData.to_pandas()
-            TestData = dt.Frame(TestData)
-
-    # Return data
-    return dict(
-        TrainData=TrainData,
-        ValidationData=ValidationData,
-        TestData=TestData,
-        ArgsList=ArgsList,
-    )
