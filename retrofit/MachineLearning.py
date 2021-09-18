@@ -1314,10 +1314,15 @@ class RetroFit:
         TrainData = self.DataSets.get('train_data')
         ValidationData = self.DataSets.get('validation_data')
         TestData = self.DataSets.get('test_data')
-        
+
+        # Update args for multiclass
+        if TempArgs.get('TargetType').lower() == 'multiclass':
+          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+
         # Initialize model
         Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
-          
+
         # Store Model
         self.ModelList[f"XGBoost{str(len(self.ModelList) + 1)}"] = Model
         self.ModelListNames.append(f"XGBoost{str(len(self.ModelList))}")
@@ -1345,6 +1350,11 @@ class RetroFit:
         temp_args = copy.deepcopy(TempArgs)
         del temp_args['AlgoArgs']['num_iterations']
         del temp_args['AlgoArgs']['early_stopping_round']
+        
+        # Update args for multiclass
+        if TempArgs.get('TargetType').lower() == 'multiclass':
+          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
         
         # Initialize model
         Model = LGBMModel(**temp_args.get('AlgoArgs'))
