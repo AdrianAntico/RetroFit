@@ -1485,7 +1485,7 @@ class RetroFit:
           pred_interactions=False, 
           validate_features=True, 
           training=False, 
-          iteration_range=(0, self.FitList[f"XGBoost{str(len(x.FitList))}"].best_iteration), 
+          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
           strict_shape=False)
 
         # Non regression cases
