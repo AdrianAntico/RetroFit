@@ -383,7 +383,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
 
 
-def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=None):
+def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
     """
     # Goal
     Return an ArgsList appropriate for the algorithm selection, target type, and training method
@@ -392,7 +392,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     Algorithms:       Choose from CatBoost, XGBoost, LightGBM, Ftrl
     TargetType:       Choose from 'regression', 'classification', 'multiclass'
     TrainMethod:      Choose from 'train', 'gridtune'
-    GetModelDataArgs: Args passed in from ML0_GetModelData()
     
     # ML0_Parameters Example
     import pkg_resources
@@ -447,8 +446,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     ModelArgs = ml.ML0_Parameters(
       Algorithms='catboost', 
       TargetType='regression', 
-      TrainMethod='Train', 
-      Model=None)
+      TrainMethod='Train')
 
     # QA
     Algorithms='catboost'
@@ -457,6 +455,14 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None, Model=Non
     Model=None
     Algo = 'catboost'
     """
+    
+    # Args Check
+    if Algorithms is None:
+      raise NameError('Algorithms cannot be None')
+    if TargetType is None:
+      raise NameError('TargetType cannot be None')
+    if TrainMethod is None:
+      raise NameError('TrainMethod cannot be None')  
     
     # Ensure Algorithms is a list
     if not isinstance(Algorithms, list):
@@ -1200,7 +1206,7 @@ class RetroFit:
       
       # Check
       if len(self.ModelArgs) == 0:
-        return print("ModelArgs is empty")
+        raise NameError('self.ModelArgs is empty')
 
       # Which Algo
       if not Algorithm is None:
@@ -1331,7 +1337,7 @@ class RetroFit:
 
       # Check
       if len(self.ModelList) == 0:
-        return print("No models exist")
+        raise NameError('No models found in self.ModelList')
 
       # Which Algo
       if not Algorithm is None:
@@ -1368,8 +1374,6 @@ class RetroFit:
         if TargetColumnName in score_data.names:
           TargetData = score_data[:, f[TargetColumnName]]
           score_data = score_data[:, f[:].remove(f[TargetColumnName])]
-          if not NewData is None:
-            return Model.predict(score_data)
 
         # Score Model and append data set name to scoring data
         if self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'regression':
@@ -1381,6 +1385,10 @@ class RetroFit:
           score_data.names = {'False': 'p0'}
         elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'multiclass':
           score_data.cbind(Model.predict(score_data))
+
+        # Return preds
+        if not NewData is None:
+          return ScoreData
         
         # cbind Target column back to score_data
         score_data.cbind(TargetData)
@@ -1414,30 +1422,26 @@ class RetroFit:
           pred_data = NewData
 
         # Generate preds and add to datatable frame
-        if NewData is None:
-          if TempArgs.get('TargetType').lower() == 'regression':
-            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
-          elif TempArgs.get('TargetType').lower() == 'classification':
-            temp = Model.predict(pred_data, prediction_type = 'Probability')
-            ScoreData['p0'] = temp[:,0]
-            ScoreData['p1'] = temp[:,1]
-          elif TempArgs.get('TargetType').lower() == 'multiclass':
-            ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
-            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-              from datatable import join
-              temp = self.DataSets.get('ArgsList')['MultiClass']
-              temp.key = f"Predict_{TargetColumnName}"
-              ScoreData = ScoreData[:, :, join(temp)]
-              temp_x = f"Predict_{TargetColumnName}"
-              del ScoreData[:, temp_x]
-              ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
-        else:
-          if TempArgs.get('TargetType').lower() == 'regression':
-            return Model.predict(pred_data, prediction_type = 'RawFormulaVal')
-          elif TempArgs.get('TargetType').lower() == 'classification':
-            return Model.predict(pred_data, prediction_type = 'Probability')
-          elif TempArgs.get('TargetType').lower() == 'multiclass':
-            return Model.predict(pred_data, prediction_type = 'Class')
+        if TempArgs.get('TargetType').lower() == 'regression':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
+        elif TempArgs.get('TargetType').lower() == 'classification':
+          temp = Model.predict(pred_data, prediction_type = 'Probability')
+          ScoreData['p0'] = temp[:,0]
+          ScoreData['p1'] = temp[:,1]
+        elif TempArgs.get('TargetType').lower() == 'multiclass':
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
+          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+            from datatable import join
+            temp = self.DataSets.get('ArgsList')['MultiClass']
+            temp.key = f"Predict_{TargetColumnName}"
+            ScoreData = ScoreData[:, :, join(temp)]
+            temp_x = f"Predict_{TargetColumnName}"
+            del ScoreData[:, temp_x]
+            ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
+
+        # Return preds
+        if not NewData is None:
+          return ScoreData
 
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
@@ -1468,35 +1472,31 @@ class RetroFit:
           elif DataName == 'train_data':
             ScoreData = self.DataFrames.get('TrainData')
         else:
-          score_data = NewData
+          ScoreData = NewData
           pred_data = self.DataSets[DataName]
 
         # Generate preds and add to datatable frame
-        if NewData is None:
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-            data = pred_data, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False)
-        else:
-          return Model.predict(
-            data = pred_data, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False)
-        
+        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+          data = pred_data, 
+          output_margin=False, 
+          pred_leaf=False, 
+          pred_contribs=False,
+          approx_contribs=False, 
+          pred_interactions=False, 
+          validate_features=True, 
+          training=False, 
+          iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+          strict_shape=False)
+
+        # Non regression cases
+        if TempArgs.get('TargetType').lower() == 'classification':
+          ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+          ScoreData['p0'] = 1 - ScoreData['p1']
+
+        # Return preds
+        if not NewData is None:
+          return ScoreData
+
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
         self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
@@ -1524,17 +1524,22 @@ class RetroFit:
             ScoreData = self.DataFrames.get('ValidationData')
           elif DataName == 'train_data':
             ScoreData = self.DataFrames.get('TrainData')
-          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
         else:
           ScoreData = NewData
-          ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
 
         # Generate preds and add to datatable frame
-        if NewData is None:
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
-        else:
-          return Model.predict(data = ScoreData)
+        ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
+        ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
         
+        # Non regression cases
+        if TempArgs.get('TargetType').lower() == 'classification':
+          ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+          ScoreData['p0'] = 1 - ScoreData['p1']
+
+        # Return preds
+        if not NewData is None:
+          return ScoreData
+
         # Store data and update names
         self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
         self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
