@@ -98,7 +98,7 @@ class FeatureEngineering:
         ArgsList = None,
         DateColumnName = None,
         PartitionType = 'random',
-        Ratios = [0.7,0.2,0.1],
+        Ratios = None,
         ByVariables = None,
         Sort = False,
         use_saved_args = False

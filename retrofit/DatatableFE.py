@@ -622,7 +622,7 @@ class FE(FeatureEngineering):
 
 
     # in class
-    def FE2_AutoDataParition(
+    def FE2_AutoDataPartition(
         self,
         data=None,
         DateColumnName=None,
