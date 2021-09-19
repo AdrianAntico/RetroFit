@@ -177,22 +177,22 @@ class FE(FeatureEngineering):
     
         if isinstance(MovingAvg_Periods, str):
             MovingAvg_Periods = [MovingAvg_Periods]
-        elif isinstance(MovingAvg_Periods, (list, type(None))):
+        elif not isinstance(MovingAvg_Periods, (list, type(None))):
             raise Exception("MovingAvg_Periods should be a string or a list")
     
         if isinstance(MovingSD_Periods, str):
             MovingSD_Periods = [MovingSD_Periods]
-        elif isinstance(MovingSD_Periods, (list, type(None))):
+        elif not isinstance(MovingSD_Periods, (list, type(None))):
             raise Exception("MovingSD_Periods should be a string or a list")
     
         if isinstance(MovingMin_Periods, str):
             MovingMin_Periods = [MovingMin_Periods]
-        elif isinstance(MovingMin_Periods, (list, type(None))):
+        elif not isinstance(MovingMin_Periods, (list, type(None))):
             raise Exception("MovingMin_Periods should be a string or a list")
     
         if isinstance(MovingMax_Periods, str):
             MovingMax_Periods = [MovingMax_Periods]
-        elif isinstance(MovingMax_Periods, (list, type(None))):
+        elif not isinstance(MovingMax_Periods, (list, type(None))):
             raise Exception("MovingMax_Periods should be a string or a list")
     
         # Sort data
@@ -312,22 +312,22 @@ class FE(FeatureEngineering):
     
         if isinstance(DiffDateVariables, str):
             DiffDateVariables = [DiffDateVariables]
-        elif isinstance(DiffDateVariables, (list, type(None))):
+        elif not isinstance(DiffDateVariables, (list, type(None))):
             raise Exception("DiffDateVariables should be a string or a list")
     
         if isinstance(DiffGroupVariables, str):
             DiffGroupVariables = [DiffGroupVariables]
-        elif isinstance(DiffGroupVariables, (list, type(None))):
+        elif not isinstance(DiffGroupVariables, (list, type(None))):
             raise Exception("DiffGroupVariables should be a string or a list")
     
         if isinstance(NLag1, str):
             NLag1 = [NLag1]
-        elif isinstance(NLag1, (list, type(None))):
+        elif not isinstance(NLag1, (list, type(None))):
             raise Exception("NLag1 should be a string or a list")
     
         if isinstance(NLag2, str):
             NLag2 = [NLag2]
-        elif isinstance(NLag2, (list, type(None))):
+        elif not isinstance(NLag2, (list, type(None))):
             raise Exception("NLag2 should be a string or a list")
 
         # Sort data

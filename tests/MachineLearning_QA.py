@@ -443,8 +443,6 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
-import polars as pl
 import retrofit
 from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
@@ -463,6 +461,20 @@ data = FE.FE0_AutoLags(
     DateColumnName='DateTime',
     ByVariables='Factor_1',
     LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
     ImputeValue=-1,
     Sort=True,
     use_saved_args=False)
