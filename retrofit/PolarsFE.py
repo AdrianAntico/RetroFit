@@ -63,7 +63,7 @@ class FE(FeatureEngineering):
         elif not isinstance(LagColumnNames, (list, type(None))):
             raise Exception("LagColumnNames should be a string or a list")
 
-        if isinstance(LagPeriods, str):
+        if isinstance(LagPeriods, int):
             LagPeriods = [LagPeriods]
         elif not isinstance(LagPeriods, (list, type(None))):
             raise Exception("LagPeriods should be a string or a list")
@@ -175,22 +175,22 @@ class FE(FeatureEngineering):
         elif not isinstance(ByVariables, (list, type(None))):
             raise Exception("RollColumnNames should be a string or a list")
     
-        if isinstance(MovingAvg_Periods, str):
+        if isinstance(MovingAvg_Periods, int):
             MovingAvg_Periods = [MovingAvg_Periods]
         elif not isinstance(MovingAvg_Periods, (list, type(None))):
             raise Exception("MovingAvg_Periods should be a string or a list")
     
-        if isinstance(MovingSD_Periods, str):
+        if isinstance(MovingSD_Periods, int):
             MovingSD_Periods = [MovingSD_Periods]
         elif not isinstance(MovingSD_Periods, (list, type(None))):
             raise Exception("MovingSD_Periods should be a string or a list")
     
-        if isinstance(MovingMin_Periods, str):
+        if isinstance(MovingMin_Periods, int):
             MovingMin_Periods = [MovingMin_Periods]
         elif not isinstance(MovingMin_Periods, (list, type(None))):
             raise Exception("MovingMin_Periods should be a string or a list")
     
-        if isinstance(MovingMax_Periods, str):
+        if isinstance(MovingMax_Periods, int):
             MovingMax_Periods = [MovingMax_Periods]
         elif not isinstance(MovingMax_Periods, (list, type(None))):
             raise Exception("MovingMax_Periods should be a string or a list")
@@ -207,9 +207,7 @@ class FE(FeatureEngineering):
             data.sort(DateColumnName, reverse = True, in_place = True)
     
         # Build lags to max window value
-        MaxVal = max(
-            max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)
-        )
+        MaxVal = max(max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods))
     
         # processing
         for rcn in RollColumnNames:
@@ -320,12 +318,12 @@ class FE(FeatureEngineering):
         elif not isinstance(DiffGroupVariables, (list, type(None))):
             raise Exception("DiffGroupVariables should be a string or a list")
     
-        if isinstance(NLag1, str):
+        if isinstance(NLag1, int):
             NLag1 = [NLag1]
         elif not isinstance(NLag1, (list, type(None))):
             raise Exception("NLag1 should be a string or a list")
     
-        if isinstance(NLag2, str):
+        if isinstance(NLag2, int):
             NLag2 = [NLag2]
         elif not isinstance(NLag2, (list, type(None))):
             raise Exception("NLag2 should be a string or a list")
@@ -351,29 +349,12 @@ class FE(FeatureEngineering):
                     # Create Lags
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: f[rcn]
-                                - f[Ref2]
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
 
                     # Remove temp columns
                     del data[:, f[Ref2]]
