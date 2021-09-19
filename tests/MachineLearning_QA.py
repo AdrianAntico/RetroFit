@@ -446,20 +446,20 @@ import datatable as dt
 from datatable import sort, f, by
 import polars as pl
 import retrofit
-from retrofit import PolarsFE as pfe
+#from retrofit import PolarsFE as pfe
 from retrofit import DatatableFE as dtfe
-from retrofit import PandasFE as panfe
+#from retrofit import PandasFE as panfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
-data = pl.read_csv(FilePath)
+
+x = dtfe.FE()
 
 # Create partitioned data sets
-DataFrames = dtfe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = x.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 

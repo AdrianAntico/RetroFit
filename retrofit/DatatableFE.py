@@ -660,10 +660,15 @@ class FE(FeatureEngineering):
         self._last_partition_args = locals()
             
         # Ensure List
-        if isinstance(CategoricalColumnNames, str):
-            CategoricalColumnNames = [CategoricalColumnNames]
-        elif not isinstance(CategoricalColumnNames, (list, type(None))):
-            raise Exception("CategoricalColumnNames should be a string or a list")
+        if isinstance(ByVariables, str):
+            ByVariables = [ByVariables]
+        elif not isinstance(ByVariables, (list, type(None))):
+            raise Exception("ByVariables should be a string or a list")
+        
+        if isinstance(Ratios, str):
+            Ratios = [Ratios]
+        elif not isinstance(Ratios, (list, type(None))):
+            raise Exception("Ratios should be a string or a list")
 
         # Accumulate Ratios
         Ratios = u.cumsum(Ratios)
