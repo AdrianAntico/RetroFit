@@ -486,11 +486,11 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
     
     # Args Check
     if Algorithms is None:
-      raise NameError('Algorithms cannot be None')
+      raise Exception('Algorithms cannot be None')
     if TargetType is None:
-      raise NameError('TargetType cannot be None')
+      raise Exception('TargetType cannot be None')
     if TrainMethod is None:
-      raise NameError('TrainMethod cannot be None')  
+      raise Exception('TrainMethod cannot be None')  
     
     # Ensure Algorithms is a list
     if not isinstance(Algorithms, list):
@@ -1243,7 +1243,7 @@ class RetroFit:
       
       # Check
       if len(self.ModelArgs) == 0:
-        raise NameError('self.ModelArgs is empty')
+        raise Exception('self.ModelArgs is empty')
 
       # Which Algo
       if not Algorithm is None:
@@ -1387,7 +1387,7 @@ class RetroFit:
 
       # Check
       if len(self.ModelList) == 0:
-        raise NameError('No models found in self.ModelList')
+        raise Exception('No models found in self.ModelList')
 
       # Which Algo
       if not Algorithm is None:

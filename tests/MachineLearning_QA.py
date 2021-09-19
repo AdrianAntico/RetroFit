@@ -446,10 +446,18 @@ import datatable as dt
 from datatable import sort, f, by
 import retrofit
 import retrofit.DatatableFE as dtfe
+from retrofit import DatatableFE as dtfe
+from retrofit.FeatureEngineering import FeatureEngineering as fe
+
+from retrofit.DatatableFE import FE
+FE.
+
+fe.
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
+data = pl.read_csv(FilePath)
 
 # 
 dtfe.
