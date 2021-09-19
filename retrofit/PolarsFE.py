@@ -165,6 +165,11 @@ class FE(FeatureEngineering):
         self._last_roll_args = locals()
     
         # Ensure List
+        if isinstance(DateColumnName, str):
+            DateColumnName = [DateColumnName]
+        elif not isinstance(DateColumnName, (list, type(None))):
+            raise Exception("DateColumnName should be a string or a list")
+
         if isinstance(ByVariables, str):
             ByVariables = [ByVariables]
         elif not isinstance(ByVariables, (list, type(None))):
@@ -298,6 +303,11 @@ class FE(FeatureEngineering):
         self._last_lag_args = locals()
             
         # Ensure List
+        if isinstance(DateColumnName, str):
+            DateColumnName = [DateColumnName]
+        elif not isinstance(DateColumnName, (list, type(None))):
+            raise Exception("DateColumnName should be a string or a list")
+
         if isinstance(ByVariables, str):
             ByVariables = [ByVariables]
         elif not isinstance(ByVariables, (list, type(None))):
