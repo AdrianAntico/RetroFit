@@ -479,6 +479,19 @@ data = FE.FE0_AutoRollStats(
     Sort=True,
     use_saved_args=False)
 
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
   data, 

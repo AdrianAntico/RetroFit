@@ -311,16 +311,6 @@ class FE(FeatureEngineering):
             DiffGroupVariables = [DiffGroupVariables]
         elif not isinstance(DiffGroupVariables, (list, type(None))):
             raise Exception("DiffGroupVariables should be a string or a list")
-    
-        if isinstance(NLag1, int):
-            NLag1 = [NLag1]
-        elif not isinstance(NLag1, (list, type(None))):
-            raise Exception("NLag1 should be a string or a list")
-    
-        if isinstance(NLag2, int):
-            NLag2 = [NLag2]
-        elif not isinstance(NLag2, (list, type(None))):
-            raise Exception("NLag2 should be a string or a list")
 
         # Sort data
         if Sort:
