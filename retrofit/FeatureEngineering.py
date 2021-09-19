@@ -89,4 +89,16 @@ class FeatureEngineering:
         use_saved_args=False
     ):
         raise NotImplementedError
+    
+    def FE2_AutoDataPartition(
+        data = None, 
+        ArgsList = None,
+        DateColumnName = None,
+        PartitionType = 'random',
+        Ratios = [0.7,0.2,0.1],
+        ByVariables = None,
+        Sort = False,
+        use_saved_args = False
+    ):
+        raise NotImplementedError
 

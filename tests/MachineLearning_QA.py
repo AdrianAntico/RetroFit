@@ -444,37 +444,28 @@ import pkg_resources
 import timeit
 import datatable as dt
 from datatable import sort, f, by
+import polars as pl
 import retrofit
-import retrofit.DatatableFE as dtfe
+from retrofit import PolarsFE as pfe
 from retrofit import DatatableFE as dtfe
-from retrofit.FeatureEngineering import FeatureEngineering as fe
-
-from retrofit.DatatableFE import FE
-FE.
-
-fe.
+from retrofit import PandasFE as panfe
+from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
 data = pl.read_csv(FilePath)
 
-# 
-dtfe.
-
-
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
+DataFrames = dtfe.FE2_AutoDataParition(
   data = data, 
   ArgsList = None, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
