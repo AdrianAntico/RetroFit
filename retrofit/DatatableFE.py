@@ -186,9 +186,7 @@ class FE(FeatureEngineering):
                 data = data[:, :, sort(DateColumnName, reverse=True)]
     
         # Build lags to max window value
-        MaxVal = max(
-            max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods)
-        )
+        MaxVal = max(max(MovingAvg_Periods, MovingSD_Periods, MovingMin_Periods, MovingMax_Periods))
     
         # processing
         for rcn in RollColumnNames:
@@ -200,9 +198,7 @@ class FE(FeatureEngineering):
     
                 # Generate Lags for rowmean, rowsd, rowmin, rowmax
                 if ByVariables:
-                    data = data[
-                        :, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)}), by(ByVariables)
-                    ]
+                    data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)}), by(ByVariables)]
                 else:
                     data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=ns)})]
     
@@ -331,29 +327,12 @@ class FE(FeatureEngineering):
                     # Create Lags
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: f[rcn]
-                                - f[Ref2]
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[rcn] - f[Ref2]})]
 
                     # Remove temp columns
                     del data[:, f[Ref2]]
@@ -364,35 +343,14 @@ class FE(FeatureEngineering):
                     Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
-                            by(ByVariables),
-                        ]
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}), by(ByVariables)]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: f[Ref1]
-                                - f[Ref2]
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: f[Ref1] - f[Ref2]})]
 
                     # Remove temp columns
                     del data[:, f[Ref1]]
@@ -408,29 +366,12 @@ class FE(FeatureEngineering):
                     # Create Lags
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.as_type(f[rcn], int)
-                                - dt.as_type(f[Ref2], int)
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
 
                     # Remove temp columns
                     del data[:, f[Ref2]]
@@ -441,35 +382,14 @@ class FE(FeatureEngineering):
                     Ref1 = "TEMP__Lag_" + str(NLag1) + "_" + rcn
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}),
-                            by(ByVariables),
-                        ]
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)}), by(ByVariables)]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref1: dt.shift(f[rcn], n=NLag1)})]
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.as_type(f[rcn], int)
-                                - dt.as_type(f[Ref2], int)
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.as_type(f[rcn], int) - dt.as_type(f[Ref2], int)})]
 
                     # Remove temp columns
                     del data[:, f[Ref1]]
@@ -485,32 +405,12 @@ class FE(FeatureEngineering):
                     # Create Lags
                     Ref2 = "TEMP__Lag_" + str(NLag2) + "_" + rcn
                     if ByVariables:
-                        data = data[
-                            :,
-                            f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}),
-                            by(ByVariables),
-                        ]
+                        data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)}), by(ByVariables)]
                     else:
                         data = data[:, f[:].extend({Ref2: dt.shift(f[rcn], n=NLag2)})]
 
                     # Create diffs
-                    data = data[
-                        :,
-                        f[:].extend(
-                            {
-                                "Diff_"
-                                + str(NLag1)
-                                + "_"
-                                + str(NLag2)
-                                + "_"
-                                + rcn: dt.ifelse(
-                                    f[rcn] == f[Ref2],
-                                    "NoDiff",
-                                    "New=" + f[rcn] + "Old=" + f[Ref2],
-                                )
-                            }
-                        ),
-                    ]
+                    data = data[:, f[:].extend({"Diff_" + str(NLag1) + "_" + str(NLag2) + "_" + rcn: dt.ifelse(f[rcn] == f[Ref2], "NoDiff", "New=" + f[rcn] + "Old=" + f[Ref2])})]
 
                     # Remove temp columns
                     del data[:, f[Ref2]]
@@ -611,25 +511,16 @@ class FE(FeatureEngineering):
                 # Nanosecond
                 if CVars.lower() in "nanosecond":
                     try:
-                        data[
-                            :,
-                            f[:].extend(
-                                {DateVar + "_nanosecond": time.nanosecond(f[DateVar])}
-                            ),
-                        ]
+                        data[:, f[:].extend({DateVar + "_nanosecond": time.nanosecond(f[DateVar])})]
                     except ValueError:
-                        raise print(
-                            "Skipping time.nanosecond calculation due to type mismatch"
-                        )
+                        raise Exception("Skipping time.nanosecond calculation due to type mismatch")
     
                 # Second
                 if CVars.lower() in "second":
                     try:
-                        data = data[
-                            :, f[:].extend({DateVar + "_second": time.second(f[DateVar])})
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_second": time.second(f[DateVar])})]
                     except ValueError:
-                        raise print("Skipping time.second calculation due to type mismatch")
+                        raise Exception("Skipping time.second calculation due to type mismatch")
     
                 # Minute
                 if CVars.lower() in "minute":
@@ -638,83 +529,51 @@ class FE(FeatureEngineering):
                             :, f[:].extend({DateVar + "_minute": time.minute(f[DateVar])})
                         ]
                     except ValueError:
-                        raise print("Skipping time.minute calculation due to type mismatch")
+                        raise Exception("Skipping time.minute calculation due to type mismatch")
     
                 # Hour
                 if CVars.lower() in "hour":
                     try:
-                        data = data[
-                            :, f[:].extend({DateVar + "_hour": time.hour(f[DateVar])})
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_hour": time.hour(f[DateVar])})]
                     except ValueError:
-                        raise print("Skipping time.hour calculation due to type mismatch")
+                        raise Exception("Skipping time.hour calculation due to type mismatch")
     
                 # day_of_week
                 if CVars.lower() in "wday":
                     try:
-                        data = data[
-                            :,
-                            f[:].extend({DateVar + "_wday": time.day_of_week(f[DateVar])}),
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_wday": time.day_of_week(f[DateVar])})]
                     except ValueError:
-                        raise print(
-                            "Skipping time.day_of_week 'wday' calculation due to type mismatch"
-                        )
+                        raise Exception("Skipping time.day_of_week 'wday' calculation due to type mismatch")
     
                 # day of month
                 if CVars.lower() in "mday":
                     try:
-                        data = data[
-                            :, f[:].extend({DateVar + "_mday": time.day(f[DateVar])})
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_mday": time.day(f[DateVar])})]
                     except ValueError:
-                        raise print(
-                            "Skipping time.day 'mday' calculation due to type mismatch"
-                        )
+                        raise Exception("Skipping time.day 'mday' calculation due to type mismatch")
     
                 # month
                 if CVars.lower() in "month":
                     try:
-                        data = data[
-                            :, f[:].extend({DateVar + "_month": time.month(f[DateVar])})
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_month": time.month(f[DateVar])})]
                     except ValueError:
-                        raise print(
-                            "Skipping wday time.month calculation due to type mismatch"
-                        )
+                        raise Exception("Skipping wday time.month calculation due to type mismatch")
     
                 # quarter
                 if CVars.lower() in "quarter":
                     try:
                         data = data[:, f[:].extend({"temp___temp": time.month(f[DateVar])})]
-                        data[
-                            :,
-                            update(
-                                temp___temp=ifelse(
-                                    f["temp___temp"] <= 3,
-                                    1,
-                                    ifelse(
-                                        f["temp___temp"] <= 6,
-                                        2,
-                                        ifelse(f["temp___temp"] <= 9, 3, 4),
-                                    ),
-                                )
-                            ),
-                        ]
+                        data[:, update(temp___temp=ifelse(f["temp___temp"] <= 3, 1, ifelse(f["temp___temp"] <= 6, 2, ifelse(f["temp___temp"] <= 9, 3, 4))))]
                         data.names = {"temp___temp": DateVar + "_quarter"}
                     except ValueError:
-                        raise print(
-                            "Skipping time.month 'quarter' calculation due to type mismatch"
-                        )
+                        raise Exception("Skipping time.month 'quarter' calculation due to type mismatch")
     
                 # year
                 if CVars.lower() in "year":
                     try:
-                        data = data[
-                            :, f[:].extend({DateVar + "_year": time.year(f[DateVar])})
-                        ]
+                        data = data[:, f[:].extend({DateVar + "_year": time.year(f[DateVar])})]
                     except ValueError:
-                        raise print("Skipping time.year calculation due to type mismatch")
+                        raise Exception("Skipping time.year calculation due to type mismatch")
     
         # Return
         return data
@@ -798,7 +657,7 @@ class FE(FeatureEngineering):
             ByVariables = self.partition_args.get("ByVariables")
 
         # Locals is a dict of args and their respective values
-        self._last_calendar_args = locals()
+        self._last_partition_args = locals()
             
         # Ensure List
         if isinstance(CategoricalColumnNames, str):
@@ -813,15 +672,13 @@ class FE(FeatureEngineering):
         if PartitionType.lower() == "random":
 
             # Add random number column
-            data = data[
-                :, f[:].extend({"ID": np.random.uniform(0, 1, size=data.shape[0])})
-            ]
+            data = data[:, f[:].extend({"ID": np.random.uniform(0, 1, size=data.shape[0])})]
 
         # Time base partitioning
         if PartitionType.lower() == "time":
 
             # Sort data
-            if Sort == True:
+            if Sort:
                 data = data[:, :, sort(f[DateColumnName], reverse=False)]
 
         # Number of rows

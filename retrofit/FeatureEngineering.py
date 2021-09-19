@@ -16,11 +16,13 @@ class FeatureEngineering:
         self.diff_args = {}
         self.calendar_args = {}
         self.dummy_args = {}
+        self.partition_args = {}
         self._last_lag_args = {}
         self._last_roll_args = {}
         self._last_diff_args = {}
         self._last_calendar_args = {}
         self._last_dummy_args = {}
+        self._last_partition_args = {}
 
     def save_args(self) -> None:
         self.lag_args = self._last_lag_args
@@ -28,6 +30,7 @@ class FeatureEngineering:
         self.diff_args = self._last_diff_args
         self.calendar_args = self._last_calendar_args
         self.dummy_args = self._last_dummy_args
+        self.partition_args = self._last_partition_args
 
     def FE0_AutoLags(
         self,
