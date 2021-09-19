@@ -490,7 +490,7 @@ class FE(FeatureEngineering):
         """
 
         # Additional imports
-        from datatable import time
+        from datatable import time, update
 
         # ArgsList Collection
         if use_saved_args:
