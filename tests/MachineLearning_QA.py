@@ -492,6 +492,13 @@ data = FE.FE0_AutoDiff(
     Sort=True,
     use_saved_args=False)
 
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
   data, 

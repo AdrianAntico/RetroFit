@@ -488,7 +488,10 @@ class FE(FeatureEngineering):
         CalendarVariables:    'nanosecond', 'second', 'minute', 'hour', 'mday', 'wday', 'month', 'quarter', 'year'
         use_saved_args:       Score mode
         """
-    
+
+        # Additional imports
+        from datatable import time
+
         # ArgsList Collection
         if use_saved_args:
             DateColumnNames = self.calendar_args.get("DateColumnName")
