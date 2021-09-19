@@ -73,6 +73,11 @@ class FE(FeatureEngineering):
         elif not isinstance(ByVariables, (list, type(None))):
             raise Exception("ByVariables should be a string or a list")
 
+        if isinstance(DateColumnName, str):
+            DateColumnName = [DateColumnName]
+        elif not isinstance(DateColumnName, (list, type(None))):
+            raise Exception("DateColumnName should be a string or a list")
+
         # Sort data
         if ByVariables:
             SortCols = copy.copy(ByVariables)

@@ -446,19 +446,29 @@ import datatable as dt
 from datatable import sort, f, by
 import polars as pl
 import retrofit
-#from retrofit import PolarsFE as pfe
 from retrofit import DatatableFE as dtfe
-#from retrofit import PandasFE as panfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
 
-x = dtfe.FE()
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
 
 # Create partitioned data sets
-DataFrames = x.FE2_AutoDataPartition(
+DataFrames = FE.FE2_AutoDataPartition(
   data, 
   DateColumnName = None, 
   PartitionType = 'random', 
