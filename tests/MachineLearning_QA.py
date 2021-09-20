@@ -499,6 +499,17 @@ data = FE.FE1_AutoCalendarVariables(
     CalendarVariables=['wday','month','quarter'],
     use_saved_args=False)
 
+# Type conversions for modeling
+data = FE1_ColTypeConversions(
+    self,
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=False,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
   data, 
@@ -509,6 +520,10 @@ DataFrames = FE.FE2_AutoDataPartition(
   Sort = False,
   use_saved_args = False)
 
+# ModelDataPrep()
+def ModelDataPrep()
+
+
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
   Processing = 'catboost',
@@ -517,7 +532,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = list(data.names[5:len(data.names)]),
   CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,

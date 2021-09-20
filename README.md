@@ -531,6 +531,95 @@ ArgsList = Output['ArgsList']
 
 
 
+#### **FE1_ColTypeConversions()**
+<p>
+
+<details><summary>Function Description</summary>
+<p>
+ 
+<code>FE1_ColTypeConversions()</code> Automatically convert column types required by certain models
+
+</p>
+</details>
+
+<details><summary>Code Example</summary>
+<p>
+
+```
+# Setup Environment
+import pkg_resources
+import timeit
+import datatable as dt
+import retrofit
+from retrofit import DatatableFE as dtfe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE1_ColTypeConversions(
+    self,
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=False,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+```
+
+</p>
+</details>
 
 
 </p>

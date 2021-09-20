@@ -628,7 +628,60 @@ class FE(FeatureEngineering):
         # Return data
         return data_new
 
+    
+    # in class
+    def FE1_ColTypeConversions(
+        self,
+        data=None,
+        Int2Float=False,
+        Bool2Float=False,
+        RemoveDateCols=False,
+        RemoveStrCols=False,
+        SkipCols=None,
+        use_saved_args=False):
+        
+        # ArgsList Collection
+        if use_saved_args:
+            Int2Float = self.model_data_prep_args.get("Int2Float")
+            Bool2Float = self.model_data_prep_args.get("Bool2Float")
+            RemoveDateCols = self.model_data_prep_args.get("RemoveDateCols")
+            RemoveStrCols = self.model_data_prep_args.get("RemoveStrCols")
+            SkipCols = self.model_data_prep_args.get("SkipCols")
 
+        # Locals is a dict of args and their respective values
+        self._last_model_data_prep_args = locals()
+
+        # SkipCols
+        x = list(data.names)
+        x = [z for z in x if z not in SkipCols]
+        
+        # Loop through cols
+        for nam in x:
+
+            # int to float
+            if Int2Float:
+                if data[nam].types[0] == dt.Type.int32 or data[nam].types[0] == dt.Type.int64:
+                    data[nam] = data[:, as_type(f[nam], dt.float64)]
+
+            # bool to float
+            if Bool2Float:
+                if data[nam].types[0] == dt.Type.bool8:
+                    data[nam] = data[:, as_type(f[nam], dt.float64)]
+
+            # Remove Date Cols
+            if RemoveDateCols:
+                if data[nam].types[0] == dt.Type.date32 or data[nam].types[0] == dt.Type.date64:
+                    del data[nam]
+
+            # Remove Str Cols
+            if RemoveStrCols:
+                if data[nam].types[0] == dt.Type.str32 or data[nam].types[0] == dt.Type.str64:
+                    del data[nam]
+
+        # return
+        return data
+    
+    
     # in class
     def FE2_AutoDataPartition(
         self,

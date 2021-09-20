@@ -16,6 +16,7 @@ class FeatureEngineering:
         self.diff_args = {}
         self.calendar_args = {}
         self.dummy_args = {}
+        self.model_data_prep_args = {}
         self.partition_args = {}
         self._last_lag_args = {}
         self._last_roll_args = {}
@@ -23,6 +24,7 @@ class FeatureEngineering:
         self._last_calendar_args = {}
         self._last_dummy_args = {}
         self._last_partition_args = {}
+        self._last_model_data_prep_args = {}
 
     def save_args(self) -> None:
         self.lag_args = self._last_lag_args
@@ -30,6 +32,7 @@ class FeatureEngineering:
         self.diff_args = self._last_diff_args
         self.calendar_args = self._last_calendar_args
         self.dummy_args = self._last_dummy_args
+        self.model_data_prep_args = self._last_model_data_prep_args
         self.partition_args = self._last_partition_args
 
     def FE0_AutoLags(
@@ -92,7 +95,19 @@ class FeatureEngineering:
         use_saved_args=False
     ):
         raise NotImplementedError
-    
+
+    def FE1_ColTypeConversions(
+        self,
+        data=None,
+        Int2Float=False,
+        Bool2Float=False,
+        RemoveDateCols=False,
+        RemoveStrCols=False,
+        SkipCols=None,
+        use_saved_args=False
+    ):
+          raise NotImplementedError
+
     def FE2_AutoDataPartition(
         data = None, 
         ArgsList = None,
@@ -104,4 +119,3 @@ class FeatureEngineering:
         use_saved_args = False
     ):
         raise NotImplementedError
-
