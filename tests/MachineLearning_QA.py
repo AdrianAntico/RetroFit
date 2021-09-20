@@ -580,6 +580,8 @@ import retrofit
 from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
+import polars as pl
+
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)

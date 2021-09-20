@@ -20,7 +20,7 @@ setup(
     long_description=README,
     long_description_content_type="text/markdown",
     url="https://github.com/AdrianAntico/retrofit",
-    authors=["Adrian Antico", "Sean Benner"],
+    author=["Adrian Antico", "Sean Benner"],
     author_email="adrianantico@gmail.com",
     license="MIT",
     packages=find_packages(),

@@ -1,428 +1,471 @@
 # QA: Test FE0_AutoLags
+import pkg_resources
 import timeit
 import datatable as dt
-import polars as pl
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import DatatableFE as dtfe
+from retrofit import PolarsFE as pfe
 
-## No Group Example: datatable
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# No Group Example: datatable
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
+
+# Run function
+t_start = timeit.default_timer()
+data1 = FE.FE0_AutoLags(
+  data=data, 
+  LagPeriods=1, 
+  LagColumnNames='Leads', 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=None, 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args = False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+del Output
+print(data1.names)
+
+# No Group Example: polars
+
+# Instantiate Feature Engineering Class
+FE = pfe.FE()
+
+# Run function
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = pl.read_csv(FilePath)
+t_start = timeit.default_timer()
+data2 = FE.FE0_AutoLags(
+  data=data,
+  LagPeriods=1,
+  LagColumnNames='Leads',
+  DateColumnName='CalendarDateColumn',
+  ByVariables=None,
+  ImputeValue=-1.0,
+  Sort=True,
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+print(data2.columns)
+
+# Group Example, Single Lag: datatable
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Run function
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+data1 = FE.FE0_AutoLags(
+  data=data, 
+  LagPeriods=1, 
+  LagColumnNames='Leads', 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data1 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data1.names)
-print(ArgsList)
 
-# # Args
-# ArgsList=None
-# LagPeriods=1
-# LagColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=None
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
+# Group Exmaple: polars
 
-## No Group Example: polars
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+# Instantiate Feature Engineering Class
+FE = pfe.FE()
+
+# Run function
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+data2 = FE.FE0_AutoLags(
+  data=data, 
+  LagPeriods=1, 
+  LagColumnNames='Leads', 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+  ImputeValue=-1.0, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data2 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data2.columns)
-print(ArgsList)
 
-# # Args
-# data=data
-# LagPeriods=1
-# LagColumnNames='Weekly_Sales'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# ImputeValue=-1.0
-# Sort=True
-# Processing='polars'
-# InputFrame='polars'
-# OutputFrame='polars'
+# Group and Multiple Periods and LagColumnNames: datatable
 
-## Group Example, Single Lag: datatable
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Run function
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
+data1 = FE.FE0_AutoLags(
+  data=data, 
+  LagPeriods=[1,3,5], 
+  LagColumnNames=['Leads','XREGS1'], 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data1 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data1.names)
-print(ArgsList)
 
-# # Args
-# ArgsList=None
-# LagPeriods=1
-# LagColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
+# Group and Multiple Periods and LagColumnNames: datatable
 
-## Group Exmaple: polars
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+# Instantiate Feature Engineering Class
+FE = pfe.FE()
+
+# Run function
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=1, LagColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
+data2 = FE.FE0_AutoLags(
+  data=data, 
+  LagPeriods=[1,3,5],
+  LagColumnNames=['Leads','XREGS1'], 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+  ImputeValue=-1.0, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data2 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data2.columns)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# LagPeriods=1
-# LagColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# ImputeValue=-1.0
-# Sort=True
-# Processing='polars'
-# InputFrame='polars'
-# OutputFrame='polars'
-
-## Group and Multiple Periods and LagColumnNames: datatable
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-data = dt.fread(FilePath)
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data1 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data1.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# LagPeriods=[1,3,5]
-# LagColumnNames=['Leads','XREGS1']
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
-
-## Group and Multiple Periods and LagColumnNames: datatable
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoLags(data=data, ArgsList=None, LagPeriods=[1,3,5], LagColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], ImputeValue=-1.0, Sort=True, Processing='polars', InputFrame='polars', OutputFrame='polars')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data2 = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data2.columns)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# LagPeriods=[1,3,5]
-# LagColumnNames=['Leads','XREGS1']
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# ImputeValue=-1.0
-# Sort=True
-# Processing='polars'
-# InputFrame='polars'
-# OutputFrame='polars'
 
 #########################################################################################################
 #########################################################################################################
 
-# QA FE0_AutoRollStats
+# Test Function
+import pkg_resources
 import timeit
 import datatable as dt
-import polars as pl
-from retrofit import FeatureEngineering as fe
-
-## No Group Example
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-data = dt.fread(FilePath)
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoRollStats(data=data, ArgsList=None, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# RollColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=None
-# MovingAvg_Periods=[3,5,7]
-# MovingSD_Periods=[3,5,7]
-# MovingMin_Periods=[3,5,7]
-# MovingMax_Periods=[3,5,7]
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
-
-## No Group Example
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoRollStats(data=data, ArgsList=None, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# RollColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=None
-# MovingAvg_Periods=[3,5,7]
-# MovingSD_Periods=[3,5,7]
-# MovingMin_Periods=[3,5,7]
-# MovingMax_Periods=[3,5,7]
-# ImputeValue=-1
-# Sort=True
-# Processing='polars'
-# InputFrame='polars'
-# OutputFrame='polars'
-
-## Group and Multiple Periods and RollColumnNames:
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-data = dt.fread(FilePath)
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoRollStats(data=data, ArgsList=None, RollColumnNames=['Leads','XREGS1'], DateColumnName='CalendarDateColumn', ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# RollColumnNames=['Leads','XREGS1']
-# DateColumnName='CalendarDateColumn'
-# ByVariables=['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# MovingAvg_Periods=[3,5,7]
-# MovingSD_Periods=[3,5,7]
-# MovingMin_Periods=[3,5,7]
-# MovingMax_Periods=[3,5,7]
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
-
-## No Group Example:
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-data = dt.fread(FilePath)
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoRollStats(data=data, ArgsList=None, RollColumnNames='Leads', DateColumnName='CalendarDateColumn', ByVariables=None, MovingAvg_Periods=[3,5,7], MovingSD_Periods=[3,5,7], MovingMin_Periods=[3,5,7], MovingMax_Periods=[3,5,7], ImputeValue=-1, Sort=True, Processing='datatable', InputFrame='datatable', OutputFrame='datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# RollColumnNames='Leads'
-# DateColumnName='CalendarDateColumn'
-# ByVariables=None
-# MovingAvg_Periods=[3,5,7]
-# MovingSD_Periods=[3,5,7]
-# MovingMin_Periods=[3,5,7]
-# MovingMax_Periods=[3,5,7]
-# ImputeValue=-1
-# Sort=True
-# Processing='datatable'
-# InputFrame='datatable'
-# OutputFrame='datatable'
-
-#########################################################################################################
-#########################################################################################################
-
-# QA FE0_AutoDiff
-import timeit
-import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import DatatableFE as dtfe
+
+# Group Example:
+
+# Run function
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+t_start = timeit.default_timer()
+data = FE.FE0_AutoRollStats(
+  data=data, 
+  RollColumnNames='Leads', 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=None, 
+  MovingAvg_Periods=[3,5,7], 
+  MovingSD_Periods=[3,5,7], 
+  MovingMin_Periods=[3,5,7], 
+  MovingMax_Periods=[3,5,7], 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+print(data.names)
     
-## Group Example:
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-data = dt.fread(FilePath)
-t_start = timeit.default_timer()
-Output = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
-t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
-print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# DateColumnName = 'CalendarDateColumn'
-# ByVariables = ['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# DiffNumericVariables = 'Leads'
-# DiffDateVariables = 'CalendarDateColumn'
-# DiffGroupVariables = None
-# NLag1 = 0
-# NLag2 = 1
-# Sort=True
-# Processing = 'datatable'
-# InputFrame = 'datatable'
-# OutputFrame = 'datatable'
-
 ## Group and Multiple Periods and RollColumnNames:
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
 data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Run function
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = ['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+data = FE.FE0_AutoRollStats(
+  data=data, 
+  RollColumnNames=['Leads','XREGS1'], 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+  MovingAvg_Periods=[3,5,7], 
+  MovingSD_Periods=[3,5,7], 
+  MovingMin_Periods=[3,5,7], 
+  MovingMax_Periods=[3,5,7], 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# DateColumnName = 'CalendarDateColumn'
-# ByVariables = ['MarketingSegment','MarketingSegment2','MarketingSegment3', 'Label']
-# DiffNumericVariables = 'Leads'
-# DiffDateVariables = 'CalendarDateColumn'
-# DiffGroupVariables = None
-# NLag1 = 0
-# NLag2 = 1
-# Sort=True
-# Processing = 'datatable'
-# InputFrame = 'datatable'
-# OutputFrame = 'datatable'
 
 ## No Group Example:
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
 data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Run function
 t_start = timeit.default_timer()
-Output = fe.FE0_AutoDiff(data=data, ArgsList=None, DateColumnName = 'CalendarDateColumn', ByVariables = None, DiffNumericVariables = 'Leads', DiffDateVariables = 'CalendarDateColumn', DiffGroupVariables = None, NLag1 = 0, NLag2 = 1, Sort=True, Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+data = FE.FE0_AutoRollStats(
+  data=data, 
+  RollColumnNames='Leads', 
+  DateColumnName='CalendarDateColumn', 
+  ByVariables=None, 
+  MovingAvg_Periods=[3,5,7], 
+  MovingSD_Periods=[3,5,7], 
+  MovingMin_Periods=[3,5,7], 
+  MovingMax_Periods=[3,5,7], 
+  ImputeValue=-1, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-del Output
 print(data.names)
-print(ArgsList)
-
-# # Args
-# ArgsList=None
-# DateColumnName = 'CalendarDateColumn'
-# ByVariables = None
-# DiffNumericVariables = 'Leads'
-# DiffDateVariables = 'CalendarDateColumn'
-# DiffGroupVariables = None
-# NLag1 = 0
-# NLag2 = 1
-# Sort=True
-# Processing = 'datatable'
-# InputFrame = 'datatable'
-# OutputFrame = 'datatable'
 
 #########################################################################################################
 #########################################################################################################
 
-# QA FE0_AutoDiff
+# Test Function
+import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import DatatableFE as dtfe
 
-# FE1_AutoCalendarVariables
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+## Group Example:
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
 data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
 t_start = timeit.default_timer()
-Output = fe.FE1_AutoCalendarVariables(data=data, ArgsList=None, DateColumnNames = 'CalendarDateColumn', CalendarVariables = ['wday','mday','wom','month','quarter','year'], Processing = 'datatable', InputFrame = 'datatable', OutputFrame = 'datatable')
+data = FE.FE0_AutoDiff(
+  data=data, 
+  DateColumnName = 'CalendarDateColumn', 
+  ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+  DiffNumericVariables = 'Leads', 
+  DiffDateVariables = 'CalendarDateColumn', 
+  DiffGroupVariables = None, 
+  NLag1 = 0, 
+  NLag2 = 1, 
+  Sort=True, 
+  use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
+    
+## Group and Multiple Periods and RollColumnNames:
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+t_start = timeit.default_timer()
+data = FE.FE0_AutoDiff(
+  data=data, 
+  DateColumnName = 'CalendarDateColumn',
+  ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+  DiffNumericVariables = 'Leads', 
+  DiffDateVariables = 'CalendarDateColumn', 
+  DiffGroupVariables = None, 
+  NLag1 = 0, 
+  NLag2 = 1, 
+  Sort=True, 
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+print(data.names)
+
+## No Group Example:
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+t_start = timeit.default_timer()
+data = FE.FE0_AutoDiff(
+  data=data, 
+  DateColumnName = 'CalendarDateColumn', 
+  ByVariables = None, 
+  DiffNumericVariables = 'Leads', 
+  DiffDateVariables = 'CalendarDateColumn', 
+  DiffGroupVariables = None, 
+  NLag1 = 0, 
+  NLag2 = 1, 
+  Sort=True, 
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+print(data.names)
+
+#########################################################################################################
+#########################################################################################################
+
+# Test Function
+import pkg_resources
+import timeit
+import datatable as dt
+import retrofit
+from retrofit import DatatableFE as dtfe
+from retrofit import PolarsFE as pfe
+
+# DatatableFE
+ 
+# Data can be created using the R package RemixAutoML and function FakeDataGenerator
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+t_start = timeit.default_timer()
+data = FE.AutoCalendarVariables(
+  data=data, 
+  DateColumnNames = 'CalendarDateColumn',
+  CalendarVariables = ['wday','mday','month','quarter','year'],
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+data.names
+
+# PolarsFE
+
+# Instantiate Feature Engineering Class
+FE = pfe.FE()
+
+t_start = timeit.default_timer()
+data = FE.AutoCalendarVariables(
+  data=data,
+  DateColumnNames = 'CalendarDateColumn',
+  CalendarVariables = ['wday','mday','month','quarter','year'],
+  use_saved_args=False)
+t_end = timeit.default_timer()
+print(t_end - t_start)
+data.names
 
 #########################################################################################################
 #########################################################################################################
 
 # Example: datatable
+import pkg_resources
 import timeit
 import datatable as dt
 import retrofit
-from retrofit import FeatureEngineering as fe
+from retrofit import DatatableFE as dtfe
+from retrofit import PolarsFE as pfe
+
+# DatatableFE
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Run function
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
-Output = fe.FE1_DummyVariables(
+data = FE.FE1_DummyVariables(
   data=data, 
-  ArgsList=None, 
   CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+  use_saved_args=False)
 t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
-
+t_end - t_start
 
 # Example: polars
-import retrofit
-from retrofit import FeatureEngineering as fe
-import polars as pl
+# DatatableFE
+
+# Instantiate Feature Engineering Class
+FE = pfe.FE()
+
+# Run function
 data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
 t_start = timeit.default_timer()
-Output = fe.FE1_DummyVariables(
+data = FE.FE1_DummyVariables(
   data=data, 
   ArgsList=None, 
   CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
-  Processing='polars', 
-  InputFrame='polars', 
-  OutputFrame='polars')
+  use_saved_args=False)
 t_end = timeit.default_timer()
-print(t_end - t_start)
-data = Output['data']
-ArgsList = Output['ArgsList']
+t_end - t_start
+
+#########################################################################################################
+#########################################################################################################
+
+# Setup Environment
+import pkg_resources
+import timeit
+import datatable as dt
+import retrofit
+from retrofit import DatatableFE as dtfe
+from retrofit import MachineLearning as ml
+
+# Load some data
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
+data = dt.fread(FilePath)
+
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    self,
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=False,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
 
 #########################################################################################################
 #########################################################################################################
