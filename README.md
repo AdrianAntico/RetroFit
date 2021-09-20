@@ -1121,27 +1121,84 @@ self.CompareModelsListNames = []
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1151,7 +1208,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
@@ -1209,27 +1266,84 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv')
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1239,7 +1353,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
@@ -1297,27 +1411,46 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv')
+FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1327,7 +1460,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
@@ -1391,27 +1524,84 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1421,7 +1611,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
@@ -1482,27 +1672,84 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create some lags
+data = FE.FE0_AutoLags(
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some rolling stats
+data = FE.FE0_AutoRollStats(
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create some diffs
+data = FE.FE0_AutoDiff(
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1512,7 +1759,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,
@@ -1573,27 +1820,46 @@ x.FitListNames
 import pkg_resources
 import timeit
 import datatable as dt
-from datatable import sort, f, by
 import retrofit
-from retrofit import FeatureEngineering_old as fe
+from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
@@ -1603,7 +1869,7 @@ ModelData = ml.ML0_GetModelData(
   TestData = DataFrames['TestData'],
   ArgsList = None,
   TargetColumnName = 'Adrian',
-  NumericColumnNames = list(data.names[1:11]),
+  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']],
   CategoricalColumnNames = ['Factor_2', 'Factor_3'],
   TextColumnNames = None,
   WeightColumnName = None,

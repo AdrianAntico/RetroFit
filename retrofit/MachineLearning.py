@@ -1431,8 +1431,8 @@ class RetroFit:
           score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
         elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'classification':
           score_data.cbind(Model.predict(score_data))
-          score_data.names = {'True': 'p1'}
-          score_data.names = {'False': 'p0'}
+          score_data.names = {'1.0': 'p1'}
+          score_data.names = {'0.0': 'p0'}
         elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'multiclass':
           score_data.cbind(Model.predict(score_data))
 
