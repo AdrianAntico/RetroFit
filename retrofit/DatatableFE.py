@@ -665,12 +665,12 @@ class FE(FeatureEngineering):
             # int to float
             if Int2Float:
                 if data[nam].types[0] == dt.Type.int32 or data[nam].types[0] == dt.Type.int64:
-                    data[nam] = data[:, as_type(f[nam], dt.float64)]
+                    data[nam] = data[:, as_type(f[nam], dt.float32)]
 
             # bool to float
             if Bool2Float:
                 if data[nam].types[0] == dt.Type.bool8:
-                    data[nam] = data[:, as_type(f[nam], dt.float64)]
+                    data[nam] = data[:, as_type(f[nam], dt.float32)]
 
             # Remove Date Cols
             if RemoveDateCols:

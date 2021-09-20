@@ -519,10 +519,6 @@ DataFrames = FE.FE2_AutoDataPartition(
   Sort = False,
   use_saved_args = False)
 
-# ModelDataPrep()
-def ModelDataPrep()
-
-
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
   Processing = 'catboost',
