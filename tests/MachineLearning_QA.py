@@ -1669,29 +1669,45 @@ from retrofit import MachineLearning as ml
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
 data = dt.fread(FilePath)
 
+# Instantiate Feature Engineering Class
+FE = dtfe.FE()
+
 # Dummify
-Output = fe.FE1_DummyVariables(
+data = FE.FE1_DummyVariables(
   data = data, 
-  ArgsList = None, 
   CategoricalColumnNames = ['Factor_2','Factor_3'],
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
-data = Output['data']
+  use_saved_args=False)
 data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
 
+# Create Calendar Vars
+data = FE.FE1_AutoCalendarVariables(
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
+
+# Type conversions for modeling
+data = FE.FE1_ColTypeConversions(
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
+
+# Drop Text Cols (no word2vec yet)
+data = data[:, [z for z in data.names if z not in ['Comment']]]
+
 # Create partitioned data sets
-DataFrames = fe.FE2_AutoDataParition(
-  data = data, 
-  ArgsList = None, 
+DataFrames = FE.FE2_AutoDataPartition(
+  data, 
   DateColumnName = None, 
   PartitionType = 'random', 
   Ratios = [0.7,0.2,0.1], 
   ByVariables = None, 
-  Sort = False, 
-  Processing = 'datatable', 
-  InputFrame = 'datatable', 
-  OutputFrame = 'datatable')
+  Sort = False,
+  use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
