@@ -651,10 +651,14 @@ class FE(FeatureEngineering):
         # Locals is a dict of args and their respective values
         self._last_model_data_prep_args = locals()
 
+        # Additional imports
+        from datatable import as_type
+
         # SkipCols
         x = list(data.names)
-        x = [z for z in x if z not in SkipCols]
-        
+        if SkipCols:
+            x = [z for z in x if z not in SkipCols]
+
         # Loop through cols
         for nam in x:
 

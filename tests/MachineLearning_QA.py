@@ -500,8 +500,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE1_ColTypeConversions(
-    self,
+data = FE.FE1_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
