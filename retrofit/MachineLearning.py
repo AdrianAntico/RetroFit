@@ -692,7 +692,7 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
         
         # Target Dependent Args
         if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['objective'] = 'binary:logistic'
+          AlgoArgs['objective'] = 'binary'
           AlgoArgs['metric'] = 'auc'
         elif ArgsList.get('TargetType').lower() == 'regression':
           AlgoArgs['objective'] = 'regression'
