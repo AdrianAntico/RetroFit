@@ -559,13 +559,23 @@ t_end - t_start
 
 
 
-#### **FE1_ColTypeConversions()**
+
+</p>
+</details>
+
+
+
+### FE2 Feature Engineering: Full-Data-Set
+<p>
+
+
+#### **FE2_ColTypeConversions()**
 <p>
 
 <details><summary>Function Description</summary>
 <p>
  
-<code>FE1_ColTypeConversions()</code> Automatically convert column types required by certain models
+<code>FE2_ColTypeConversions()</code> Automatically convert column types required by certain models
 
 </p>
 </details>
@@ -635,7 +645,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     self,
     data,
     Int2Float=True,
@@ -649,14 +659,6 @@ data = FE.FE1_ColTypeConversions(
 </p>
 </details>
 
-
-</p>
-</details>
-
-
-
-### FE2 Feature Engineering: Full-Data-Set
-<p>
 
 <details><summary>Expand to view content</summary>
 <p>
@@ -1195,7 +1197,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -1340,7 +1342,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -1447,7 +1449,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -1598,7 +1600,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -1746,7 +1748,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -1856,7 +1858,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2019,7 +2021,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2177,7 +2179,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2297,7 +2299,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2462,7 +2464,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2619,7 +2621,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,
@@ -2738,7 +2740,7 @@ data = FE.FE1_AutoCalendarVariables(
     use_saved_args=False)
 
 # Type conversions for modeling
-data = FE.FE1_ColTypeConversions(
+data = FE.FE2_ColTypeConversions(
     data,
     Int2Float=True,
     Bool2Float=True,

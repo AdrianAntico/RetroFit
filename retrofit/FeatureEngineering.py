@@ -96,7 +96,7 @@ class FeatureEngineering:
     ):
         raise NotImplementedError
 
-    def FE1_ColTypeConversions(
+    def FE2_ColTypeConversions(
         self,
         data=None,
         Int2Float=False,
