@@ -674,7 +674,7 @@ class FE(FeatureEngineering):
 
             # Remove Date Cols
             if RemoveDateCols:
-                if data[nam].types[0] == dt.Type.date32 or data[nam].types[0] == dt.Type.date64:
+                if data[nam].types[0] == dt.Type.date32:
                     del data[nam]
 
             # Remove Str Cols
