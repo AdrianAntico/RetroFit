@@ -5,7 +5,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG" align="center" width="1000" />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
 
 ## Quick Note
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
@@ -33,7 +33,7 @@ https://github.com/AdrianAntico/RemixAutoML
 
 
 
-<img src="https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG" align="center" width="1000" />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG' align='center' width='1000' />
 
 
 
@@ -537,7 +537,7 @@ t_end - t_start
 FE = pfe.FE()
 
 # Run function
-data = pl.read_csv("C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv")
+data = pl.read_csv('C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv')
 t_start = timeit.default_timer()
 data = FE.FE1_DummyVariables(
   data=data, 
@@ -857,8 +857,8 @@ DataSets = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms='CatBoost', 
-  TargetType="Regression", 
-  TrainMethod="Train")
+  TargetType='Regression', 
+  TrainMethod='Train')
 ```
 
 </p>
@@ -1233,8 +1233,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'Ftrl', 
-  TargetType = "Regression", 
-  TrainMethod = "Train")
+  TargetType = 'Regression', 
+  TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1386,8 +1386,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'Ftrl', 
-  TargetType = "Classification", 
-  TrainMethod = "Train")
+  TargetType = 'Classification', 
+  TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1501,8 +1501,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'Ftrl',
-  TargetType = "MultiClass",
-  TrainMethod = "Train")
+  TargetType = 'MultiClass',
+  TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1652,8 +1652,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'CatBoost', 
-  TargetType = "Regression", 
-  TrainMethod = "Train")
+  TargetType = 'Regression', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
@@ -2092,8 +2092,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'XGBoost', 
-  TargetType = "Regression", 
-  TrainMethod = "Train")
+  TargetType = 'Regression', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
@@ -2261,8 +2261,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'XGBoost', 
-  TargetType = "Classification", 
-  TrainMethod = "Train")
+  TargetType = 'Classification', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
@@ -2389,8 +2389,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'XGBoost',
-  TargetType = "MultiClass",
-  TrainMethod = "Train")
+  TargetType = 'MultiClass',
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
@@ -2554,8 +2554,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'LightGBM', 
-  TargetType = "Regression", 
-  TrainMethod = "Train")
+  TargetType = 'Regression', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
@@ -2711,8 +2711,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'LightGBM', 
-  TargetType = "Classification", 
-  TrainMethod = "Train")
+  TargetType = 'Classification', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
@@ -2838,8 +2838,8 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'LightGBM', 
-  TargetType = "MultiClass", 
-  TrainMethod = "Train")
+  TargetType = 'MultiClass', 
+  TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
