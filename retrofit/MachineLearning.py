@@ -1647,9 +1647,18 @@ class RetroFit:
     
     # regression metrics helper
     def _regression_metrics(self, _FitName = None, y_true = None, y_pred = None):
+      
+      # Environment
       import datatable as dt
       from datetime import datetime
       from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
+      
+      # checks
+      Min_y_true = min(y_true)
+      Min_y_pred = min(y_pred)
+      check = (Min_y_true > 0) & (Min_y_pred > 0)
+      
+      # Metrics
       Metrics = dt.Frame([self.FitList[_FitName]])
       Metrics.names = {'C0': 'ModelName'}
       Metrics['FeatureSet'] = None
@@ -1660,7 +1669,7 @@ class RetroFit:
       Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
       Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
       Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
-      Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred)
+      Metrics['mean_squared_log_error'] = if check: mean_squared_log_error(y_true, y_pred) else: -1
       Metrics['max_error'] = max_error(y_true, y_pred)
       return(Metrics)
     
