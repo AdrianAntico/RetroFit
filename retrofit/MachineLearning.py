@@ -1652,15 +1652,14 @@ class RetroFit:
       import datatable as dt
       from datetime import datetime
       import numpy as np
-        
-      
+
       # Get Data
       TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
       temp = self.DataSets.get(ScoredDataName)
-      
+
       # Generate metrics
       if TargetType.lower() == 'regression':
-        
+
         # Environment
         from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
 
@@ -1672,12 +1671,12 @@ class RetroFit:
         Min_y_true = min(y_true.to_numpy())[0]
         Min_y_pred = min(y_pred.to_numpy())[0]
         check = (Min_y_true > 0) & (Min_y_pred > 0)
-        
+
         # Metrics
         Metrics = dt.Frame(ModelName = [FitName])
         Metrics['FeatureSet'] = None
         Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if ByVariable:
+        if ByVariables:
           Metrics['Grouping'] = ByVariables
         else:
           Metrics['Grouping'] = 'NA'
@@ -1692,28 +1691,28 @@ class RetroFit:
         else:
           Metrics['mean_squared_log_error'] = -1
         Metrics['max_error'] = max_error(y_true, y_pred)
-        return(Metrics)
-      elif TargetType == 'classification':
-        Metrics = _classification_metrics(self, _FitName = FitName, y_true = temp[TargetColumnName], y_pred = temp[f"Predict_{TargetColumnName}"])
-      elif TargetType == 'multiclass':
-        Metrics = _multiclass_metrics(self, _FitName = FitName, y_true = temp[TargetColumnName], y_pred = temp[f"Predict_{TargetColumnName}"])
-      
+        return Metrics
+
       # Generate metrics
       if TargetType.lower() == 'classification':
-        
+
         # Imports
         from datatable import ifelse, math, f, update
-        
+
         # Cost matrix
         tpcost = CostDict['tpcost']
         fpcost = CostDict['fpcost']
         fncost = CostDict['fncost']
         tncost = CostDict['tncost']
-        
+
         # Build metrics table
         Thresholds = list(np.linspace(0.0, 1.0, 101))
         ThreshLength = [-1.0] * len(Thresholds)
         ThresholdOutput = dt.Frame(
+          ModelName   = [FitName] * len(Thresholds),
+          FeatureSet  = [None] * len(Thresholds),
+          Grouping    = [ByVariables] * len(Thresholds),
+          CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
           Threshold   = Thresholds,
           TN          = ThreshLength,
           TP          = ThreshLength,

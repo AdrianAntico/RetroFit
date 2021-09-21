@@ -307,7 +307,10 @@ ModelArgs = ml.ML0_Parameters(
   TrainMethod = "Train")
 
 # Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+x = ml.RetroFit(
+  ModelArgs,
+  ModelData,
+  DataFrames)
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'Ftrl')
