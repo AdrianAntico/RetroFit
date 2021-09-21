@@ -334,6 +334,8 @@ x.ModelListNames
 # List of model fitted names
 x.FitListNames
 
+FitName = x.FitListNames[0]
+
 ####################################
 # Ftrl Classification
 ####################################
@@ -469,6 +471,8 @@ x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
+
+x.ML1_Single_Evaluate(FitName=x.FitListNames[0], TargetType='classification', ScoredDataName=x.DataSetsNames[4], ByVariables=None)
 
 ####################################
 # Ftrl MultiClass
