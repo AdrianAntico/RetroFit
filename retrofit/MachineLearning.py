@@ -1,8 +1,8 @@
 # Module: MachineLearning
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.1.5
-# Last modified : 2021-09-20
+# Release: retrofit 0.1.6
+# Last modified : 2021-09-22
 
 def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsList=None, TargetColumnName=None, NumericColumnNames=None, CategoricalColumnNames=None, TextColumnNames=None, WeightColumnName=None, Threads=-1, Processing='catboost', InputFrame='datatable'):
     """
@@ -25,77 +25,6 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
     Threads:                Number of threads to utilize if available for the algorithm
     Processing:             'catboost', 'xgboost', 'lightgbm', or 'ftrl'
     InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
-
-    # ML0_GetModelData Example:
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-
-    # Load some data
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-        
-    # Create partitioned data sets
-    DataSets = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName='CalendarDateColumn', 
-      PartitionType='random', 
-      Ratios=[0.70,0.20,0.10], 
-      ByVariables=None, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-
-    # Collect partitioned data
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    del DataSets
-
-    # Create catboost data sets
-    t_start = timeit.default_timer()
-    DataSets = ml.ML0_GetModelData(
-      TrainData=TrainData, 
-      ValidationData=ValidationData, 
-      TestData=TestData, 
-      ArgsList=None, 
-      TargetColumnName='Leads', 
-      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
-      CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
-      TextColumnNames=None, 
-      WeightColumnName=None, 
-      Threads=-1, 
-      Processing='catboost', 
-      InputFrame='datatable')
-      
-    # timer
-    t_end = timeit.default_timer()
-    t_end - t_start
-    
-    # Collect catboost training data
-    catboost_train = DataSets['train_data']
-    catboost_validation = DataSets['validation_data']
-    catboost_test = DataSets['test_data']
-    ArgsList = DataSets['ArgsList']
-    
-    # QA: Group Case: Step through function
-    TrainData=TrainData
-    ValidationData=ValidationData
-    TestData=TestData
-    ArgsList=None
-    TargetColumnName='Leads'
-    NumericColumnNames=['XREGS1','XREGS2','XREGS3']
-    CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-    TextColumnNames=None
-    WeightColumnName=None
-    Threads=-1
-    Processing='catboost'
-    InputFrame='datatable'
     """
     
     # For making copies of lists so originals aren't modified
@@ -429,59 +358,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
     import retrofit
     from retrofit import FeatureEngineering as fe
     from retrofit import MachineLearning as ml
-
-    # Load some data
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-        
-    # Create partitioned data sets
-    DataSets = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName='CalendarDateColumn', 
-      PartitionType='random', 
-      Ratios=[0.70,0.20,0.10], 
-      ByVariables=None, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-
-    # Collect partitioned data
-    TrainData = DataSets['TrainData']
-    ValidationData = DataSets['ValidationData']
-    TestData = DataSets['TestData']
-    del DataSets
-
-    # Create catboost data sets
-    DataSets = ml.ML0_GetModelData(
-      TrainData=TrainData, 
-      ValidationData=ValidationData, 
-      TestData=TestData, 
-      ArgsList=None, 
-      TargetColumnName='Leads', 
-      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
-      CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
-      TextColumnNames=None, 
-      WeightColumnName=None, 
-      Threads=-1, 
-      Processing='catboost', 
-      InputFrame='datatable')
-
-    # Collect Args
-    Args = DataSets.get('ArgsList')
-
-    # Create Parameters for Modeling
-    ModelArgs = ml.ML0_Parameters(
-      Algorithms='catboost', 
-      TargetType='regression', 
-      TrainMethod='Train')
-
-    # QA
-    Algorithms='catboost'
-    TargetType='regression'
-    TrainMethod='Train'
-    Model=None
-    Algo = 'catboost'
     """
     
     # Args Check
@@ -831,7 +707,6 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
     return MasterArgs
 
 
-# RetroFit Class 
 class RetroFit:
     """
     ####################################

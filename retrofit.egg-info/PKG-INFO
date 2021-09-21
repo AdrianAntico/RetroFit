@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: retrofit
-Version: 0.1.5
+Version: 0.1.6
 Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: ['Adrian Antico', 'Sean Benner']
@@ -13,7 +13,7 @@ Classifier: Programming Language :: Python :: 3
 Description-Content-Type: text/markdown
 License-File: LICENSE
 
-![Version: 0.1.5](https://img.shields.io/static/v1?label=Version&message=0.1.5&color=blue&?style=plastic)
+![Version: 0.1.6](https://img.shields.io/static/v1?label=Version&message=0.1.6&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -31,7 +31,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.1.5
+pip install retrofit==0.1.6
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -40,17 +40,11 @@ https://github.com/AdrianAntico/RemixAutoML
 
 ## Feature Engineering
 
-> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The package takes advantage of datatable or polars (user chooses) for all feature engineering and data wrangling related functions which means you'll only have to go to big data tools if absolutely necessary.
+> Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The Feature Engineering class offers the user the ability to have features generated using datatable, polars, or pandas for all feature engineering and data wrangling related methods. All methods collect paramter settings which will be used for scoring pipelines without the need for the user to save them. This makes life really easy when designing training and scoring pipelines. 
 
 ## Machine Learning
 
-> Machine Learning Training -
-
-> Machine Learning Scoring -
-
-> Machine Learning Evaluation -
-
-> Machine Learning Interpretation -
+> Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from datatable or polars which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. Scoring should be seamless, from regenerating features for scoring to the actual scoring. The RetroFit class makes this super easy, fast, with minimal memory utilization.
 
 
 
@@ -805,7 +799,7 @@ TestData = DataSets['TestData']
 
 
 
-## Machine Learning Training
+## Machine Learning
 <p>
  
 <details><summary>Expand to view content</summary>
@@ -2906,47 +2900,5 @@ x.FitListNames
 
 </p>
 </details>
-
-
-
-
-
-## Machine Learning Evaluation
-<p>
- 
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-
-
-
-## Machine Learning Interpretation
-<p>
- 
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
-
-## Machine Learning Scoring
-<p>
- 
-<details><summary>Expand to view content</summary>
-<p>
-
-#### Coming Soon
-
-</p>
-</details>
-
 
 

@@ -1,8 +1,8 @@
 # Module: PolarsFE
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.1.5
-# Last modified : 2021-09-20
+# Release: retrofit 0.1.6
+# Last modified : 2021-09-22
 
 import copy
 import numpy as np
