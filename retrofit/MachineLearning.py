@@ -1659,7 +1659,7 @@ class RetroFit:
       temp = self.DataSets.get(ScoredDataName)
       
       # Generate metrics
-      if TargetType == 'regression':
+      if TargetType.lower() == 'regression':
         
         # Environment
         from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
@@ -1699,7 +1699,7 @@ class RetroFit:
         Metrics = _multiclass_metrics(self, _FitName = FitName, y_true = temp[TargetColumnName], y_pred = temp[f"Predict_{TargetColumnName}"])
       
       # Generate metrics
-      if TargetType == 'classification':
+      if TargetType.lower() == 'classification':
         
         # Imports
         from datatable import ifelse, math, f, update

@@ -319,6 +319,14 @@ x.ML1_Single_Score(
   Algorithm = 'Ftrl', 
   NewData = None)
 
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=None)
+
 # Scoring data names
 x.DataSetsNames
 
