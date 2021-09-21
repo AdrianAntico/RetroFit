@@ -1044,11 +1044,11 @@ lightgbm_test = DataSets['test_data']
 <p>
 
 
-<details><summary>Class Meta Information</summary>
+<details><summary>**Class Meta Information**</summary>
 <p>
 
 
-<details><summary>Class Goals</summary>
+<details><summary>**Class Goals**</summary>
 <p>
 
 ```
@@ -1069,7 +1069,7 @@ Model Interpretation
 </p>
 </details>
 
-<details><summary>Class Functions</summary>
+<details><summary>**Class Functions**</summary>
 <p>
 
 ```
@@ -1087,7 +1087,7 @@ PrintAlgoArgs()
 </details>
 
 
-<details><summary>Class Attributes</summary>
+<details><summary>**Class Attributes**</summary>
 <p>
 
 ```
@@ -1120,7 +1120,7 @@ self.CompareModelsListNames = []
 
 
 
-<details><summary>Ftrl Examples</summary>
+<details><summary>**Ftrl Examples**</summary>
 <p>
 
 
@@ -1540,7 +1540,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>CatBoost Examples</summary>
+<details><summary>**CatBoost Examples**</summary>
 <p>
 
 <details><summary>Regression</summary>
@@ -1969,7 +1969,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>XGBoost Examples</summary>
+<details><summary>**XGBoost Examples**</summary>
 <p>
 
 
@@ -2431,7 +2431,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>LightGBM Examples</summary>
+<details><summary>**LightGBM Examples**</summary>
 <p>
 
 
