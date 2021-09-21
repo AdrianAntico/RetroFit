@@ -468,6 +468,14 @@ x.ML1_Single_Score(
   Algorithm = 'Ftrl',
   NewData = None)
 
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
+
 # Scoring data names
 x.DataSetsNames
 
@@ -595,8 +603,6 @@ import retrofit
 from retrofit import DatatableFE as dtfe
 from retrofit import MachineLearning as ml
 
-import polars as pl
-
 # Load some data
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
 data = dt.fread(FilePath)
@@ -708,6 +714,14 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'CatBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=None)
 
 # Scoring data names
 x.DataSetsNames
@@ -836,7 +850,10 @@ ModelArgs = ml.ML0_Parameters(
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
 
 # Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+x = ml.RetroFit(
+  ModelArgs,
+  ModelData,
+  DataFrames)
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'CatBoost')
@@ -847,6 +864,14 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'CatBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Scoring data names
 x.DataSetsNames
@@ -1079,14 +1104,17 @@ ModelData = ml.ML0_GetModelData(
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
   Algorithms = 'XGBoost', 
-  TargetType = "Classification", 
+  TargetType = "Regression", 
   TrainMethod = "Train")
 
 # Update iterations to run quickly
 ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
 
 # Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+x = ml.RetroFit(
+  ModelArgs,
+  ModelData,
+  DataFrames)
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'XGBoost')
@@ -1097,6 +1125,14 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'XGBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=None)
 
 # Scoring data names
 x.DataSetsNames
@@ -1246,6 +1282,14 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'XGBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Scoring data names
 x.DataSetsNames
@@ -1654,6 +1698,14 @@ x.ML1_Single_Score(
   DataName = x.DataSetsNames[2],
   ModelName = x.ModelListNames[0],
   Algorithm = 'LightGBM')
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Scoring data names
 x.DataSetsNames

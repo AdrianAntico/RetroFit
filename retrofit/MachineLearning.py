@@ -1397,8 +1397,7 @@ class RetroFit:
 
       # Setup Environment
       import datatable as dt
-      from datatable.models import Ftrl
-
+      
       #################################################
       # Ftrl Method
       #################################################
@@ -1406,6 +1405,7 @@ class RetroFit:
 
         # Setup Environment
         from datatable import f
+        from datatable.models import Ftrl
         
         # Extract model
         if not ModelName is None:
@@ -1605,12 +1605,12 @@ class RetroFit:
         else:
           ScoreData = NewData
 
-        # Subset score data columns
-        ScoreData = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
+        # Subset score features
+        scor = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
         
         # Regression and Classification
         if TempArgs.get('TargetType').lower() != 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = ScoreData)
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = scor)
           
           # Non regression cases
           if TempArgs.get('TargetType').lower() == 'classification':
@@ -1619,7 +1619,7 @@ class RetroFit:
 
         # MultiClass
         else:
-          preds = dt.Frame(Model.predict(data = ScoreData))
+          preds = dt.Frame(Model.predict(data = scor))
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
             from datatable import cbind
             temp = self.DataSets.get('ArgsList')['MultiClass']
