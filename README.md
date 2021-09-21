@@ -1124,7 +1124,7 @@ self.CompareModelsListNames = []
 <p>
 
 
-<details><summary>Regression</summary>
+<details><summary>Regression Training</summary>
 <p>
 
 ```
@@ -1277,7 +1277,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>Classification</summary>
+<details><summary>Classification Training</summary>
 <p>
 
 ```
@@ -1430,7 +1430,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>MultiClass</summary>
+<details><summary>MultiClass Training</summary>
 <p>
 
 ```
@@ -1543,7 +1543,7 @@ x.FitListNames
 <details><summary>CatBoost Examples</summary>
 <p>
 
-<details><summary>Regression</summary>
+<details><summary>Regression Training</summary>
 <p>
 
 ```
@@ -1699,7 +1699,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>Classification</summary>
+<details><summary>Classification Training</summary>
 <p>
 
 ```
@@ -1855,7 +1855,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>MultiClass</summary>
+<details><summary>MultiClass Training</summary>
 <p>
 
 ```
@@ -1973,7 +1973,7 @@ x.FitListNames
 <p>
 
 
-<details><summary>Regression</summary>
+<details><summary>Regression Training</summary>
 <p
 
 ```
@@ -2142,7 +2142,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>Classification</summary>
+<details><summary>Classification Training</summary>
 <p>
 
 ```
@@ -2308,7 +2308,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>MultiClass</summary>
+<details><summary>MultiClass Training</summary>
 <p>
 
 ```
@@ -2435,7 +2435,7 @@ x.FitListNames
 <p>
 
 
-<details><summary>Regression</summary>
+<details><summary>Regression Training</summary>
 <p>
 
 ```
@@ -2592,7 +2592,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>Classification</summary>
+<details><summary>Classification Training</summary>
 <p>
 
 ```
@@ -2757,7 +2757,7 @@ x.FitListNames
 </details>
 
 
-<details><summary>MultiClass</summary>
+<details><summary>MultiClass Training</summary>
 <p>
 
 ```
