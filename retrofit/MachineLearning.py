@@ -1669,7 +1669,10 @@ class RetroFit:
       Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
       Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
       Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
-      Metrics['mean_squared_log_error'] = if check: mean_squared_log_error(y_true, y_pred) else: -1
+      if check:
+        Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred) 
+      else:
+        Metrics['mean_squared_log_error'] = -1
       Metrics['max_error'] = max_error(y_true, y_pred)
       return(Metrics)
     
