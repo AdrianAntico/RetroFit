@@ -1645,32 +1645,6 @@ class RetroFit:
     #################################################
     #################################################
     
-    # regression metrics helper
-    def _regression_metrics(self, _FitName = None, y_true = None, y_pred = None):
-      
-      
-
-    # classification metrics helper
-    def _classification_metrics(self, _FitName = None, y_true = None, y_pred = None):
-      import datatable
-      from datetime import datetime
-      from sklearn.metrics import accuracy_score, balanced_accuracy_score
-      Metrics = dt.Frame([self.FitList[_FitName]])
-      Metrics.names = {'C0': 'ModelName'}
-      Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-      Metrics['accuracy_score'] = accuracy_score(y_true, y_pred)
-      
-      y_true.to_list()
-      
-      Metrics['balanced_accuracy_score'] = balanced_accuracy_score(y_true, y_pred)
-      Metrics['mean_absolute_percentage_error'] = mean_absolute_percentage_error(y_true, y_pred)
-      Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
-      Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
-      Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
-      Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred)
-      Metrics['max_error'] = max_error(y_true, y_pred)
-      return(Metrics)
-    
     # Evaluation Attribute Update
     def ML1_Single_Evaluate(self, FitName=None, TargetType=None, ScoredDataName=None, ByVariables=None, CostDict=dict(tpcost = 0.0, fpcost = 1.0, fncost = 1.0, tncost = 0.0)):
       
