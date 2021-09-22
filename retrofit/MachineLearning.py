@@ -1023,15 +1023,17 @@ class RetroFit:
           ScoreData['p0'] = temp[:,0]
           ScoreData['p1'] = temp[:,1]
         elif TempArgs.get('TargetType').lower() == 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Probability')
+          preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-            from datatable import join
+            from datatable import cbind
             temp = self.DataSets.get('ArgsList')['MultiClass']
-            temp.key = f"Predict_{TargetColumnName}"
-            ScoreData = ScoreData[:, :, join(temp)]
-            temp_x = f"Predict_{TargetColumnName}"
-            del ScoreData[:, temp_x]
-            ScoreData.names = {'Old': f"Predict_{TargetColumnName}"}
+            counter = 0
+            for val in temp['Old'].to_list()[0]:
+              preds.names = {f"C{counter}": val}
+              counter += 1
+
+            # Combine ScoreData and preds
+            ScoreData.cbind(preds)
 
         # Return preds
         if not NewData is None:
