@@ -2003,12 +2003,13 @@ x.FitListNames
 </details>
 
 
+
 <details><summary>XGBoost Examples</summary>
 <p>
 
 
 <details><summary>Regression Training</summary>
-<p
+<p>
 
 
 ```python
