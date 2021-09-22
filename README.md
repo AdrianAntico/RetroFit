@@ -66,7 +66,7 @@ https://github.com/AdrianAntico/RemixAutoML
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # QA: Test FE0_AutoLags
 import pkg_resources
 import timeit
@@ -229,7 +229,7 @@ print(data2.columns)
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Test Function
 import pkg_resources
 import timeit
@@ -333,7 +333,7 @@ print(data.names)
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Test Function
 import pkg_resources
 import timeit
@@ -440,7 +440,7 @@ print(data.names)
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Test Function
 import pkg_resources
 import timeit
@@ -505,7 +505,7 @@ data.names
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Example: datatable
 import pkg_resources
 import timeit
@@ -579,7 +579,7 @@ t_end - t_start
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Setup Environment
 import pkg_resources
 import timeit
@@ -672,7 +672,7 @@ data = FE.FE2_ColTypeConversions(
 <p>
 
 
-```
+```python
 # FE2_AutoDataParition Example
 
 # Setup Environment
@@ -812,7 +812,7 @@ TestData = DataSets['TestData']
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # Setup Environment
 import pkg_resources
 import timeit
@@ -880,7 +880,7 @@ ModelArgs = ml.ML0_Parameters(
 <details><summary>Code Example</summary>
 <p>
 
-```
+```python
 # ML0_GetModelData Example:
 import pkg_resources
 import datatable as dt
@@ -1051,7 +1051,7 @@ lightgbm_test = DataSets['test_data']
 <details><summary>Class Goals</summary>
 <p>
 
-```
+```python
 ####################################
 # Goals
 ####################################
@@ -1072,7 +1072,7 @@ Model Interpretation
 <details><summary>Class Functions</summary>
 <p>
 
-```
+```python
 ####################################
 # Functions
 ####################################
@@ -1090,7 +1090,7 @@ PrintAlgoArgs()
 <details><summary>Class Attributes</summary>
 <p>
 
-```
+```python
 ####################################
 # Attributes
 ####################################
@@ -1127,7 +1127,7 @@ self.CompareModelsListNames = []
 <details><summary>Regression Training</summary>
 <p>
 
-```
+```python
 ####################################
 # Ftrl Regression
 ####################################
@@ -1283,7 +1283,7 @@ x.FitListNames
 <details><summary>Classification Training</summary>
 <p>
 
-```
+```python
 ####################################
 # Ftrl Classification
 ####################################
@@ -1439,7 +1439,7 @@ x.FitListNames
 <details><summary>MultiClass Training</summary>
 <p>
 
-```
+```python
 ####################################
 # Ftrl MultiClass
 ####################################
@@ -1563,7 +1563,7 @@ x.FitListNames
 <details><summary>Regression Training</summary>
 <p>
 
-```
+```python
 ####################################
 # CatBoost Regression
 ####################################
@@ -1722,7 +1722,7 @@ x.FitListNames
 <details><summary>Classification Training</summary>
 <p>
 
-```
+```python
 ####################################
 # CatBoost Classification
 ####################################
@@ -1881,7 +1881,7 @@ x.FitListNames
 <details><summary>MultiClass Training</summary>
 <p>
 
-```
+```python
 ####################################
 # CatBoost MultiClass
 ####################################
@@ -2010,7 +2010,7 @@ x.FitListNames
 <details><summary>Regression Training</summary>
 <p
 
-```
+```python
 ####################################
 # XGBoost Regression
 ####################################
@@ -2182,7 +2182,7 @@ x.FitListNames
 <details><summary>Classification Training</summary>
 <p>
 
-```
+```python
 ####################################
 # XGBoost Classification
 ####################################
@@ -2351,7 +2351,7 @@ x.FitListNames
 <details><summary>MultiClass Training</summary>
 <p>
 
-```
+```python
 ####################################
 # XGBoost MultiClass
 ####################################
@@ -2478,7 +2478,7 @@ x.FitListNames
 <details><summary>Regression Training</summary>
 <p>
 
-```
+```python
 ####################################
 # LightGBM Regression
 ####################################
@@ -2635,7 +2635,7 @@ x.FitListNames
 <details><summary>Classification Training</summary>
 <p>
 
-```
+```python
 ####################################
 # LightGBM Classification
 ####################################
@@ -2803,7 +2803,7 @@ x.FitListNames
 <details><summary>MultiClass Training</summary>
 <p>
 
-```
+```python
 ####################################
 # LightGBM MultiClass
 ####################################
