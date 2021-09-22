@@ -1,4 +1,4 @@
-![Version: 0.1.6](https://img.shields.io/static/v1?label=Version&message=0.1.6&color=blue&?style=plastic)
+![Version: 0.1.7](https://img.shields.io/static/v1?label=Version&message=0.1.7&color=blue&?style=plastic)
 ![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
@@ -16,7 +16,7 @@ This package is currently in its beginning stages. I'll be working off a bluepri
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.1.6
+pip install retrofit==0.1.7
 
 # Check out R package RemixAutoML
 https://github.com/AdrianAntico/RemixAutoML
@@ -1257,6 +1257,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1410,6 +1413,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1516,6 +1522,17 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'Ftrl',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -1679,6 +1696,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1835,6 +1855,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1944,6 +1967,17 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'CatBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -2122,6 +2156,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -2287,6 +2324,9 @@ metrics = x.ML1_Single_Evaluate(
   ScoredDataName=x.DataSetsNames[-1],
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -2737,6 +2777,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -2855,6 +2898,17 @@ x.ML1_Single_Score(
   DataName = x.DataSetsNames[2],
   ModelName = x.ModelListNames[0],
   Algorithm = 'LightGBM')
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames

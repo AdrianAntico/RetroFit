@@ -330,6 +330,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -476,6 +479,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -583,6 +589,9 @@ metrics = x.ML1_Single_Evaluate(
   ScoredDataName=x.DataSetsNames[-1],
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -730,6 +739,9 @@ metrics = x.ML1_Single_Evaluate(
   ScoredDataName=x.DataSetsNames[-1],
   ByVariables=None,
   CostDict=None)
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -881,6 +893,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -989,6 +1004,9 @@ metrics = x.ML1_Single_Evaluate(
   ScoredDataName=x.DataSetsNames[-1],
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -1150,6 +1168,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1307,6 +1328,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1417,6 +1441,17 @@ x.ML1_Single_Score(
   ModelName = x.ModelListNames[0],
   Algorithm = 'XGBoost',
   NewData = None)
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames
@@ -1575,6 +1610,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=None)
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1731,6 +1769,9 @@ metrics = x.ML1_Single_Evaluate(
   ByVariables=None,
   CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
+# Metrics
+metrics.keys()
+
 # Scoring data names
 x.DataSetsNames
 
@@ -1840,6 +1881,17 @@ x.ML1_Single_Score(
   DataName = x.DataSetsNames[2],
   ModelName = x.ModelListNames[0],
   Algorithm = 'LightGBM')
+
+# Evaluate scored data
+metrics = x.ML1_Single_Evaluate(
+  FitName=x.FitListNames[0],
+  TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
+  ScoredDataName=x.DataSetsNames[-1],
+  ByVariables=None,
+  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+
+# Metrics
+metrics.keys()
 
 # Scoring data names
 x.DataSetsNames

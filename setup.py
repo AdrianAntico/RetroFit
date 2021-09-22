@@ -15,7 +15,7 @@ with open(os.path.join(HERE, "requirements.txt")) as f:
 
 setup(
     name="retrofit",
-    version="0.1.6",
+    version="0.1.7",
     description="AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.",
     long_description=README,
     long_description_content_type="text/markdown",

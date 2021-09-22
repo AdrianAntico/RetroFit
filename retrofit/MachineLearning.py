@@ -1,8 +1,8 @@
 # Module: MachineLearning
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.1.6
-# Last modified : 2021-09-22
+# Release: retrofit 0.1.7
+# Last modified : 2021-09-21
 
 def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsList=None, TargetColumnName=None, NumericColumnNames=None, CategoricalColumnNames=None, TextColumnNames=None, WeightColumnName=None, Threads=-1, Processing='catboost', InputFrame='datatable'):
     """
@@ -1391,7 +1391,7 @@ class RetroFit:
         # Imports
         from datatable import ifelse, math, f, update, join
         from numpy import sort
-        from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score
+        from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score, roc_auc_score
         
         # All levels analysis
         levels = list(np.sort(list(set(temp[TargetColumnName].to_list()[0]))))
@@ -1425,13 +1425,14 @@ class RetroFit:
         MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
         
         # other metrics
+        MetricsDict['roc_auc_score'] = roc_auc_score(y_true, y_pred, average = 'micro')
         MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
         MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
         MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
         MetricsDict['precision_recall_fscore_support'] = precision_recall_fscore_support(y_true, y_pred, average = 'micro')
         MetricsDict['precision_score'] = precision_score(y_true, y_pred, average = 'micro')
         MetricsDict['recall_score'] = recall_score(y_true, y_pred, average = 'micro')
-
+        
         # Create temp_target
         temp['temp_target'] = 1.0
         
@@ -1579,7 +1580,7 @@ class RetroFit:
             counter = counter + 1
             
             # Store datatables
-            MetricsDict[level] = ThresholdOutput
+            MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
 
         # Remove temp target
         del temp[:, f['temp_target']]
