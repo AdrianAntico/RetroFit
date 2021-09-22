@@ -1168,7 +1168,7 @@ class RetroFit:
           preds = dt.Frame(Model.predict(data = scor))
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
             from datatable import cbind
-            temp = self.DataSets.get('ArgsList')['MultiClass']
+            temp = x.DataSets.get('ArgsList')['MultiClass']
             counter = 0
             for val in temp['Old'].to_list()[0]:
               preds.names = {f"C{counter}": val}
@@ -1425,7 +1425,6 @@ class RetroFit:
         MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
         
         # other metrics
-        MetricsDict['roc_auc_score'] = roc_auc_score(y_true, scores, average = 'micro')
         MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
         MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
         MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
