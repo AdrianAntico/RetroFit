@@ -1044,41 +1044,41 @@ FE = dtfe.FE()
 
 # Create some lags
 data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
+  data,
+  LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+  DateColumnName='DateTime',
+  ByVariables='Factor_1',
+  LagPeriods=[1,2],
+  ImputeValue=-1,
+  Sort=True,
+  use_saved_args=False)
 
 # Create some rolling stats
 data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
+  data,
+  RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+  DateColumnName='DateTime',
+  ByVariables='Factor_1',
+  MovingAvg_Periods=[1,2],
+  MovingSD_Periods=[2,3],
+  MovingMin_Periods=[1,2],
+  MovingMax_Periods=[1,2],
+  ImputeValue=-1,
+  Sort=True,
+  use_saved_args=False)
 
 # Create some diffs
 data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
+  data,
+  DateColumnName='DateTime',
+  ByVariables=['Factor_1','Factor_2','Factor_3'],
+  DiffNumericVariables='Independent_Variable1',
+  DiffDateVariables=None,
+  DiffGroupVariables=None,
+  NLag1=0,
+  NLag2=1,
+  Sort=True,
+  use_saved_args=False)
 
 # Dummify
 data = FE.FE1_DummyVariables(
@@ -1089,20 +1089,20 @@ data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.
 
 # Create Calendar Vars
 data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
+  data,
+  DateColumnNames='DateTime',
+  CalendarVariables=['wday','month','quarter'],
+  use_saved_args=False)
 
 # Type conversions for modeling
 data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
+  data,
+  Int2Float=True,
+  Bool2Float=True,
+  RemoveDateCols=True,
+  RemoveStrCols=False,
+  SkipCols=None,
+  use_saved_args=False)
 
 # Drop Text Cols (no word2vec yet)
 data = data[:, [z for z in data.names if z not in ['Comment']]]
@@ -1145,10 +1145,7 @@ ModelArgs = ml.ML0_Parameters(
 ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
 
 # Initialize RetroFit
-x = ml.RetroFit(
-  ModelArgs,
-  ModelData,
-  DataFrames)
+x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
 
 # Train Model
 x.ML1_Single_Train(Algorithm = 'XGBoost')
@@ -1907,4 +1904,3 @@ x.ModelListNames
 
 # List of model fitted names
 x.FitListNames
-
