@@ -748,337 +748,6 @@ class RetroFit:
     self.InterpretationListNames = []
     self.CompareModelsList = dict()
     self.CompareModelsListNames = []
-    
-    ####################################
-    # Ftrl Example
-    ####################################
-    
-    # Setup Environment
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-    
-    # Load some data
-    # BechmarkData.csv is located is the tests folder
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-
-    # Create partitioned data sets
-    Data = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName=None, 
-      PartitionType='random', 
-      Ratios=[0.7,0.2,0.1], 
-      ByVariables=None, 
-      Sort=False, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-
-    # Prepare modeling data sets
-    ModelData = ml.ML0_GetModelData(
-      Processing='CatBoost',
-      TrainData=Data['TrainData'],
-      ValidationData=Data['ValidationData'],
-      TestData=Data['TestData'],
-      ArgsList=None,
-      TargetColumnName='Leads',
-      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
-      CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
-      TextColumnNames=None,
-      WeightColumnName=None,
-      Threads=-1,
-      InputFrame='datatable')
-
-    # Get args list for algorithm and target type
-    ModelArgs = ml.ML0_Parameters(
-      Algorithms='CatBoost',
-      TargetType='Regression',
-      TrainMethod='Train')
-
-    # Initialize RetroFit
-    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-    # Train Model
-    x.ML1_Single_Train(Algorithm='Ftrl')
-    x.ML1_Single_Train(Algorithm='catboost')
-
-    # Score data
-    x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0])
-
-    # Scoring data colnames
-    x.DataSets['Scored_test_data'].names
-    
-    # Scoring data
-    x.DataSets.get('Scored_test_data_Ftrl_1')
-
-    # Check ModelArgs Dict
-    x.ModelArgs
-
-    # Check the names of data sets collected
-    x.DataSetsNames
-
-    # List of model names
-    x.ModelListNames
-
-    # List of model fitted names
-    x.FitListNames
-
-    ####################################
-    # CatBoost Example Usage
-    ####################################
-    
-    # Setup Environment
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-    
-    # Load some data
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-    
-    # Create partitioned data sets
-    DataFrames = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName=None, 
-      PartitionType='random', 
-      Ratios=[0.7,0.2,0.1], 
-      ByVariables=None, 
-      Sort=False, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-    
-    # Prepare modeling data sets
-    ModelData = ml.ML0_GetModelData(
-      Processing='catboost',
-      TrainData=DataFrames['TrainData'],
-      ValidationData=DataFrames['ValidationData'],
-      TestData=DataFrames['TestData'],
-      ArgsList=None,
-      TargetColumnName='Leads',
-      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
-      CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
-      TextColumnNames=None,
-      WeightColumnName=None,
-      Threads=-1,
-      InputFrame='datatable')
-    
-    # Get args list for algorithm and target type
-    ModelArgs = ml.ML0_Parameters(
-      Algorithms='CatBoost', 
-      TargetType="Regression", 
-      TrainMethod="Train")
-    
-    # Initialize RetroFit
-    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-    
-    # Train Model
-    x.ML1_Single_Train(Algorithm='CatBoost')
-    
-    # Score data
-    x.ML1_Single_Score(DataName=x.DataSetsNames[2], ModelName=x.ModelListNames[0], Algorithm='CatBoost')
-    
-    # Scoring data colnames
-    x.DataSets['Scored_test_data'].names
-    
-    # Scoring data
-    x.DataSets.get('Scored_test_data_CatBoost_1')
-
-    # Check ModelArgs Dict
-    x.ModelArgs
-
-    # Check the names of data sets collected
-    x.DataSetsNames
-
-    # List of model names
-    x.ModelListNames
-
-    # List of model fitted names
-    x.FitListNames
-    
-    ####################################
-    # XGBoost Example Usage
-    ####################################
-    
-    # Setup Environment
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-    
-    # Load some data
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-    
-    # Create partitioned data sets
-    DataFrames = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName=None, 
-      PartitionType='random', 
-      Ratios=[0.7,0.2,0.1], 
-      ByVariables=None, 
-      Sort=False, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-    
-    # Prepare modeling data sets
-    ModelData = ml.ML0_GetModelData(
-      Processing='xgboost',
-      TrainData=DataFrames['TrainData'],
-      ValidationData=DataFrames['ValidationData'],
-      TestData=DataFrames['TestData'],
-      ArgsList=None,
-      TargetColumnName='Leads',
-      NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
-      CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'],
-      TextColumnNames=None,
-      WeightColumnName=None,
-      Threads=-1,
-      InputFrame='datatable')
-    
-    # Get args list for algorithm and target type
-    ModelArgs = ml.ML0_Parameters(
-      Algorithms='XGBoost', 
-      TargetType="Regression", 
-      TrainMethod="Train")
-    
-    # Update iterations to run quickly
-    ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
-    
-    # Initialize RetroFit
-    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-    
-    # Train Model
-    x.ML1_Single_Train(Algorithm='XGBoost')
-    
-    # Score data
-    x.ML1_Single_Score(
-      DataName = x.DataSetsNames[2],
-      ModelName = x.ModelListNames[0],
-      Algorithm = 'XGBoost')
-    
-    # Scoring data names
-    x.DataSetsNames
-    
-    # Scoring data
-    x.DataSets.get('Scored_test_data_XGBoost_1')
-    
-    # Check ModelArgs Dict
-    x.PrintAlgoArgs(Algo='XGBoost')
-    
-    # List of model names
-    x.ModelListNames
-    
-    # List of model fitted names
-    x.FitListNames
-    
-    ####################################
-    # LightGBM Example Usage
-    ####################################
-    
-    # Setup Environment
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-    
-    # Load some data
-    FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv') 
-    data = dt.fread(FilePath)
-    
-    # Dummify
-    Output = fe.FE1_DummyVariables(
-      data=data, 
-      ArgsList=None, 
-      CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'], 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-    data = Output['data']
-    data = data[:, [name not in ['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'] for name in data.names]]
-    
-    # Create partitioned data sets
-    DataFrames = fe.FE2_AutoDataParition(
-      data=data, 
-      ArgsList=None, 
-      DateColumnName=None, 
-      PartitionType='random', 
-      Ratios=[0.7,0.2,0.1], 
-      ByVariables=None, 
-      Sort=False, 
-      Processing='datatable', 
-      InputFrame='datatable', 
-      OutputFrame='datatable')
-    
-    # Prepare modeling data sets
-    ModelData = ml.ML0_GetModelData(
-      Processing='xgboost',
-      TrainData=DataFrames['TrainData'],
-      ValidationData=DataFrames['ValidationData'],
-      TestData=DataFrames['TestData'],
-      ArgsList=None,
-      TargetColumnName='Leads',
-      NumericColumnNames=['XREGS1','XREGS2','XREGS3','MarketingSegments_B','MarketingSegments_A','MarketingSegments_C','MarketingSegments2_a','MarketingSegments2_b','MarketingSegments2_c','MarketingSegments3_x','MarketingSegments3_z','MarketingSegments3_y'],
-      CategoricalColumnNames=None,
-      TextColumnNames=None,
-      WeightColumnName=None,
-      Threads=-1,
-      InputFrame='datatable')
-    
-    # Get args list for algorithm and target type
-    ModelArgs = ml.ML0_Parameters(
-      Algorithms='LightGBM', 
-      TargetType="Regression", 
-      TrainMethod="Train")
-    
-    # Update iterations to run quickly
-    ModelArgs['LightGBM']['AlgoArgs']['num_boost_round'] = 50
-    
-    # Initialize RetroFit
-    x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-    
-    # Train Model
-    x.ML1_Single_Train(Algorithm='LightGBM')
-    
-    # Score data
-    x.ML1_Single_Score(
-      DataName = x.DataSetsNames[2],
-      ModelName = x.ModelListNames[0],
-      Algorithm = 'LightGBM')
-    
-    # Scoring data names
-    x.DataSetsNames
-    
-    # Scoring data
-    x.DataSets.get('Scored_test_data_LightGBM_1')
-    
-    # Check ModelArgs Dict
-    x.PrintAlgoArgs(Algo='LightGBM')
-    
-    # List of model names
-    x.ModelListNames
-    
-    # List of model fitted names
-    x.FitListNames
     """
     
     # Define __init__
@@ -1354,7 +1023,7 @@ class RetroFit:
           ScoreData['p0'] = temp[:,0]
           ScoreData['p1'] = temp[:,1]
         elif TempArgs.get('TargetType').lower() == 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Class')
+          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'Probability')
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
             from datatable import join
             temp = self.DataSets.get('ArgsList')['MultiClass']
@@ -1527,7 +1196,7 @@ class RetroFit:
       import datatable as dt
       from datetime import datetime
       import numpy as np
-
+      
       # Get Data
       TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
       temp = self.DataSets.get(ScoredDataName)
@@ -1713,3 +1382,206 @@ class RetroFit:
 
         # return
         return ThresholdOutput
+      
+      # Generate metrics (requires target as categorical and preds as softmax probs split into columns)
+      if TargetType.lower() == 'multiclass':
+
+        # Imports
+        from datatable import ifelse, math, f, update, join
+        from numpy import sort
+        from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score
+        
+        # All levels analysis
+        levels = list(np.sort(list(set(temp[TargetColumnName].to_list()[0]))))
+        scores = temp[:, levels].to_numpy()
+        lookup = dt.Frame(PredClass = levels)
+        lookup['Levels'] = np.arange(0,lookup.shape[0], 1)
+        targets = temp[:, levels].to_numpy()
+        ClassPreds = dt.Frame(Levels = list(targets.argmax(axis = 1)))
+        lookup.key = 'Levels'
+        ClassPreds = ClassPreds[:, :, join(lookup)]
+        del ClassPreds[:, f.Levels]
+        temp.cbind(ClassPreds)
+        
+        # Metrics dict
+        MetricsDict = dict()
+        
+        # multilabel_confusion_matrix
+        y_true = temp[TargetColumnName].to_numpy()
+        y_pred = temp['PredClass'].to_numpy()
+        MetricsDict['multilabel_confusion_matrix'] = multilabel_confusion_matrix(y_true, y_pred)
+
+        # Confusion matrix
+        MetricsDict['confusion_matrix'] = confusion_matrix(y_true, y_pred)
+
+        # top_k_accuracy_score
+        top_acc_scores = dt.Frame(TopN = np.arange(0,lookup.shape[0], 1))
+        top_acc_scores['top_acc_scores'] = -1 * len(levels)
+        top_acc_scores['N'] = temp.shape[0]
+        for k in range(len(levels)):
+          top_acc_scores[k, f['top_acc_scores']] = top_k_accuracy_score(y_true, scores, k=k, normalize=False)
+        MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
+        
+        # other metrics
+        MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
+        MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
+        MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
+        MetricsDict['precision_recall_fscore_support'] = precision_recall_fscore_support(y_true, y_pred, average = 'micro')
+        MetricsDict['precision_score'] = precision_score(y_true, y_pred, average = 'micro')
+        MetricsDict['recall_score'] = recall_score(y_true, y_pred, average = 'micro')
+
+        # Create temp_target
+        temp['temp_target'] = 1.0
+        
+        # Individual levels analysis
+        for level in levels:
+          
+          # Update temp_target
+          temp[:, update(temp_target = ifelse(f[TargetColumnName] == level, 1.0, 0.0))]
+          
+          # Cost matrix
+          tpcost = CostDict['tpcost']
+          fpcost = CostDict['fpcost']
+          fncost = CostDict['fncost']
+          tncost = CostDict['tncost']
+
+          # Build metrics table
+          Thresholds = list(np.linspace(0.0, 1.0, 101))
+          ThreshLength = [-1.0] * len(Thresholds)
+          ThresholdOutput = dt.Frame(
+            ModelName   = [FitName] * len(Thresholds),
+            FeatureSet  = [None] * len(Thresholds),
+            Grouping    = [ByVariables] * len(Thresholds),
+            CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
+            Threshold   = Thresholds,
+            TN          = ThreshLength,
+            TP          = ThreshLength,
+            FN          = ThreshLength,
+            FP          = ThreshLength,
+            N           = ThreshLength,
+            P           = ThreshLength,
+            Utility     = ThreshLength,
+            MCC         = ThreshLength,
+            Accuracy    = ThreshLength,
+            F1_Score    = ThreshLength,
+            F2_Score    = ThreshLength,
+            F0_5_Score  = ThreshLength,
+            TPR         = ThreshLength,
+            TNR         = ThreshLength,
+            FNR         = ThreshLength,
+            FPR         = ThreshLength,
+            FDR         = ThreshLength,
+            FOR         = ThreshLength,
+            NPV         = ThreshLength,
+            PPV         = ThreshLength,
+            ThreatScore = ThreshLength)
+
+          # Generate metrics
+          counter = 0
+          for Thresh in Thresholds:
+            TN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
+            TP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
+            FN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
+            FP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
+            N1 = temp.shape[0]
+            N  = temp[f[level] < Thresh, ...].shape[0]
+            P1 = temp[f['temp_target'] == 1, ...].shape[0]
+            P  = temp[(f['temp_target'] == 1) & (f[level] > Thresh), ...].shape[0]
+  
+            # Calculate metrics ----
+            if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
+              MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+            else:
+              MCC = -1.0
+            if not N1 == 0:
+              Accuracy    = (TP+TN)/N1
+            else:
+              Accuracy = -1.0
+            if not P1 == 0:
+              TPR         = TP/P1
+            else:
+              TPR = -1.0
+            if not (N1-P1) == 0:
+              TNR         = TN/(N1-P1)
+            else:
+              TNR = -1.0
+            if not P1 == 0:
+              FNR         = FN / P1
+            else:
+              FNR = -1.0
+            if not N1 == 0:
+              FPR         = FP / N1
+            else:
+              FPR = -1.0
+            if not (FP + TP) == 0:
+              FDR         = FP / (FP + TP)
+            else:
+              FDR = -1.0
+            if not (FN + TN) == 0:
+              FOR         = FN / (FN + TN)
+            else:
+              FOR = -1.0
+            if not (TP + FP + FN) == 0:
+              F1_Score    = 2 * TP / (2 * TP + FP + FN)
+            else:
+              F1_Score = -1.0
+            if not (TP + FP + FN) == 0:
+              F2_Score    = 3 * TP / (2 * TP + FP + FN)
+            else:
+              F2_Score = -1.0
+            if not (TP + FP + FN) == 0:
+              F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
+            else:
+              F0_5_Score = -1.0
+            if not (TN + FN) == 0:
+              NPV         = TN / (TN + FN)
+            else:
+              NPV = -1.0
+            if not (TP + FP) == 0:
+              PPV         = TP / (TP + FP)
+            else:
+              PPV = -1.0
+            if not (TP + FN + FP) == 0:
+              ThreatScore = TP / (TP + FN + FP)
+            else:
+              ThreatScore = -1.0
+            if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
+              Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
+            else:
+              Utility = -1.0
+
+            # Fill in values ----
+            ThresholdOutput[counter, update(P = P)]
+            ThresholdOutput[counter, update(N = N)]
+            ThresholdOutput[counter, update(TN = TN)]
+            ThresholdOutput[counter, update(TP = TP)]
+            ThresholdOutput[counter, update(FP = FP)]
+            ThresholdOutput[counter, update(FN = FN)]
+            ThresholdOutput[counter, update(Utility = Utility)]
+            ThresholdOutput[counter, update(MCC = MCC)]
+            ThresholdOutput[counter, update(Accuracy = Accuracy)]
+            ThresholdOutput[counter, update(F1_Score = F1_Score)]
+            ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
+            ThresholdOutput[counter, update(F2_Score = F2_Score)]
+            ThresholdOutput[counter, update(NPV = NPV)]
+            ThresholdOutput[counter, update(TPR = TPR)]
+            ThresholdOutput[counter, update(TNR = TNR)]
+            ThresholdOutput[counter, update(FNR = FNR)]
+            ThresholdOutput[counter, update(FPR = FPR)]
+            ThresholdOutput[counter, update(FDR = FDR)]
+            ThresholdOutput[counter, update(FOR = FOR)]
+            ThresholdOutput[counter, update(PPV = PPV)]
+            ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
+            
+            # Increment
+            counter = counter + 1
+            
+            # Store datatables
+            MetricsDict[level] = ThresholdOutput
+
+        # Remove temp target
+        del temp[:, f['temp_target']]
+        
+        # return
+        return MetricsDict
+
