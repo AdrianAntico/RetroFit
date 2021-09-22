@@ -1168,7 +1168,7 @@ class RetroFit:
           preds = dt.Frame(Model.predict(data = scor))
           if not self.DataSets.get('ArgsList')['MultiClass'] is None:
             from datatable import cbind
-            temp = x.DataSets.get('ArgsList')['MultiClass']
+            temp = self.DataSets.get('ArgsList')['MultiClass']
             counter = 0
             for val in temp['Old'].to_list()[0]:
               preds.names = {f"C{counter}": val}
