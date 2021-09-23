@@ -11,7 +11,7 @@
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
 
 ## Installation
-```
+```python
 # Most up-to-date
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
