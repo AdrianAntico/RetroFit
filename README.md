@@ -30,7 +30,6 @@
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
   * [**ML1 Machine Learning: RetroFit Class**](#--machine-learning-1----)
 
-
 ## Quick Note
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
 
