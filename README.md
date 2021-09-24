@@ -10,10 +10,10 @@
 
 - [**Quick Note**](#--quick-note--)
 - [**Installation**](#--installation--)
-- [**Feature Engineering Note**](#--feature-engineering-note--)
-- [**Machine Learning Note**](#--machine-learning-note--)
-- [**Feature Engineering**](#--feature-engineering--)
-- [**Machine Learning**](#--machine-learning--)
+- [**Feature Engineering Note**](#--feature-engineering-note)
+- [**Machine Learning Note**](#--machine-learning-note)
+- [**Feature Engineering**](#--feature-engineering)
+- [**Machine Learning**](#--machine-learning)
 
 
 ## **Quick Note**
