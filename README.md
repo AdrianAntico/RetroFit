@@ -8,8 +8,8 @@
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
 
 
-- [**Quick Note**](#--quick-note--)
-- [**Installation**](#--installation--)
+- [**Quick Note**](#quick-note)
+- [**Installation**](#installation)
 - [**Feature Engineering Note**](#feature-engineering-note)
 - [**Machine Learning Note**](#machine-learning-note)
 - [**Feature Engineering**](#feature-engineering)
