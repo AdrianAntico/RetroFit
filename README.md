@@ -30,8 +30,6 @@
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
   * [**ML1 Machine Learning: RetroFit Class**](#--ml1-machine-learning--retrofit-class--)
 
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 
 ## Quick Note
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
