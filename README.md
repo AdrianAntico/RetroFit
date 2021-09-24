@@ -11,7 +11,7 @@
 - [Installation](#installation)
 - [Feature Engineering Note](#feature-engineering-note)
 - [Machine Learning Note](#machine-learning-note)
-- [Feature Engineering](#feature-engineering-1)
+- [Feature Engineering](#feature-engineering)
   * [FE0 Feature Engineering: Row-Dependence](#fe0-feature-engineering--row-dependence)
     + [**FE0_AutoLags()**](#--fe0-autolags----)
     + [**FE0_AutoRollStats()**](#--fe0-autorollstats----)
@@ -24,11 +24,11 @@
     + [**FE2_AutoDataParition()**](#--fe2-autodataparition----)
   * [FE3 Feature Engineering: Model-Based](#fe3-feature-engineering--model-based)
       - [Coming soon](#coming-soon)
-- [Machine Learning](#machine-learning-1)
+- [Machine Learning](#machine-learning)
   * [ML0 Machine Learning: Prepare for Modeling](#ml0-machine-learning--prepare-for-modeling)
     + [**ML0_Parameters()**](#--ml0-parameters----)
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
-  * [**ML1 Machine Learning: RetroFit Class**](#--machine-learning-1----)
+  * [**ML1 Machine Learning: RetroFit Class**](#--ml1-machine-learning:-retrofit-class----)
 
 ## **Quick Note**
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
