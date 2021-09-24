@@ -9,8 +9,8 @@
 
 - [Quick Note](#quick-note)
 - [Installation](#installation)
-- [Feature Engineering](#feature-engineering)
-- [Machine Learning](#machine-learning)
+- [Feature Engineering Note](#feature-engineering-note)
+- [Machine Learning Note](#machine-learning-note)
 - [Feature Engineering](#feature-engineering-1)
   * [FE0 Feature Engineering: Row-Dependence](#fe0-feature-engineering--row-dependence)
     + [**FE0_AutoLags()**](#--fe0-autolags----)
