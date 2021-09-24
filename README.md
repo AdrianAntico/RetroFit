@@ -28,7 +28,7 @@
   * [ML0 Machine Learning: Prepare for Modeling](#ml0-machine-learning--prepare-for-modeling)
     + [**ML0_Parameters()**](#--ml0-parameters----)
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
-  * [**ML1 Machine Learning: RetroFit Class**](#--ml1-machine-learning--retrofit-class--)
+  * [**ML1 Machine Learning: RetroFit Class**](#--machine-learning-1----)
 
 
 ## Quick Note
