@@ -7,12 +7,13 @@
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
 
+
 - [**Quick Note**](#--quick-note--)
 - [**Installation**](#--installation--)
 - [**Feature Engineering Note**](#--feature-engineering-note--)
 - [**Machine Learning Note**](#--machine-learning-note--)
 - [**Feature Engineering**](#--feature-engineering--)
-  * [FE0 Feature Engineering: Row-Dependence](#fe0-feature-engineering--row-dependence)
+  * [**FE0 Feature Engineering Row Dependence**](#--fe0-feature-engineering-row-dependence--)
     + [**FE0_AutoLags()**](#--fe0-autolags----)
     + [**FE0_AutoRollStats()**](#--fe0-autorollstats----)
     + [**FE0_AutoDiff()**](#--fe0-autodiff----)
@@ -29,7 +30,6 @@
     + [**ML0_Parameters()**](#--ml0-parameters----)
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
   * [**ML1 Machine Learning RetroFit Class**](#--ml1-machine-learning-retrofit-class--)
-
 
 
 ## **Quick Note**
@@ -70,7 +70,7 @@ https://github.com/AdrianAntico/RemixAutoML
 <p>
 
 
-### FE0 Feature Engineering: Row-Dependence
+### **FE0 Feature Engineering Row Dependence**
 <p>
 
 <details><summary>Expand to view content</summary>
