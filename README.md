@@ -7,28 +7,29 @@
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
 
-- [Quick Note](#quick-note)
-- [Installation](#installation)
-- [Feature Engineering Note](#feature-engineering-note)
-- [Machine Learning Note](#machine-learning-note)
-- [Feature Engineering](#feature-engineering)
+- [**Quick Note**](#--quick-note--)
+- [**Installation**](#--installation--)
+- [**Feature Engineering Note**](#--feature-engineering-note--)
+- [**Machine Learning Note**](#--machine-learning-note--)
+- [**Feature Engineering**](#--feature-engineering--)
   * [FE0 Feature Engineering: Row-Dependence](#fe0-feature-engineering--row-dependence)
     + [**FE0_AutoLags()**](#--fe0-autolags----)
     + [**FE0_AutoRollStats()**](#--fe0-autorollstats----)
     + [**FE0_AutoDiff()**](#--fe0-autodiff----)
-  * [FE1 Feature Engineering: Row-Independence](#fe1-feature-engineering--row-independence)
+  * [**FE1 Feature Engineering: Row-Independence**](#--fe1-feature-engineering--row-independence--)
     + [**FE1_AutoCalendarVariables()**](#--fe1-autocalendarvariables----)
     + [**FE1_DummyVariables()**](#--fe1-dummyvariables----)
-  * [FE2 Feature Engineering: Full-Data-Set](#fe2-feature-engineering--full-data-set)
+  * [**FE2 Feature Engineering: Full-Data-Set**](#--fe2-feature-engineering--full-data-set--)
     + [**FE2_ColTypeConversions()**](#--fe2-coltypeconversions----)
     + [**FE2_AutoDataParition()**](#--fe2-autodataparition----)
-  * [FE3 Feature Engineering: Model-Based](#fe3-feature-engineering--model-based)
-      - [Coming soon](#coming-soon)
-- [Machine Learning](#machine-learning)
-  * [ML0 Machine Learning: Prepare for Modeling](#ml0-machine-learning--prepare-for-modeling)
+  * [**FE3 Feature Engineering: Model-Based**](#--fe3-feature-engineering--model-based--)
+      - [**Coming soon**](#--coming-soon--)
+- [**Machine Learning**](#--machine-learning--)
+  * [**ML0 Machine Learning: Prepare for Modeling**](#--ml0-machine-learning--prepare-for-modeling--)
     + [**ML0_Parameters()**](#--ml0-parameters----)
     + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
-  * [**ML1 Machine Learning: RetroFit Class**](#--ml1-machine-learning:-retrofit-class----)
+  * [**ML1 Machine Learning: RetroFit Class**](#--ml1-machine-learning--retrofit-class--)
+
 
 ## **Quick Note**
 This package is currently in its beginning stages. I'll be working off a blueprint from my R package RemixAutoML so there should be minimal breakages upon new releases, only non-breaking enhancements and additions. 
@@ -46,11 +47,11 @@ https://github.com/AdrianAntico/RemixAutoML
 ```
 
 
-## **Feature Engineering**
+## **Feature Engineering Note**
 
 > Feature Engineering - Some of the feature engineering functions can only be found in this package. I believe feature engineering is your best bet for improving model performance. I have functions that cover all feature types. There are feature engineering functions for numeric data, categorical data, text data, and date data. They are all designed to generate features for training and scoring pipelines and they run extremely fast with low memory utilization. The Feature Engineering class offers the user the ability to have features generated using datatable, polars, or pandas for all feature engineering and data wrangling related methods. All methods collect paramter settings which will be used for scoring pipelines without the need for the user to save them. This makes life really easy when designing training and scoring pipelines. 
 
-## **Machine Learning**
+## **Machine Learning Note**
 
 > Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from datatable or polars which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. Scoring should be seamless, from regenerating features for scoring to the actual scoring. The RetroFit class makes this super easy, fast, with minimal memory utilization.
 
