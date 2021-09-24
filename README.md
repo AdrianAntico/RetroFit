@@ -13,23 +13,7 @@
 - [**Feature Engineering Note**](#--feature-engineering-note--)
 - [**Machine Learning Note**](#--machine-learning-note--)
 - [**Feature Engineering**](#--feature-engineering--)
-  * [**FE0 Feature Engineering Row Dependence**](#--fe0-feature-engineering-row-dependence--)
-    + [**FE0_AutoLags()**](#--fe0-autolags----)
-    + [**FE0_AutoRollStats()**](#--fe0-autorollstats----)
-    + [**FE0_AutoDiff()**](#--fe0-autodiff----)
-  * [**FE1 Feature Engineering Row Independence**](#--fe1-feature-engineering-row-independence--)
-    + [**FE1_AutoCalendarVariables()**](#--fe1-autocalendarvariables----)
-    + [**FE1_DummyVariables()**](#--fe1-dummyvariables----)
-  * [**FE2 Feature Engineering Full Data Set**](#--fe2-feature-engineering-full-data-set--)
-    + [**FE2_ColTypeConversions()**](#--fe2-coltypeconversions----)
-    + [**FE2_AutoDataParition()**](#--fe2-autodataparition----)
-  * [**FE3 Feature Engineering Model-Based**](#--fe3-feature-engineering-model-based--)
-      - [**Coming soon**](#--coming-soon--)
 - [**Machine Learning**](#--machine-learning--)
-  * [**ML0 Machine Learning: Prepare for Modeling**](#--ml0-machine-learning--prepare-for-modeling--)
-    + [**ML0_Parameters()**](#--ml0-parameters----)
-    + [**ML0_GetModelData()**](#--ml0-getmodeldata----)
-  * [**ML1 Machine Learning RetroFit Class**](#--ml1-machine-learning-retrofit-class--)
 
 
 ## **Quick Note**
