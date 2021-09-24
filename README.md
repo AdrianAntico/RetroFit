@@ -12,6 +12,8 @@ Table of Contents
 - [**Installation**](#installation)
 - [**Feature Engineering Note**](#feature-engineering-note)
 - [**Machine Learning Note**](#machine-learning-note)
+
+Documentation + Code Examples
 - [**Feature Engineering**](#feature-engineering)
 - [**Machine Learning**](#machine-learning)
 
