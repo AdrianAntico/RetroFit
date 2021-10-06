@@ -48,7 +48,7 @@ def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsLis
       CategoricalColumnNames = ArgsList['CategoricalColumnNames']
       TextColumnNames = ArgsList['TextColumnNames']
       WeightColumnName = ArgsList['WeightColumnName']
-      Threads = ArgsList['Threads'],
+      Threads = ArgsList['Threads']
       Processing = ArgsList['Processing']
     else:
       ArgsList = dict(

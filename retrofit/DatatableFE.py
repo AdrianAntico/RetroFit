@@ -17,6 +17,7 @@ class FE(FeatureEngineering):
     def __init__(self) -> None:
         super().__init__()
 
+    # in class
     def FE0_AutoLags(
         self,
         data=None,
@@ -586,7 +587,7 @@ class FE(FeatureEngineering):
         # Return
         return data
 
-
+    # in class
     def FE1_DummyVariables(
         self,
         data=None,
@@ -775,3 +776,9 @@ class FE(FeatureEngineering):
     
         # Return data
         return dict(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData)
+
+    # in class
+    def FE3_CategoricalEncoding(
+        self,
+        data=None,
+        LagColumnNames=None,

@@ -96,14 +96,14 @@ data = dt.fread(FilePath)
 # Run function
 t_start = timeit.default_timer()
 data1 = FE.FE0_AutoLags(
-  data=data, 
-  LagPeriods=1, 
-  LagColumnNames='Leads', 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=None, 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args = False)
+    data=data, 
+    LagPeriods=1, 
+    LagColumnNames='Leads', 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=None, 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args = False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 del Output
@@ -119,14 +119,14 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
 data2 = FE.FE0_AutoLags(
-  data=data,
-  LagPeriods=1,
-  LagColumnNames='Leads',
-  DateColumnName='CalendarDateColumn',
-  ByVariables=None,
-  ImputeValue=-1.0,
-  Sort=True,
-  use_saved_args=False)
+    data=data,
+    LagPeriods=1,
+    LagColumnNames='Leads',
+    DateColumnName='CalendarDateColumn',
+    ByVariables=None,
+    ImputeValue=-1.0,
+    Sort=True,
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data2.columns)
@@ -141,14 +141,14 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data1 = FE.FE0_AutoLags(
-  data=data, 
-  LagPeriods=1, 
-  LagColumnNames='Leads', 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    LagPeriods=1, 
+    LagColumnNames='Leads', 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data1.names)
@@ -163,14 +163,14 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
 data2 = FE.FE0_AutoLags(
-  data=data, 
-  LagPeriods=1, 
-  LagColumnNames='Leads', 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
-  ImputeValue=-1.0, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    LagPeriods=1, 
+    LagColumnNames='Leads', 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+    ImputeValue=-1.0, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data2.columns)
@@ -185,14 +185,14 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data1 = FE.FE0_AutoLags(
-  data=data, 
-  LagPeriods=[1,3,5], 
-  LagColumnNames=['Leads','XREGS1'], 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    LagPeriods=[1,3,5], 
+    LagColumnNames=['Leads','XREGS1'], 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data1.names)
@@ -207,14 +207,14 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
 data2 = FE.FE0_AutoLags(
-  data=data, 
-  LagPeriods=[1,3,5],
-  LagColumnNames=['Leads','XREGS1'], 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
-  ImputeValue=-1.0, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    LagPeriods=[1,3,5],
+    LagColumnNames=['Leads','XREGS1'], 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=['MarketingSegments','MarketingSegments2','MarketingSegments3', 'Label'], 
+    ImputeValue=-1.0, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data2.columns)
@@ -259,17 +259,17 @@ FE = dtfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.FE0_AutoRollStats(
-  data=data, 
-  RollColumnNames='Leads', 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=None, 
-  MovingAvg_Periods=[3,5,7], 
-  MovingSD_Periods=[3,5,7], 
-  MovingMin_Periods=[3,5,7], 
-  MovingMax_Periods=[3,5,7], 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    RollColumnNames='Leads', 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=None, 
+    MovingAvg_Periods=[3,5,7], 
+    MovingSD_Periods=[3,5,7], 
+    MovingMin_Periods=[3,5,7], 
+    MovingMax_Periods=[3,5,7], 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -284,17 +284,17 @@ FE = dtfe.FE()
 # Run function
 t_start = timeit.default_timer()
 data = FE.FE0_AutoRollStats(
-  data=data, 
-  RollColumnNames=['Leads','XREGS1'], 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
-  MovingAvg_Periods=[3,5,7], 
-  MovingSD_Periods=[3,5,7], 
-  MovingMin_Periods=[3,5,7], 
-  MovingMax_Periods=[3,5,7], 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    RollColumnNames=['Leads','XREGS1'], 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+    MovingAvg_Periods=[3,5,7], 
+    MovingSD_Periods=[3,5,7], 
+    MovingMin_Periods=[3,5,7], 
+    MovingMax_Periods=[3,5,7], 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -309,17 +309,17 @@ FE = dtfe.FE()
 # Run function
 t_start = timeit.default_timer()
 data = FE.FE0_AutoRollStats(
-  data=data, 
-  RollColumnNames='Leads', 
-  DateColumnName='CalendarDateColumn', 
-  ByVariables=None, 
-  MovingAvg_Periods=[3,5,7], 
-  MovingSD_Periods=[3,5,7], 
-  MovingMin_Periods=[3,5,7], 
-  MovingMax_Periods=[3,5,7], 
-  ImputeValue=-1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    RollColumnNames='Leads', 
+    DateColumnName='CalendarDateColumn', 
+    ByVariables=None, 
+    MovingAvg_Periods=[3,5,7], 
+    MovingSD_Periods=[3,5,7], 
+    MovingMin_Periods=[3,5,7], 
+    MovingMax_Periods=[3,5,7], 
+    ImputeValue=-1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -361,16 +361,16 @@ FE = dtfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.FE0_AutoDiff(
-  data=data, 
-  DateColumnName = 'CalendarDateColumn', 
-  ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
-  DiffNumericVariables = 'Leads', 
-  DiffDateVariables = 'CalendarDateColumn', 
-  DiffGroupVariables = None, 
-  NLag1 = 0, 
-  NLag2 = 1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    DateColumnName = 'CalendarDateColumn', 
+    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+    DiffNumericVariables = 'Leads', 
+    DiffDateVariables = 'CalendarDateColumn', 
+    DiffGroupVariables = None, 
+    NLag1 = 0, 
+    NLag2 = 1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -384,16 +384,16 @@ FE = dtfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.FE0_AutoDiff(
-  data=data, 
-  DateColumnName = 'CalendarDateColumn',
-  ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
-  DiffNumericVariables = 'Leads', 
-  DiffDateVariables = 'CalendarDateColumn', 
-  DiffGroupVariables = None, 
-  NLag1 = 0, 
-  NLag2 = 1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    DateColumnName = 'CalendarDateColumn',
+    ByVariables = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label'], 
+    DiffNumericVariables = 'Leads', 
+    DiffDateVariables = 'CalendarDateColumn', 
+    DiffGroupVariables = None, 
+    NLag1 = 0, 
+    NLag2 = 1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -407,16 +407,16 @@ FE = dtfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.FE0_AutoDiff(
-  data=data, 
-  DateColumnName = 'CalendarDateColumn', 
-  ByVariables = None, 
-  DiffNumericVariables = 'Leads', 
-  DiffDateVariables = 'CalendarDateColumn', 
-  DiffGroupVariables = None, 
-  NLag1 = 0, 
-  NLag2 = 1, 
-  Sort=True, 
-  use_saved_args=False)
+    data=data, 
+    DateColumnName = 'CalendarDateColumn', 
+    ByVariables = None, 
+    DiffNumericVariables = 'Leads', 
+    DiffDateVariables = 'CalendarDateColumn', 
+    DiffGroupVariables = None, 
+    NLag1 = 0, 
+    NLag2 = 1, 
+    Sort=True, 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 print(data.names)
@@ -471,10 +471,10 @@ FE = dtfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.AutoCalendarVariables(
-  data=data, 
-  DateColumnNames = 'CalendarDateColumn',
-  CalendarVariables = ['wday','mday','month','quarter','year'],
-  use_saved_args=False)
+    data=data, 
+    DateColumnNames = 'CalendarDateColumn',
+    CalendarVariables = ['wday','mday','month','quarter','year'],
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 data.names
@@ -486,10 +486,10 @@ FE = pfe.FE()
 
 t_start = timeit.default_timer()
 data = FE.AutoCalendarVariables(
-  data=data,
-  DateColumnNames = 'CalendarDateColumn',
-  CalendarVariables = ['wday','mday','month','quarter','year'],
-  use_saved_args=False)
+    data=data,
+    DateColumnNames = 'CalendarDateColumn',
+    CalendarVariables = ['wday','mday','month','quarter','year'],
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 data.names
@@ -535,9 +535,9 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 data = FE.FE1_DummyVariables(
-  data=data, 
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
-  use_saved_args=False)
+    data=data, 
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 t_end - t_start
 
@@ -551,10 +551,10 @@ FE = pfe.FE()
 data = pl.read_csv('C:/Users/Bizon/Documents/GitHub/BenchmarkData.csv')
 t_start = timeit.default_timer()
 data = FE.FE1_DummyVariables(
-  data=data, 
-  ArgsList=None, 
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
-  use_saved_args=False)
+    data=data, 
+    ArgsList=None, 
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2'], 
+    use_saved_args=False)
 t_end = timeit.default_timer()
 t_end - t_start
 ```
@@ -704,13 +704,13 @@ FE = dtfe.FE()
 # datatable random Example
 t_start = timeit.default_timer()
 DataSets = FE.FE2_AutoDataParition(
-  data=data,
-  DateColumnName='CalendarDateColumn',
-  PartitionType='random',
-  Ratios=[0.70,0.20,0.10],
-  Sort = False,
-  ByVariables=None,
-  use_saved_args=False)
+    data=data,
+    DateColumnName='CalendarDateColumn',
+    PartitionType='random',
+    Ratios=[0.70,0.20,0.10],
+    Sort = False,
+    ByVariables=None,
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 TrainData = DataSets['TrainData']
@@ -721,13 +721,13 @@ TestData = DataSets['TestData']
 data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
 DataSets = FE.FE2_AutoDataParition(
-  data=data,
-  DateColumnName='CalendarDateColumn',
-  PartitionType='random',
-  Ratios=[0.70,0.20,0.10],
-  ByVariables=None,
-  Sort = False,
-  use_saved_args=False)
+    data=data,
+    DateColumnName='CalendarDateColumn',
+    PartitionType='random',
+    Ratios=[0.70,0.20,0.10],
+    ByVariables=None,
+    Sort = False,
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 TrainData = DataSets['TrainData']
@@ -738,13 +738,13 @@ TestData = DataSets['TestData']
 data = dt.fread(FilePath)
 t_start = timeit.default_timer()
 DataSets = FE.FE2_AutoDataParition(
-  data=data,
-  DateColumnName='CalendarDateColumn',
-  PartitionType='time',
-  Ratios=[0.70,0.20,0.10],
-  Sort = True,
-  ByVariables=None,
-  use_saved_args=False)
+    data=data,
+    DateColumnName='CalendarDateColumn',
+    PartitionType='time',
+    Ratios=[0.70,0.20,0.10],
+    Sort = True,
+    ByVariables=None,
+    use_saved_args=False)
 t_end = timeit.default_timer()
 print(t_end - t_start)
 TrainData = DataSets['TrainData']
@@ -755,13 +755,13 @@ TestData = DataSets['TestData']
 data = pl.read_csv(FilePath)
 t_start = timeit.default_timer()
 DataSets = FE.FE2_AutoDataParition(
-  data=data,
-  DateColumnName='CalendarDateColumn',
-  PartitionType='time',
-  Ratios=[0.70,0.20,0.10],
-  ByVariables=None,
-  Sort = True,
-  use_saved_args=False)
+    data=data,
+    DateColumnName='CalendarDateColumn',
+    PartitionType='time',
+    Ratios=[0.70,0.20,0.10],
+    ByVariables=None,
+    Sort = True,
+    use_saved_args=False)
 t_end = timeit.default_timer()
 t_end - t_start
 TrainData = DataSets['TrainData']
@@ -839,37 +839,37 @@ data = dt.fread(FilePath)
 
 # Create partitioned data sets
 Data = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName=None, 
-  PartitionType='random', 
-  Ratios=[0.7,0.2,0.1], 
-  ByVariables=None, 
-  Sort=False, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+    data=data, 
+    ArgsList=None, 
+    DateColumnName=None, 
+    PartitionType='random', 
+    Ratios=[0.7,0.2,0.1], 
+    ByVariables=None, 
+    Sort=False, 
+    Processing='datatable', 
+    InputFrame='datatable', 
+    OutputFrame='datatable')
 
 # Prepare modeling data sets
 DataSets = ml.ML0_GetModelData(
-  Processing='catboost',
-  TrainData=Data['TrainData'],
-  ValidationData=Data['ValidationData'],
-  TestData=Data['TestData'],
-  ArgsList=None,
-  TargetColumnName='Leads',
-  NumericColumnNames=['XREGS1','XREGS2','XREGS3'],
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'],
-  TextColumnNames=None,
-  WeightColumnName=None,
-  Threads=-1,
-  InputFrame='datatable')
+    Processing='catboost',
+    TrainData=Data['TrainData'],
+    ValidationData=Data['ValidationData'],
+    TestData=Data['TestData'],
+    ArgsList=None,
+    TargetColumnName='Leads',
+    NumericColumnNames=['XREGS1','XREGS2','XREGS3'],
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'],
+    TextColumnNames=None,
+    WeightColumnName=None,
+    Threads=-1,
+    InputFrame='datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms='CatBoost', 
-  TargetType='Regression', 
-  TrainMethod='Train')
+    Algorithms='CatBoost', 
+    TargetType='Regression', 
+    TrainMethod='Train')
 ```
 
 </p>
@@ -910,15 +910,15 @@ data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName='CalendarDateColumn', 
-  PartitionType='random', 
-  Ratios=[0.70,0.20,0.10], 
-  ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+    data=data, 
+    ArgsList=None, 
+    DateColumnName='CalendarDateColumn', 
+    PartitionType='random', 
+    Ratios=[0.70,0.20,0.10], 
+    ByVariables=None, 
+    Processing='datatable', 
+    InputFrame='datatable', 
+    OutputFrame='datatable')
 
 # Collect partitioned data
 TrainData = DataSets['TrainData']
@@ -928,18 +928,18 @@ del DataSets
 
 # Create catboost data sets
 DataSets = ml.ML0_GetModelData(
-  TrainData=TrainData, 
-  ValidationData=ValidationData, 
-  TestData=TestData, 
-  ArgsList=None, 
-  TargetColumnName='Leads', 
-  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
-  TextColumnNames=None, 
-  WeightColumnName=None, 
-  Threads=-1, 
-  Processing='catboost', 
-  InputFrame='datatable')
+    TrainData=TrainData, 
+    ValidationData=ValidationData, 
+    TestData=TestData, 
+    ArgsList=None, 
+    TargetColumnName='Leads', 
+    NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+    TextColumnNames=None, 
+    WeightColumnName=None, 
+    Threads=-1, 
+    Processing='catboost', 
+    InputFrame='datatable')
   
 # Collect catboost training data
 catboost_train = DataSets['train_data']
@@ -956,15 +956,15 @@ data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName='CalendarDateColumn', 
-  PartitionType='random', 
-  Ratios=[0.70,0.20,0.10], 
-  ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+    data=data, 
+    ArgsList=None, 
+    DateColumnName='CalendarDateColumn', 
+    PartitionType='random', 
+    Ratios=[0.70,0.20,0.10], 
+    ByVariables=None, 
+    Processing='datatable', 
+    InputFrame='datatable', 
+    OutputFrame='datatable')
 
 # Collect partitioned data
 TrainData = DataSets['TrainData']
@@ -974,18 +974,18 @@ del DataSets
 
 # Create xgboost data sets
 DataSets = ml.ML0_GetModelData(
-  TrainData=TrainData, 
-  ValidationData=ValidationData, 
-  TestData=TestData, 
-  ArgsList=None, 
-  TargetColumnName='Leads', 
-  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
-  TextColumnNames=None, 
-  WeightColumnName=None, 
-  Threads=-1, 
-  Processing='xgboost', 
-  InputFrame='datatable')
+    TrainData=TrainData, 
+    ValidationData=ValidationData, 
+    TestData=TestData, 
+    ArgsList=None, 
+    TargetColumnName='Leads', 
+    NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+    TextColumnNames=None, 
+    WeightColumnName=None, 
+    Threads=-1, 
+    Processing='xgboost', 
+    InputFrame='datatable')
   
 # Collect xgboost training data
 xgboost_train = DataSets['train_data']
@@ -1002,15 +1002,15 @@ data = dt.fread(FilePath)
     
 # Create partitioned data sets
 DataSets = fe.FE2_AutoDataParition(
-  data=data, 
-  ArgsList=None, 
-  DateColumnName='CalendarDateColumn', 
-  PartitionType='random', 
-  Ratios=[0.70,0.20,0.10], 
-  ByVariables=None, 
-  Processing='datatable', 
-  InputFrame='datatable', 
-  OutputFrame='datatable')
+    data=data, 
+    ArgsList=None, 
+    DateColumnName='CalendarDateColumn', 
+    PartitionType='random', 
+    Ratios=[0.70,0.20,0.10], 
+    ByVariables=None, 
+    Processing='datatable', 
+    InputFrame='datatable', 
+    OutputFrame='datatable')
 
 # Collect partitioned data
 TrainData = DataSets['TrainData']
@@ -1020,18 +1020,18 @@ del DataSets
 
 # Create lightgbm data sets
 DataSets = ml.ML0_GetModelData(
-  TrainData=TrainData, 
-  ValidationData=ValidationData, 
-  TestData=TestData, 
-  ArgsList=None, 
-  TargetColumnName='Leads', 
-  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
-  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
-  TextColumnNames=None, 
-  WeightColumnName=None, 
-  Threads=-1, 
-  Processing='lightgbm', 
-  InputFrame='datatable')
+    TrainData=TrainData, 
+    ValidationData=ValidationData, 
+    TestData=TestData, 
+    ArgsList=None, 
+    TargetColumnName='Leads', 
+    NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'], 
+    CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3','Label'], 
+    TextColumnNames=None, 
+    WeightColumnName=None, 
+    Threads=-1, 
+    Processing='lightgbm', 
+    InputFrame='datatable')
   
 # Collect lightgbm training data
 lightgbm_train = DataSets['train_data']
@@ -1218,34 +1218,34 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'Ftrl',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'Ftrl',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
+    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'Ftrl', 
-  TargetType = 'Regression', 
-  TrainMethod = 'Train')
+    Algorithms = 'Ftrl', 
+    TargetType = 'Regression', 
+    TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1255,18 +1255,18 @@ x.ML1_Single_Train(Algorithm = 'Ftrl')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2], 
-  ModelName = x.ModelListNames[0], 
-  Algorithm = 'Ftrl', 
-  NewData = None)
+    DataName = x.DataSetsNames[2], 
+    ModelName = x.ModelListNames[0], 
+    Algorithm = 'Ftrl', 
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=None)
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=None)
 
 # Metrics
 metrics.keys()
@@ -1374,34 +1374,34 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'Ftrl',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'Ftrl',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
+    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'Ftrl', 
-  TargetType = 'Classification', 
-  TrainMethod = 'Train')
+    Algorithms = 'Ftrl', 
+    TargetType = 'Classification', 
+    TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1411,18 +1411,18 @@ x.ML1_Single_Train(Algorithm = 'Ftrl')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'Ftrl',
-  NewData = None)
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'Ftrl',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
 
 # Metrics
 metrics.keys()
@@ -1492,34 +1492,34 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'Ftrl',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'Ftrl',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']],
+    CategoricalColumnNames = ['Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'Ftrl',
-  TargetType = 'MultiClass',
-  TrainMethod = 'Train')
+    Algorithms = 'Ftrl',
+    TargetType = 'MultiClass',
+    TrainMethod = 'Train')
 
 # Initialize RetroFit
 x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
@@ -1529,18 +1529,18 @@ x.ML1_Single_Train(Algorithm = 'Ftrl')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'Ftrl',
-  NewData = None)
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'Ftrl',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('Ftrl')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=1))
 
 # Metrics
 metrics.keys()
@@ -1654,34 +1654,34 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'catboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'catboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
+    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'CatBoost', 
-  TargetType = 'Regression', 
-  TrainMethod = 'Train')
+    Algorithms = 'CatBoost', 
+    TargetType = 'Regression', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
@@ -1694,18 +1694,18 @@ x.ML1_Single_Train(Algorithm = 'CatBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2], 
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'CatBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2], 
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'CatBoost',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=None)
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=None)
 
 # Metrics
 metrics.keys()
@@ -1813,34 +1813,34 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'catboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'catboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
+    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'CatBoost', 
-  TargetType = 'Classification', 
-  TrainMethod = 'Train')
+    Algorithms = 'CatBoost', 
+    TargetType = 'Classification', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
@@ -1853,18 +1853,18 @@ x.ML1_Single_Train(Algorithm = 'CatBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2], 
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'CatBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2], 
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'CatBoost',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Metrics
 metrics.keys()
@@ -1934,34 +1934,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
+
+# Features for modeling
+Features = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'catboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']],
-  CategoricalColumnNames = ['Factor_2', 'Factor_3'],
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'catboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = ['Factor_2', 'Factor_3'],
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'CatBoost',
-  TargetType = 'MultiClass',
-  TrainMethod = 'Train')
+    Algorithms = 'CatBoost',
+    TargetType = 'MultiClass',
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
@@ -1974,18 +1977,18 @@ x.ML1_Single_Train(Algorithm = 'CatBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2], 
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'CatBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2], 
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'CatBoost',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Metrics
 metrics.keys()
@@ -2045,102 +2048,102 @@ FE = dtfe.FE()
 
 # Create some lags
 data = FE.FE0_AutoLags(
-  data,
-  LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-  DateColumnName='DateTime',
-  ByVariables='Factor_1',
-  LagPeriods=[1,2],
-  ImputeValue=-1,
-  Sort=True,
-  use_saved_args=False)
+    data,
+    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    LagPeriods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
 
 # Create some rolling stats
 data = FE.FE0_AutoRollStats(
-  data,
-  RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-  DateColumnName='DateTime',
-  ByVariables='Factor_1',
-  MovingAvg_Periods=[1,2],
-  MovingSD_Periods=[2,3],
-  MovingMin_Periods=[1,2],
-  MovingMax_Periods=[1,2],
-  ImputeValue=-1,
-  Sort=True,
-  use_saved_args=False)
+    data,
+    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
+    DateColumnName='DateTime',
+    ByVariables='Factor_1',
+    MovingAvg_Periods=[1,2],
+    MovingSD_Periods=[2,3],
+    MovingMin_Periods=[1,2],
+    MovingMax_Periods=[1,2],
+    ImputeValue=-1,
+    Sort=True,
+    use_saved_args=False)
 
 # Create some diffs
 data = FE.FE0_AutoDiff(
-  data,
-  DateColumnName='DateTime',
-  ByVariables=['Factor_1','Factor_2','Factor_3'],
-  DiffNumericVariables='Independent_Variable1',
-  DiffDateVariables=None,
-  DiffGroupVariables=None,
-  NLag1=0,
-  NLag2=1,
-  Sort=True,
-  use_saved_args=False)
+    data,
+    DateColumnName='DateTime',
+    ByVariables=['Factor_1','Factor_2','Factor_3'],
+    DiffNumericVariables='Independent_Variable1',
+    DiffDateVariables=None,
+    DiffGroupVariables=None,
+    NLag1=0,
+    NLag2=1,
+    Sort=True,
+    use_saved_args=False)
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
 data = FE.FE1_AutoCalendarVariables(
-  data,
-  DateColumnNames='DateTime',
-  CalendarVariables=['wday','month','quarter'],
-  use_saved_args=False)
+    data,
+    DateColumnNames='DateTime',
+    CalendarVariables=['wday','month','quarter'],
+    use_saved_args=False)
 
 # Type conversions for modeling
 data = FE.FE2_ColTypeConversions(
-  data,
-  Int2Float=True,
-  Bool2Float=True,
-  RemoveDateCols=True,
-  RemoveStrCols=False,
-  SkipCols=None,
-  use_saved_args=False)
+    data,
+    Int2Float=True,
+    Bool2Float=True,
+    RemoveDateCols=True,
+    RemoveStrCols=False,
+    SkipCols=None,
+    use_saved_args=False)
 
 # Drop Text Cols (no word2vec yet)
 data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'xgboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'xgboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'XGBoost', 
-  TargetType = "Regression", 
-  TrainMethod = "Train")
+    Algorithms = 'XGBoost', 
+    TargetType = "Regression", 
+    TrainMethod = "Train")
 
 # Update iterations to run quickly
 ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
@@ -2153,18 +2156,18 @@ x.ML1_Single_Train(Algorithm = 'XGBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'XGBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'XGBoost',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=None)
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=None)
 
 # Metrics
 metrics.keys()
@@ -2252,9 +2255,9 @@ data = FE.FE0_AutoDiff(
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
@@ -2279,37 +2282,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'xgboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'xgboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'XGBoost', 
-  TargetType = 'Classification', 
-  TrainMethod = 'Train')
+    Algorithms = 'XGBoost', 
+    TargetType = 'Classification', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
@@ -2322,18 +2325,18 @@ x.ML1_Single_Train(Algorithm = 'XGBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'XGBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'XGBoost',
+    NewData = None)
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Metrics
 metrics.keys()
@@ -2383,9 +2386,9 @@ FE = dtfe.FE()
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
@@ -2410,37 +2413,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'xgboost',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'xgboost',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'XGBoost',
-  TargetType = 'MultiClass',
-  TrainMethod = 'Train')
+    Algorithms = 'XGBoost',
+    TargetType = 'MultiClass',
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
@@ -2453,10 +2456,10 @@ x.ML1_Single_Train(Algorithm = 'XGBoost')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'XGBoost',
-  NewData = None)
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'XGBoost',
+    NewData = None)
 
 # Scoring data names
 x.DataSetsNames
@@ -2548,9 +2551,9 @@ data = FE.FE0_AutoDiff(
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
@@ -2575,37 +2578,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'lightgbm',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'lightgbm',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'LightGBM', 
-  TargetType = 'Regression', 
-  TrainMethod = 'Train')
+    Algorithms = 'LightGBM', 
+    TargetType = 'Regression', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
@@ -2618,9 +2621,9 @@ x.ML1_Single_Train(Algorithm = 'LightGBM')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'LightGBM')
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'LightGBM')
 
 # Scoring data names
 x.DataSetsNames
@@ -2705,9 +2708,9 @@ data = FE.FE0_AutoDiff(
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
@@ -2732,37 +2735,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'lightgbm',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'lightgbm',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'LightGBM', 
-  TargetType = 'Classification', 
-  TrainMethod = 'Train')
+    Algorithms = 'LightGBM', 
+    TargetType = 'Classification', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
@@ -2775,17 +2778,17 @@ x.ML1_Single_Train(Algorithm = 'LightGBM')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'LightGBM')
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'LightGBM')
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Metrics
 metrics.keys()
@@ -2835,9 +2838,9 @@ FE = dtfe.FE()
 
 # Dummify
 data = FE.FE1_DummyVariables(
-  data = data, 
-  CategoricalColumnNames = ['Factor_2','Factor_3'],
-  use_saved_args=False)
+    data = data, 
+    CategoricalColumnNames = ['Factor_2','Factor_3'],
+    use_saved_args=False)
 data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
 
 # Create Calendar Vars
@@ -2862,37 +2865,37 @@ data = data[:, [z for z in data.names if z not in ['Comment']]]
 
 # Create partitioned data sets
 DataFrames = FE.FE2_AutoDataPartition(
-  data, 
-  DateColumnName = None, 
-  PartitionType = 'random', 
-  Ratios = [0.7,0.2,0.1], 
-  ByVariables = None, 
-  Sort = False,
-  use_saved_args = False)
+    data, 
+    DateColumnName = None, 
+    PartitionType = 'random', 
+    Ratios = [0.7,0.2,0.1], 
+    ByVariables = None, 
+    Sort = False,
+    use_saved_args = False)
 
 # Features
 Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
 
 # Prepare modeling data sets
 ModelData = ml.ML0_GetModelData(
-  Processing = 'lightgbm',
-  TrainData = DataFrames['TrainData'],
-  ValidationData = DataFrames['ValidationData'],
-  TestData = DataFrames['TestData'],
-  ArgsList = None,
-  TargetColumnName = 'Adrian',
-  NumericColumnNames = Features,
-  CategoricalColumnNames = None,
-  TextColumnNames = None,
-  WeightColumnName = None,
-  Threads = -1,
-  InputFrame = 'datatable')
+    Processing = 'lightgbm',
+    TrainData = DataFrames['TrainData'],
+    ValidationData = DataFrames['ValidationData'],
+    TestData = DataFrames['TestData'],
+    ArgsList = None,
+    TargetColumnName = 'Adrian',
+    NumericColumnNames = Features,
+    CategoricalColumnNames = None,
+    TextColumnNames = None,
+    WeightColumnName = None,
+    Threads = -1,
+    InputFrame = 'datatable')
 
 # Get args list for algorithm and target type
 ModelArgs = ml.ML0_Parameters(
-  Algorithms = 'LightGBM', 
-  TargetType = 'MultiClass', 
-  TrainMethod = 'Train')
+    Algorithms = 'LightGBM', 
+    TargetType = 'MultiClass', 
+    TrainMethod = 'Train')
 
 # Update iterations to run quickly
 ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
@@ -2905,17 +2908,17 @@ x.ML1_Single_Train(Algorithm = 'LightGBM')
 
 # Score data
 x.ML1_Single_Score(
-  DataName = x.DataSetsNames[2],
-  ModelName = x.ModelListNames[0],
-  Algorithm = 'LightGBM')
+    DataName = x.DataSetsNames[2],
+    ModelName = x.ModelListNames[0],
+    Algorithm = 'LightGBM')
 
 # Evaluate scored data
 metrics = x.ML1_Single_Evaluate(
-  FitName=x.FitListNames[0],
-  TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
-  ScoredDataName=x.DataSetsNames[-1],
-  ByVariables=None,
-  CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
+    FitName=x.FitListNames[0],
+    TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
+    ScoredDataName=x.DataSetsNames[-1],
+    ByVariables=None,
+    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
 
 # Metrics
 metrics.keys()

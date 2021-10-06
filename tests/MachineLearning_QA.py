@@ -52,20 +52,6 @@ catboost_train = DataSets['train_data']
 catboost_validation = DataSets['validation_data']
 catboost_test = DataSets['test_data']
 
-# QA: Group Case: Step through function
-# TrainData=TrainData
-# ValidationData=ValidationData
-# TestData=TestData
-# ArgsList=None
-# TargetColumnName='Leads'
-# NumericColumnNames=['XREGS1','XREGS2','XREGS3']
-# CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-# TextColumnNames=None
-# WeightColumnName=None
-# Threads=-1
-# Processing='catboost'
-# InputFrame='datatable'
-
 # XGBoost
 
 # Load some data
@@ -110,21 +96,6 @@ xgboost_train = DataSets['train_data']
 xgboost_validation = DataSets['validation_data']
 xgboost_test = DataSets['test_data']
 
-# QA: Group Case: Step through function
-# TrainData=TrainData
-# ValidationData=ValidationData
-# TestData=TestData
-# ArgsList=None
-# TargetColumnName='Leads'
-# NumericColumnNames=['XREGS1','XREGS2','XREGS3']
-# CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-# TextColumnNames=None
-# WeightColumnName=None
-# Threads=-1
-# Processing='xgboost'
-# InputFrame='datatable'
-
-
 # LightGBM
 
 # Load some data
@@ -168,21 +139,6 @@ DataSets = ml.ML0_GetModelData(
 lightgbm_train = DataSets['train_data']
 lightgbm_validation = DataSets['validation_data']
 lightgbm_test = DataSets['test_data']
-
-# QA: Group Case: Step through function
-# TrainData=TrainData
-# ValidationData=ValidationData
-# TestData=TestData
-# ArgsList=None
-# TargetColumnName='Leads'
-# NumericColumnNames=['XREGS1','XREGS2','XREGS3']
-# CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3', 'Label']
-# TextColumnNames=None
-# WeightColumnName=None
-# Threads=-1
-# Processing='lightgbm'
-# InputFrame='datatable'
-
 
 ############################################################################################
 # ML0_Parameters
