@@ -4,6 +4,9 @@
 # Release: retrofit 0.1.7
 # Last modified : 2021-09-21
 
+import retrofit
+from retrofit import utils as u
+
 def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsList=None, TargetColumnName=None, NumericColumnNames=None, CategoricalColumnNames=None, TextColumnNames=None, WeightColumnName=None, Threads=-1, Processing='catboost', InputFrame='datatable'):
     """
     # Goal:
@@ -752,22 +755,23 @@ class RetroFit:
     
     # Define __init__
     def __init__(self, ModelArgs, ModelData, DataFrames):
-      self.ModelArgs = ModelArgs
-      self.ModelArgsNames = [*self.ModelArgs]
-      self.Runs = len(self.ModelArgs)
-      self.DataFrames = DataFrames
-      self.DataSets = ModelData
-      self.DataSetsNames = [*self.DataSets]
-      self.ModelList = dict()
-      self.ModelListNames = []
-      self.FitList = dict()
-      self.FitListNames = []
-      self.EvaluationList = dict()
-      self.EvaluationListNames = []
-      self.InterpretationList = dict()
-      self.InterpretationListNames = []
-      self.CompareModelsList = dict()
-      self.CompareModelsListNames = []
+        self.ModelArgs = ModelArgs
+        self.ModelArgsNames = [*self.ModelArgs]
+        self.Runs = len(self.ModelArgs)
+        self.DataFrames = DataFrames
+        self.DataSets = ModelData
+        self.DataSetsNames = [*self.DataSets]
+        self.ModelList = dict()
+        self.ModelListNames = []
+        self.SavedModels = []
+        self.FitList = dict()
+        self.FitListNames = []
+        self.EvaluationList = dict()
+        self.EvaluationListNames = []
+        self.InterpretationList = dict()
+        self.InterpretationListNames = []
+        self.CompareModelsList = dict()
+        self.CompareModelsListNames = []
     
     #################################################
     #################################################
@@ -775,9 +779,9 @@ class RetroFit:
     #################################################
     #################################################
     def PrintAlgoArgs(self, Algo=None):
-      from retrofit import utils
-      print(utils.printdict(self.ModelArgs[Algo]['AlgoArgs']))
-    
+        from retrofit import utils
+        print(utils.printdict(self.ModelArgs[Algo]['AlgoArgs']))
+
     #################################################
     #################################################
     # Function: Train Model
@@ -785,142 +789,266 @@ class RetroFit:
     #################################################
     def ML1_Single_Train(self, Algorithm=None):
       
-      # Check
-      if len(self.ModelArgs) == 0:
-        raise Exception('self.ModelArgs is empty')
-
-      # Which Algo
-      if not Algorithm is None:
-        TempArgs = self.ModelArgs[Algorithm]
-      else:
-        TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
-
-      #################################################
-      # Ftrl Method
-      #################################################
-      if TempArgs.get('Algorithms').lower() == 'ftrl':
-
-        # Setup Environment
-        import datatable as dt
-        from datatable import f
-        from datatable.models import Ftrl
-
-        # Define training data and target variable
-        TrainData = self.DataSets.get('train_data')
-        TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
-
-        # Initialize model
-        Model = Ftrl(**TempArgs.get('AlgoArgs'))
-        self.ModelList[f"Ftrl{str(len(self.ModelList) + 1)}"] = Model
-        self.ModelListNames.append(f"Ftrl{str(len(self.ModelList))}")
-
-        # Train Model
-        self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
-        self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
-
-      #################################################
-      # CatBoost Method
-      #################################################
-      if TempArgs.get('Algorithms').lower() == 'catboost':
-
-        # Setup Environment
-        import catboost
-        if TempArgs.get('TargetType').lower() in ['classification', 'multiclass']:
-          from catboost import CatBoostClassifier
+        # Check
+        if len(self.ModelArgs) == 0:
+            raise Exception('self.ModelArgs is empty')
+  
+        # Which Algo
+        if not Algorithm is None:
+            TempArgs = self.ModelArgs[Algorithm]
         else:
-          from catboost import CatBoostRegressor
+            TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
 
-        # Define training data and target variable
-        TrainData = self.DataSets.get('train_data')
-        ValidationData = self.DataSets.get('validation_data')
-        TestData = self.DataSets.get('test_data')
+        #################################################
+        # Ftrl Method
+        #################################################
+        if TempArgs.get('Algorithms').lower() == 'ftrl':
+  
+            # Setup Environment
+            import datatable as dt
+            from datatable import f
+            from datatable.models import Ftrl
+    
+            # Define training data and target variable
+            TrainData = self.DataSets.get('train_data')
+            TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
+    
+            # Initialize model
+            Model = Ftrl(**TempArgs.get('AlgoArgs'))
+            self.ModelList[f"Ftrl{str(len(self.ModelList) + 1)}"] = Model
+            self.ModelListNames.append(f"Ftrl{str(len(self.ModelList))}")
+    
+            # Train Model
+            self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
+            self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
+
+        #################################################
+        # CatBoost Method
+        #################################################
+        if TempArgs.get('Algorithms').lower() == 'catboost':
+  
+            # Setup Environment
+            import catboost
+            if TempArgs.get('TargetType').lower() in ['classification', 'multiclass']:
+                from catboost import CatBoostClassifier
+            else:
+                from catboost import CatBoostRegressor
+  
+            # Define training data and target variable
+            TrainData = self.DataSets.get('train_data')
+            ValidationData = self.DataSets.get('validation_data')
+            TestData = self.DataSets.get('test_data')
+            
+            # Initialize model
+            if TempArgs.get('TargetType').lower() == 'regression':
+                Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
+            elif TempArgs.get('TargetType').lower() == 'classification':
+                Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
+            elif TempArgs.get('TargetType').lower() == 'multiclass':
+                self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+                TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+                Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
+            
+            # Store Model
+            self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
+            self.ModelListNames.append(f"CatBoost{str(len(self.ModelList))}")
+    
+            # Train Model
+            self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
+            self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
+
+        #################################################
+        # XGBoost Method
+        #################################################
+        if TempArgs.get('Algorithms').lower() == 'xgboost':
+  
+            # Setup Environment
+            import xgboost as xgb
+            from xgboost import train
+            
+            # Define training data and target variable
+            TrainData = self.DataSets.get('train_data')
+            ValidationData = self.DataSets.get('validation_data')
+            TestData = self.DataSets.get('test_data')
+    
+            # Update args for multiclass
+            if TempArgs.get('TargetType').lower() == 'multiclass':
+                self.ModelArgs.get('XGBoost').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+                TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+    
+            # Initialize model
+            Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
+    
+            # Store Model
+            self.ModelList[f"XGBoost{str(len(self.ModelList) + 1)}"] = Model
+            self.ModelListNames.append(f"XGBoost{str(len(self.ModelList))}")
+    
+            # Train Model
+            self.FitList[f"XGBoost{str(len(self.FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
+            self.FitListNames.append(f"XGBoost{str(len(self.FitList))}")
         
-        # Initialize model
-        if TempArgs.get('TargetType').lower() == 'regression':
-          Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
-        elif TempArgs.get('TargetType').lower() == 'classification':
-          Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
-        elif TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
+        #################################################
+        # LightGBM Method
+        #################################################
+        if TempArgs.get('Algorithms').lower() == 'lightgbm':
+  
+            # Setup Environment
+            import lightgbm as lgbm
+            from lightgbm import LGBMModel
+            
+            # Define training data and target variable
+            TrainData = self.DataSets.get('train_data')
+            ValidationData = self.DataSets.get('validation_data')
+            TestData = self.DataSets.get('test_data')
+    
+            # Create temp args
+            import copy
+            temp_args = copy.deepcopy(TempArgs)
+    
+            # Update args for multiclass
+            if TempArgs.get('TargetType').lower() == 'multiclass':
+                self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+                TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+                temp_args.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+    
+            # Create modified args
+            del temp_args['AlgoArgs']['num_iterations']
+            del temp_args['AlgoArgs']['early_stopping_round']
+    
+            # Initialize model
+            Model = LGBMModel(**temp_args.get('AlgoArgs'))
+    
+            # Store Model
+            self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
+            self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
+    
+            # Initialize model
+            self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=temp_args.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_iterations'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_round'))
+            self.FitListNames.append(f"LightGBM{str(len(self.FitList))}")
+    
+    #################################################
+    #################################################
+    # Function: Save Models
+    #################################################
+    #################################################
+    def ML1_SaveModel(self, ModelName=None, Algorithm=None, **kwargs):
+        """
+        **kwargs are for algorithm-specific additional arguments
         
-        # Store Model
-        self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
-        self.ModelListNames.append(f"CatBoost{str(len(self.ModelList))}")
-
-        # Train Model
-        self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
-        self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
-
-      #################################################
-      # XGBoost Method
-      #################################################
-      if TempArgs.get('Algorithms').lower() == 'xgboost':
-
-        # Setup Environment
-        import xgboost as xgb
-        from xgboost import train
+        # CatBoost: https://catboost.ai/en/docs/concepts/python-reference_catboostregressor_save_model
         
-        # Define training data and target variable
-        TrainData = self.DataSets.get('train_data')
-        ValidationData = self.DataSets.get('validation_data')
-        TestData = self.DataSets.get('test_data')
-
-        # Update args for multiclass
-        if TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('XGBoost').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-
-        # Initialize model
-        Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
-
-        # Store Model
-        self.ModelList[f"XGBoost{str(len(self.ModelList) + 1)}"] = Model
-        self.ModelListNames.append(f"XGBoost{str(len(self.ModelList))}")
-
-        # Train Model
-        self.FitList[f"XGBoost{str(len(self.FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
-        self.FitListNames.append(f"XGBoost{str(len(self.FitList))}")
+        paramter name: format='cbm'
         
-      #################################################
-      # LightGBM Method
-      #################################################
-      if TempArgs.get('Algorithms').lower() == 'lightgbm':
-
-        # Setup Environment
-        import lightgbm as lgbm
-        from lightgbm import LGBMModel
+        cbm — CatBoost binary format.
+        coreml — Apple CoreML format (only datasets without categorical features are currently supported).
+        json — JSON format. Refer to the CatBoost JSON model tutorial for format details.
+        python — Standalone Python code (multiclassification models are not currently supported). See the Python section for details on applying the resulting model.
+        cpp — Standalone C++ code (multiclassification models are not currently supported). See the C++ section for details on applying the resulting model.
+        onnx — ONNX-ML format (only datasets without categorical features are currently supported). Refer to https://onnx.ai/ for details. See the ONNX section for details on applying the resulting model.
+        pmml — PMML version 4.3 format. Categorical features must be interpreted as one-hot encoded during the training if present in the training dataset. This can be accomplished by setting the --one-hot-max-size/one_hot_max_size parameter to a value that is greater than the maximum number of unique categorical feature values among all categorical features in the dataset. See the PMML section for details on applying the resulting model.
         
-        # Define training data and target variable
-        TrainData = self.DataSets.get('train_data')
-        ValidationData = self.DataSets.get('validation_data')
-        TestData = self.DataSets.get('test_data')
+        
+        paramter name: export_parameters=None
+        
+        Description
+        
+        Additional format-dependent parameters for:
+        
+            Apple CoreML
+        
+            Possible values (all are strings):
+        
+                prediction_type. Possible values are "probability "and "raw".
+        
+                coreml_description
+        
+                coreml_model_version
+        
+                coreml_model_author
+        
+                coreml_model_license
+        
+            ONNX-ML
+                onnx_graph_name
+                onnx_domain
+                onnx_model_version
+                onnx_doc_string
+        
+            See the ONNX-ML parameters reference for details.
+        
+            PMML
+        
+            Possible values (all are strings):
+                pmml_copyright
+                pmml_description
+                pmml_model_version
+        
+            See the PMML parameters reference for details.
 
-        # Create temp args
-        import copy
-        temp_args = copy.deepcopy(TempArgs)
+        
+        paramter name: pool
+        
+        Description
+        
+        The dataset previously used for training.
+        
+        This parameter is required if the model contains categorical features and the output format is cpp, python, or JSON.
+        
+        """
+        
+        # Ftrl
+        if Algorithm.lower() == 'ftrl':
+            u.save(x = self.ModelList[f"{ModelName}"], Path=None)
+            self.SavedModels.append(f"CatBoost{str(len(self.SavedModels))}")
+        
+        # CatBoost
+        if Algorithm.lower() == 'catboost':
+            catboost.save_model(fname, format="cbm", export_parameters=None, pool=None)
+        
+        # XGBoost
+        if Algorithm.lower() == 'xgboost':
+            catboost.asdf
+        
+        # LightGBM
+        if Algorithm.lower() == 'lightgbm':
+            catboost.asdf
+    
+    #################################################
+    #################################################
+    # Function: Load Models
+    #################################################
+    #################################################
+    def ML1_LoadModel(ModelName=None, Algorithm=None, **kwargs):
+        
+        """
+        **kwargs are for passing args to algorithm-specific load() function
+        
+        Possible values:
 
-        # Update args for multiclass
-        if TempArgs.get('TargetType').lower() == 'multiclass':
-          self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-          temp_args.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+        cbm — CatBoost binary format.
+        AppleCoreML(only datasets without categorical features are currently supported).
+        json — JSON format. Refer to the CatBoost JSON model tutorial for format details.
+        onnx — ONNX-ML format (only datasets without categorical features are currently supported). Refer to https://onnx.ai/ for details. See the ONNX section for details on applying the resulting model.
+        
+        """
+        
+        # Ftrl
+        if Algorithm.lower() == 'ftrl':
+            return u.load(Path=self.SavedModelNames[f"{}"])
+        
+        # CatBoost
+        if Algorithm.lower() == 'catboost':
+            return catboost.load_model(self.SavedModelNames[f"{ModelName}"], format='cbm')
 
-        # Create modified args
-        del temp_args['AlgoArgs']['num_iterations']
-        del temp_args['AlgoArgs']['early_stopping_round']
-
-        # Initialize model
-        Model = LGBMModel(**temp_args.get('AlgoArgs'))
-
-        # Store Model
-        self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
-        self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
-
-        # Initialize model
-        self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=temp_args.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_iterations'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_round'))
-        self.FitListNames.append(f"LightGBM{str(len(self.FitList))}")
+        
+        # XGBoost
+        if Algorithm.lower() == 'xgboost':
+            return catboost.asdf
+        
+        # LightGBM
+        if Algorithm.lower() == 'lightgbm':
+            return catboost.asdf
+      
 
     #################################################
     #################################################
@@ -929,261 +1057,261 @@ class RetroFit:
     #################################################
     def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None, NewData=None):
 
-      # Check
-      if len(self.ModelList) == 0:
-        raise Exception('No models found in self.ModelList')
-
-      # Which Algo
-      if not Algorithm is None:
-        TempArgs = self.ModelArgs[Algorithm]
-      else:
-        TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
-
-      # Setup Environment
-      import datatable as dt
-      
-      #################################################
-      # Ftrl Method
-      #################################################
-      if TempArgs['Algorithms'].lower() == 'ftrl':
-
-        # Setup Environment
-        from datatable import f
-        from datatable.models import Ftrl
-        
-        # Extract model
-        if not ModelName is None:
-          Model = self.ModelList.get(ModelName)
-        else:
-          Model = self.ModelList.get(f"Ftrl{str(len(self.FitList))}")
-
-        # Grab scoring data
-        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if NewData is None:
-          score_data = self.DataSets[DataName]
-        else:
-          score_data = NewData
-        
-        # Split frames
-        if TargetColumnName in score_data.names:
-          TargetData = score_data[:, f[TargetColumnName]]
-          score_data = score_data[:, f[:].remove(f[TargetColumnName])]
-
-        # Score Model and append data set name to scoring data
-        if self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'regression':
-          score_data.cbind(Model.predict(score_data))
-          score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
-        elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'classification':
-          score_data.cbind(Model.predict(score_data))
-          score_data.names = {'1.0': 'p1'}
-          score_data.names = {'0.0': 'p0'}
-        elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'multiclass':
-          score_data.cbind(Model.predict(score_data))
-
-        # Return preds
-        if not NewData is None:
-          return ScoreData
-        
-        # cbind Target column back to score_data
-        score_data.cbind(TargetData)
-
-        # Store data and update names
-        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = score_data
-        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
-
-      #################################################
-      # CatBoost Method
-      #################################################
-      if TempArgs['Algorithms'].lower() == 'catboost':
-
-        # Extract Model
-        if not ModelName is None:
-          Model = self.ModelList.get(ModelName)
-        else:
-          Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
-
-        # Grab dataframe data
-        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if NewData is None:
-          pred_data = self.DataSets[DataName]
-          if DataName == 'test_data':
-            ScoreData = self.DataFrames.get('TestData')
-          elif DataName == 'validation_data':
-            ScoreData = self.DataFrames.get('ValidationData')
-          elif DataName == 'train_data':
-            ScoreData = self.DataFrames.get('TrainData')
-        else:
-          pred_data = NewData
-
-        # Generate preds and add to datatable frame
-        if TempArgs.get('TargetType').lower() == 'regression':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
-        elif TempArgs.get('TargetType').lower() == 'classification':
-          temp = Model.predict(pred_data, prediction_type = 'Probability')
-          ScoreData['p0'] = temp[:,0]
-          ScoreData['p1'] = temp[:,1]
-        elif TempArgs.get('TargetType').lower() == 'multiclass':
-          preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
-          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-            from datatable import cbind
-            temp = self.DataSets.get('ArgsList')['MultiClass']
-            counter = 0
-            for val in temp['Old'].to_list()[0]:
-              preds.names = {f"C{counter}": val}
-              counter += 1
-
-            # Combine ScoreData and preds
-            ScoreData.cbind(preds)
-
-        # Return preds
-        if not NewData is None:
-          return ScoreData
-
-        # Store data and update names
-        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
-
-      #################################################
-      # XGBoost Method
-      #################################################
-      if TempArgs['Algorithms'].lower() == 'xgboost':
-
-        # Environment
-        import xgboost as xgb
-        from datatable import f
-
-        # Extract Model
-        if not ModelName is None:
-          Model = self.FitList.get(ModelName)
-        else:
-          Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
-
-        # Grab dataframe data
-        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if NewData is None:
-          pred_data = self.DataSets[DataName]
-          if DataName == 'test_data':
-            ScoreData = self.DataFrames.get('TestData')
-          elif DataName == 'validation_data':
-            ScoreData = self.DataFrames.get('ValidationData')
-          elif DataName == 'train_data':
-            ScoreData = self.DataFrames.get('TrainData')
-        else:
-          ScoreData = NewData
-          pred_data = self.DataSets[DataName]
-
-        # Generate preds and add to datatable frame
-        if TempArgs.get('TargetType').lower() != 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-            data = pred_data, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False)
-          
-          # Classification
-          if TempArgs.get('TargetType').lower() == 'classification':
-            ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-            ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
-          
-        else:
-          preds = dt.Frame(Model.predict(
-            data = pred_data, 
-            output_margin=False, 
-            pred_leaf=False, 
-            pred_contribs=False,
-            approx_contribs=False, 
-            pred_interactions=False, 
-            validate_features=True, 
-            training=False, 
-            iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-            strict_shape=False))
-
-          # MultiClass Case
-          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-            from datatable import cbind
-            temp = self.DataSets.get('ArgsList')['MultiClass']
-            counter = 0
-            for val in temp['Old'].to_list()[0]:
-              preds.names = {f"C{counter}": val}
-              counter += 1
+        # Check
+        if len(self.ModelList) == 0:
+            raise Exception('No models found in self.ModelList')
   
-            # Combine ScoreData and preds
-            ScoreData.cbind(preds)
-
-        # Return preds
-        if not NewData is None:
-          return ScoreData
-
-        # Store data and update names
-        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+        # Which Algo
+        if not Algorithm is None:
+            TempArgs = self.ModelArgs[Algorithm]
+        else:
+            TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
+  
+        # Setup Environment
+        import datatable as dt
       
-      #################################################
-      # LightGBM Method
-      #################################################
-      if TempArgs['Algorithms'].lower() == 'lightgbm':
-        
-        # Environment
-        import lightgbm as lgbm
-        from datatable import f
-        
-        # Extract Model
-        if not ModelName is None:
-          Model = self.FitList.get(ModelName)
-        else:
-          Model = self.FitList.get(f"LightGBM{str(len(self.FitList))}")
+        #################################################
+        # Ftrl Method
+        #################################################
+        if TempArgs['Algorithms'].lower() == 'ftrl':
+  
+            # Setup Environment
+            from datatable import f
+            from datatable.models import Ftrl
+            
+            # Extract model
+            if not ModelName is None:
+                Model = self.ModelList.get(ModelName)
+            else:
+                Model = self.ModelList.get(f"Ftrl{str(len(self.FitList))}")
+    
+            # Grab scoring data
+            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+            if NewData is None:
+                score_data = self.DataSets[DataName]
+            else:
+                score_data = NewData
+            
+            # Split frames
+            if TargetColumnName in score_data.names:
+                TargetData = score_data[:, f[TargetColumnName]]
+                score_data = score_data[:, f[:].remove(f[TargetColumnName])]
+    
+            # Score Model and append data set name to scoring data
+            if self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'regression':
+                score_data.cbind(Model.predict(score_data))
+                score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
+            elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'classification':
+                score_data.cbind(Model.predict(score_data))
+                score_data.names = {'1.0': 'p1'}
+                score_data.names = {'0.0': 'p0'}
+            elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'multiclass':
+                score_data.cbind(Model.predict(score_data))
+    
+            # Return preds
+            if not NewData is None:
+                return ScoreData
+            
+            # cbind Target column back to score_data
+            score_data.cbind(TargetData)
+    
+            # Store data and update names
+            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = score_data
+            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+
+        #################################################
+        # CatBoost Method
+        #################################################
+        if TempArgs['Algorithms'].lower() == 'catboost':
+  
+          # Extract Model
+          if not ModelName is None:
+              Model = self.ModelList.get(ModelName)
+          else:
+              Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
+  
+          # Grab dataframe data
+          TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+          if NewData is None:
+              pred_data = self.DataSets[DataName]
+              if DataName == 'test_data':
+                  ScoreData = self.DataFrames.get('TestData')
+              elif DataName == 'validation_data':
+                  ScoreData = self.DataFrames.get('ValidationData')
+              elif DataName == 'train_data':
+                  ScoreData = self.DataFrames.get('TrainData')
+          else:
+              pred_data = NewData
+  
+          # Generate preds and add to datatable frame
+          if TempArgs.get('TargetType').lower() == 'regression':
+              ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
+          elif TempArgs.get('TargetType').lower() == 'classification':
+              temp = Model.predict(pred_data, prediction_type = 'Probability')
+              ScoreData['p0'] = temp[:,0]
+              ScoreData['p1'] = temp[:,1]
+          elif TempArgs.get('TargetType').lower() == 'multiclass':
+            preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
+            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                from datatable import cbind
+                temp = self.DataSets.get('ArgsList')['MultiClass']
+                counter = 0
+                for val in temp['Old'].to_list()[0]:
+                    preds.names = {f"C{counter}": val}
+                    counter += 1
+    
+                  # Combine ScoreData and preds
+                  ScoreData.cbind(preds)
+  
+          # Return preds
+          if not NewData is None:
+              return ScoreData
+  
+          # Store data and update names
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+
+        #################################################
+        # XGBoost Method
+        #################################################
+        if TempArgs['Algorithms'].lower() == 'xgboost':
+  
+          # Environment
+          import xgboost as xgb
+          from datatable import f
+  
+          # Extract Model
+          if not ModelName is None:
+              Model = self.FitList.get(ModelName)
+          else:
+              Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
+  
+          # Grab dataframe data
+          TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+          if NewData is None:
+              pred_data = self.DataSets[DataName]
+              if DataName == 'test_data':
+                  ScoreData = self.DataFrames.get('TestData')
+              elif DataName == 'validation_data':
+                  ScoreData = self.DataFrames.get('ValidationData')
+              elif DataName == 'train_data':
+                  ScoreData = self.DataFrames.get('TrainData')
+          else:
+            ScoreData = NewData
+            pred_data = self.DataSets[DataName]
+  
+          # Generate preds and add to datatable frame
+          if TempArgs.get('TargetType').lower() != 'multiclass':
+              ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+                data = pred_data, 
+                output_margin=False, 
+                pred_leaf=False, 
+                pred_contribs=False,
+                approx_contribs=False, 
+                pred_interactions=False, 
+                validate_features=True, 
+                training=False, 
+                iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+                strict_shape=False)
+            
+            # Classification
+            if TempArgs.get('TargetType').lower() == 'classification':
+                ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+                ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+            
+          else:
+              preds = dt.Frame(Model.predict(
+                data = pred_data, 
+                output_margin=False, 
+                pred_leaf=False, 
+                pred_contribs=False,
+                approx_contribs=False, 
+                pred_interactions=False, 
+                validate_features=True, 
+                training=False, 
+                iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+                strict_shape=False))
+  
+            # MultiClass Case
+            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                from datatable import cbind
+                temp = self.DataSets.get('ArgsList')['MultiClass']
+                counter = 0
+                for val in temp['Old'].to_list()[0]:
+                    preds.names = {f"C{counter}": val}
+                    counter += 1
+    
+              # Combine ScoreData and preds
+              ScoreData.cbind(preds)
+  
+          # Return preds
+          if not NewData is None:
+              return ScoreData
+  
+          # Store data and update names
+          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+      
+        #################################################
+        # LightGBM Method
+        #################################################
+        if TempArgs['Algorithms'].lower() == 'lightgbm':
           
-        # Grab dataframe data
-        TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-        if NewData is None:
-          if DataName == 'test_data':
-            ScoreData = self.DataFrames.get('TestData')
-          elif DataName == 'validation_data':
-            ScoreData = self.DataFrames.get('ValidationData')
-          elif DataName == 'train_data':
-            ScoreData = self.DataFrames.get('TrainData')
-        else:
-          ScoreData = NewData
-
-        # Subset score features
-        scor = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
-        
-        # Regression and Classification
-        if TempArgs.get('TargetType').lower() != 'multiclass':
-          ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = scor)
-          
-          # Non regression cases
-          if TempArgs.get('TargetType').lower() == 'classification':
-            ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-            ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
-
-        # MultiClass
-        else:
-          preds = dt.Frame(Model.predict(data = scor))
-          if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-            from datatable import cbind
-            temp = self.DataSets.get('ArgsList')['MultiClass']
-            counter = 0
-            for val in temp['Old'].to_list()[0]:
-              preds.names = {f"C{counter}": val}
-              counter += 1
-
-            # Combine ScoreData and preds
-            ScoreData.cbind(preds)
-
-        # Return preds
-        if not NewData is None:
-          return ScoreData
-
-        # Store data and update names
-        self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-        self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+            # Environment
+            import lightgbm as lgbm
+            from datatable import f
+            
+            # Extract Model
+            if not ModelName is None:
+                Model = self.FitList.get(ModelName)
+            else:
+                Model = self.FitList.get(f"LightGBM{str(len(self.FitList))}")
+              
+            # Grab dataframe data
+            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+            if NewData is None:
+                if DataName == 'test_data':
+                  ScoreData = self.DataFrames.get('TestData')
+                elif DataName == 'validation_data':
+                  ScoreData = self.DataFrames.get('ValidationData')
+                elif DataName == 'train_data':
+                  ScoreData = self.DataFrames.get('TrainData')
+            else:
+                ScoreData = NewData
+    
+            # Subset score features
+            scor = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
+            
+            # Regression and Classification
+            if TempArgs.get('TargetType').lower() != 'multiclass':
+                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = scor)
+              
+              # Non regression cases
+              if TempArgs.get('TargetType').lower() == 'classification':
+                  ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+                  ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+    
+            # MultiClass
+            else:
+                preds = dt.Frame(Model.predict(data = scor))
+                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                    from datatable import cbind
+                    temp = self.DataSets.get('ArgsList')['MultiClass']
+                    counter = 0
+                    for val in temp['Old'].to_list()[0]:
+                      preds.names = {f"C{counter}": val}
+                      counter += 1
+    
+                    # Combine ScoreData and preds
+                    ScoreData.cbind(preds)
+    
+            # Return preds
+            if not NewData is None:
+                return ScoreData
+    
+            # Store data and update names
+            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
     
     #################################################
     #################################################
@@ -1194,193 +1322,193 @@ class RetroFit:
     # Evaluation Attribute Update
     def ML1_Single_Evaluate(self, FitName=None, TargetType=None, ScoredDataName=None, ByVariables=None, CostDict=dict(tpcost = 0.0, fpcost = 1.0, fncost = 1.0, tncost = 0.0)):
       
-      # TargetType Agnostic Imports
-      import datatable as dt
-      from datetime import datetime
-      import numpy as np
+        # TargetType Agnostic Imports
+        import datatable as dt
+        from datetime import datetime
+        import numpy as np
       
-      # Get Data
-      TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
-      temp = self.DataSets.get(ScoredDataName)
-
-      # Generate metrics
-      if TargetType.lower() == 'regression':
-
-        # Environment
-        from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
-
-        # Actuals and preds
-        y_true = temp[TargetColumnName]
-        y_pred = temp[f"Predict_{TargetColumnName}"]
-
-        # checks
-        Min_y_true = min(y_true.to_numpy())[0]
-        Min_y_pred = min(y_pred.to_numpy())[0]
-        check = (Min_y_true > 0) & (Min_y_pred > 0)
-
-        # Metrics
-        Metrics = dt.Frame(ModelName = [FitName])
-        Metrics['FeatureSet'] = None
-        Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        if ByVariables:
-          Metrics['Grouping'] = ByVariables
-        else:
-          Metrics['Grouping'] = 'NA'
-        Metrics['explained_variance_score'] = explained_variance_score(y_true, y_pred)
-        Metrics['r2_score'] = r2_score(y_true, y_pred)
-        Metrics['mean_absolute_percentage_error'] = mean_absolute_percentage_error(y_true, y_pred)
-        Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
-        Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
-        Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
-        if check:
-          Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred) 
-        else:
-          Metrics['mean_squared_log_error'] = -1
-        Metrics['max_error'] = max_error(y_true, y_pred)
-        return Metrics
-
-      # Generate metrics
-      if TargetType.lower() == 'classification':
-
-        # Imports
-        from datatable import ifelse, math, f, update
-
-        # Cost matrix
-        tpcost = CostDict['tpcost']
-        fpcost = CostDict['fpcost']
-        fncost = CostDict['fncost']
-        tncost = CostDict['tncost']
-
-        # Build metrics table
-        Thresholds = list(np.linspace(0.0, 1.0, 101))
-        ThreshLength = [-1.0] * len(Thresholds)
-        ThresholdOutput = dt.Frame(
-          ModelName   = [FitName] * len(Thresholds),
-          FeatureSet  = [None] * len(Thresholds),
-          Grouping    = [ByVariables] * len(Thresholds),
-          CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
-          Threshold   = Thresholds,
-          TN          = ThreshLength,
-          TP          = ThreshLength,
-          FN          = ThreshLength,
-          FP          = ThreshLength,
-          N           = ThreshLength,
-          P           = ThreshLength,
-          Utility     = ThreshLength,
-          MCC         = ThreshLength,
-          Accuracy    = ThreshLength,
-          F1_Score    = ThreshLength,
-          F2_Score    = ThreshLength,
-          F0_5_Score  = ThreshLength,
-          TPR         = ThreshLength,
-          TNR         = ThreshLength,
-          FNR         = ThreshLength,
-          FPR         = ThreshLength,
-          FDR         = ThreshLength,
-          FOR         = ThreshLength,
-          NPV         = ThreshLength,
-          PPV         = ThreshLength,
-          ThreatScore = ThreshLength)
+        # Get Data
+        TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
+        temp = self.DataSets.get(ScoredDataName)
 
         # Generate metrics
-        counter = 0
-        for Thresh in Thresholds:
-          TN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
-          TP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
-          FN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
-          FP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
-          N1 = temp.shape[0]
-          N  = temp[f["p1"] < Thresh, ...].shape[0]
-          P1 = temp[f[TargetColumnName] == 1, ...].shape[0]
-          P  = temp[(f[TargetColumnName] == 1) & (f['p1'] > Thresh), ...].shape[0]
+        if TargetType.lower() == 'regression':
 
-          # Calculate metrics ----
-          if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
-            MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
-          else:
-            MCC = -1.0
-          if not N1 == 0:
-            Accuracy    = (TP+TN)/N1
-          else:
-            Accuracy = -1.0
-          if not P1 == 0:
-            TPR         = TP/P1
-          else:
-            TPR = -1.0
-          if not (N1-P1) == 0:
-            TNR         = TN/(N1-P1)
-          else:
-            TNR = -1.0
-          if not P1 == 0:
-            FNR         = FN / P1
-          else:
-            FNR = -1.0
-          if not N1 == 0:
-            FPR         = FP / N1
-          else:
-            FPR = -1.0
-          if not (FP + TP) == 0:
-            FDR         = FP / (FP + TP)
-          else:
-            FDR = -1.0
-          if not (FN + TN) == 0:
-            FOR         = FN / (FN + TN)
-          else:
-            FOR = -1.0
-          if not (TP + FP + FN) == 0:
-            F1_Score    = 2 * TP / (2 * TP + FP + FN)
-          else:
-            F1_Score = -1.0
-          if not (TP + FP + FN) == 0:
-            F2_Score    = 3 * TP / (2 * TP + FP + FN)
-          else:
-            F2_Score = -1.0
-          if not (TP + FP + FN) == 0:
-            F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
-          else:
-            F0_5_Score = -1.0
-          if not (TN + FN) == 0:
-            NPV         = TN / (TN + FN)
-          else:
-            NPV = -1.0
-          if not (TP + FP) == 0:
-            PPV         = TP / (TP + FP)
-          else:
-            PPV = -1.0
-          if not (TP + FN + FP) == 0:
-            ThreatScore = TP / (TP + FN + FP)
-          else:
-            ThreatScore = -1.0
-          if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
-            Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
-          else:
-            Utility = -1.0
+            # Environment
+            from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
+    
+            # Actuals and preds
+            y_true = temp[TargetColumnName]
+            y_pred = temp[f"Predict_{TargetColumnName}"]
+    
+            # checks
+            Min_y_true = min(y_true.to_numpy())[0]
+            Min_y_pred = min(y_pred.to_numpy())[0]
+            check = (Min_y_true > 0) & (Min_y_pred > 0)
+    
+            # Metrics
+            Metrics = dt.Frame(ModelName = [FitName])
+            Metrics['FeatureSet'] = None
+            Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            if ByVariables:
+                Metrics['Grouping'] = ByVariables
+            else:
+                Metrics['Grouping'] = 'NA'
+            Metrics['explained_variance_score'] = explained_variance_score(y_true, y_pred)
+            Metrics['r2_score'] = r2_score(y_true, y_pred)
+            Metrics['mean_absolute_percentage_error'] = mean_absolute_percentage_error(y_true, y_pred)
+            Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
+            Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
+            Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
+            if check:
+                Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred) 
+            else:
+                Metrics['mean_squared_log_error'] = -1
+            Metrics['max_error'] = max_error(y_true, y_pred)
+            return Metrics
 
-          # Fill in values ----
-          ThresholdOutput[counter, update(P = P)]
-          ThresholdOutput[counter, update(N = N)]
-          ThresholdOutput[counter, update(TN = TN)]
-          ThresholdOutput[counter, update(TP = TP)]
-          ThresholdOutput[counter, update(FP = FP)]
-          ThresholdOutput[counter, update(FN = FN)]
-          ThresholdOutput[counter, update(Utility = Utility)]
-          ThresholdOutput[counter, update(MCC = MCC)]
-          ThresholdOutput[counter, update(Accuracy = Accuracy)]
-          ThresholdOutput[counter, update(F1_Score = F1_Score)]
-          ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
-          ThresholdOutput[counter, update(F2_Score = F2_Score)]
-          ThresholdOutput[counter, update(NPV = NPV)]
-          ThresholdOutput[counter, update(TPR = TPR)]
-          ThresholdOutput[counter, update(TNR = TNR)]
-          ThresholdOutput[counter, update(FNR = FNR)]
-          ThresholdOutput[counter, update(FPR = FPR)]
-          ThresholdOutput[counter, update(FDR = FDR)]
-          ThresholdOutput[counter, update(FOR = FOR)]
-          ThresholdOutput[counter, update(PPV = PPV)]
-          ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
-          
-          # Increment
-          counter = counter + 1
+        # Generate metrics
+        if TargetType.lower() == 'classification':
+  
+            # Imports
+            from datatable import ifelse, math, f, update
+    
+            # Cost matrix
+            tpcost = CostDict['tpcost']
+            fpcost = CostDict['fpcost']
+            fncost = CostDict['fncost']
+            tncost = CostDict['tncost']
+    
+            # Build metrics table
+            Thresholds = list(np.linspace(0.0, 1.0, 101))
+            ThreshLength = [-1.0] * len(Thresholds)
+            ThresholdOutput = dt.Frame(
+              ModelName   = [FitName] * len(Thresholds),
+              FeatureSet  = [None] * len(Thresholds),
+              Grouping    = [ByVariables] * len(Thresholds),
+              CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
+              Threshold   = Thresholds,
+              TN          = ThreshLength,
+              TP          = ThreshLength,
+              FN          = ThreshLength,
+              FP          = ThreshLength,
+              N           = ThreshLength,
+              P           = ThreshLength,
+              Utility     = ThreshLength,
+              MCC         = ThreshLength,
+              Accuracy    = ThreshLength,
+              F1_Score    = ThreshLength,
+              F2_Score    = ThreshLength,
+              F0_5_Score  = ThreshLength,
+              TPR         = ThreshLength,
+              TNR         = ThreshLength,
+              FNR         = ThreshLength,
+              FPR         = ThreshLength,
+              FDR         = ThreshLength,
+              FOR         = ThreshLength,
+              NPV         = ThreshLength,
+              PPV         = ThreshLength,
+              ThreatScore = ThreshLength)
+
+            # Generate metrics
+            counter = 0
+            for Thresh in Thresholds:
+                TN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
+                TP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
+                FN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
+                FP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
+                N1 = temp.shape[0]
+                N  = temp[f["p1"] < Thresh, ...].shape[0]
+                P1 = temp[f[TargetColumnName] == 1, ...].shape[0]
+                P  = temp[(f[TargetColumnName] == 1) & (f['p1'] > Thresh), ...].shape[0]
+    
+                # Calculate metrics ----
+                if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
+                    MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+                else:
+                  MCC = -1.0
+                if not N1 == 0:
+                    Accuracy    = (TP+TN)/N1
+                else:
+                    Accuracy = -1.0
+                if not P1 == 0:
+                    TPR         = TP/P1
+                else:
+                    TPR = -1.0
+                if not (N1-P1) == 0:
+                    TNR         = TN/(N1-P1)
+                else:
+                    TNR = -1.0
+                if not P1 == 0:
+                    FNR         = FN / P1
+                else:
+                    FNR = -1.0
+                if not N1 == 0:
+                    FPR         = FP / N1
+                else:
+                    FPR = -1.0
+                if not (FP + TP) == 0:
+                    FDR         = FP / (FP + TP)
+                else:
+                    FDR = -1.0
+                if not (FN + TN) == 0:
+                    FOR         = FN / (FN + TN)
+                else:
+                    FOR = -1.0
+                if not (TP + FP + FN) == 0:
+                    F1_Score    = 2 * TP / (2 * TP + FP + FN)
+                else:
+                    F1_Score = -1.0
+                if not (TP + FP + FN) == 0:
+                    F2_Score    = 3 * TP / (2 * TP + FP + FN)
+                else:
+                    F2_Score = -1.0
+                if not (TP + FP + FN) == 0:
+                    F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
+                else:
+                    F0_5_Score = -1.0
+                if not (TN + FN) == 0:
+                    NPV         = TN / (TN + FN)
+                else:
+                    NPV = -1.0
+                if not (TP + FP) == 0:
+                    PPV         = TP / (TP + FP)
+                else:
+                    PPV = -1.0
+                if not (TP + FN + FP) == 0:
+                    ThreatScore = TP / (TP + FN + FP)
+                else:
+                    ThreatScore = -1.0
+                if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
+                    Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
+                else:
+                    Utility = -1.0
+    
+                # Fill in values ----
+                ThresholdOutput[counter, update(P = P)]
+                ThresholdOutput[counter, update(N = N)]
+                ThresholdOutput[counter, update(TN = TN)]
+                ThresholdOutput[counter, update(TP = TP)]
+                ThresholdOutput[counter, update(FP = FP)]
+                ThresholdOutput[counter, update(FN = FN)]
+                ThresholdOutput[counter, update(Utility = Utility)]
+                ThresholdOutput[counter, update(MCC = MCC)]
+                ThresholdOutput[counter, update(Accuracy = Accuracy)]
+                ThresholdOutput[counter, update(F1_Score = F1_Score)]
+                ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
+                ThresholdOutput[counter, update(F2_Score = F2_Score)]
+                ThresholdOutput[counter, update(NPV = NPV)]
+                ThresholdOutput[counter, update(TPR = TPR)]
+                ThresholdOutput[counter, update(TNR = TNR)]
+                ThresholdOutput[counter, update(FNR = FNR)]
+                ThresholdOutput[counter, update(FPR = FPR)]
+                ThresholdOutput[counter, update(FDR = FDR)]
+                ThresholdOutput[counter, update(FOR = FOR)]
+                ThresholdOutput[counter, update(PPV = PPV)]
+                ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
+              
+                # Increment
+                counter = counter + 1
 
         # return
         return ThresholdOutput
@@ -1388,202 +1516,202 @@ class RetroFit:
       # Generate metrics (requires target as categorical and preds as softmax probs split into columns)
       if TargetType.lower() == 'multiclass':
 
-        # Imports
-        from datatable import ifelse, math, f, update, join
-        from numpy import sort
-        from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score, roc_auc_score
-        
-        # All levels analysis
-        levels = list(np.sort(list(set(temp[TargetColumnName].to_list()[0]))))
-        scores = temp[:, levels].to_numpy()
-        lookup = dt.Frame(PredClass = levels)
-        lookup['Levels'] = np.arange(0,lookup.shape[0], 1)
-        targets = temp[:, levels].to_numpy()
-        ClassPreds = dt.Frame(Levels = list(targets.argmax(axis = 1)))
-        lookup.key = 'Levels'
-        ClassPreds = ClassPreds[:, :, join(lookup)]
-        del ClassPreds[:, f.Levels]
-        temp.cbind(ClassPreds)
-        
-        # Metrics dict
-        MetricsDict = dict()
-        
-        # multilabel_confusion_matrix
-        y_true = temp[TargetColumnName].to_numpy()
-        y_pred = temp['PredClass'].to_numpy()
-        MetricsDict['multilabel_confusion_matrix'] = multilabel_confusion_matrix(y_true, y_pred)
-
-        # Confusion matrix
-        MetricsDict['confusion_matrix'] = confusion_matrix(y_true, y_pred)
-
-        # top_k_accuracy_score
-        top_acc_scores = dt.Frame(TopN = np.arange(0,lookup.shape[0], 1))
-        top_acc_scores['top_acc_scores'] = -1 * len(levels)
-        top_acc_scores['N'] = temp.shape[0]
-        for k in range(len(levels)):
-          top_acc_scores[k, f['top_acc_scores']] = top_k_accuracy_score(y_true, scores, k=k, normalize=False)
-        MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
-        
-        # other metrics
-        MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
-        MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
-        MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
-        MetricsDict['precision_recall_fscore_support'] = precision_recall_fscore_support(y_true, y_pred, average = 'micro')
-        MetricsDict['precision_score'] = precision_score(y_true, y_pred, average = 'micro')
-        MetricsDict['recall_score'] = recall_score(y_true, y_pred, average = 'micro')
-        
-        # Create temp_target
-        temp['temp_target'] = 1.0
-        
-        # Individual levels analysis
-        for level in levels:
+          # Imports
+          from datatable import ifelse, math, f, update, join
+          from numpy import sort
+          from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score, roc_auc_score
           
-          # Update temp_target
-          temp[:, update(temp_target = ifelse(f[TargetColumnName] == level, 1.0, 0.0))]
+          # All levels analysis
+          levels = list(np.sort(list(set(temp[TargetColumnName].to_list()[0]))))
+          scores = temp[:, levels].to_numpy()
+          lookup = dt.Frame(PredClass = levels)
+          lookup['Levels'] = np.arange(0,lookup.shape[0], 1)
+          targets = temp[:, levels].to_numpy()
+          ClassPreds = dt.Frame(Levels = list(targets.argmax(axis = 1)))
+          lookup.key = 'Levels'
+          ClassPreds = ClassPreds[:, :, join(lookup)]
+          del ClassPreds[:, f.Levels]
+          temp.cbind(ClassPreds)
           
-          # Cost matrix
-          tpcost = CostDict['tpcost']
-          fpcost = CostDict['fpcost']
-          fncost = CostDict['fncost']
-          tncost = CostDict['tncost']
-
-          # Build metrics table
-          Thresholds = list(np.linspace(0.0, 1.0, 101))
-          ThreshLength = [-1.0] * len(Thresholds)
-          ThresholdOutput = dt.Frame(
-            ModelName   = [FitName] * len(Thresholds),
-            FeatureSet  = [None] * len(Thresholds),
-            Grouping    = [ByVariables] * len(Thresholds),
-            CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
-            Threshold   = Thresholds,
-            TN          = ThreshLength,
-            TP          = ThreshLength,
-            FN          = ThreshLength,
-            FP          = ThreshLength,
-            N           = ThreshLength,
-            P           = ThreshLength,
-            Utility     = ThreshLength,
-            MCC         = ThreshLength,
-            Accuracy    = ThreshLength,
-            F1_Score    = ThreshLength,
-            F2_Score    = ThreshLength,
-            F0_5_Score  = ThreshLength,
-            TPR         = ThreshLength,
-            TNR         = ThreshLength,
-            FNR         = ThreshLength,
-            FPR         = ThreshLength,
-            FDR         = ThreshLength,
-            FOR         = ThreshLength,
-            NPV         = ThreshLength,
-            PPV         = ThreshLength,
-            ThreatScore = ThreshLength)
-
-          # Generate metrics
-          counter = 0
-          for Thresh in Thresholds:
-            TN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
-            TP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
-            FN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
-            FP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
-            N1 = temp.shape[0]
-            N  = temp[f[level] < Thresh, ...].shape[0]
-            P1 = temp[f['temp_target'] == 1, ...].shape[0]
-            P  = temp[(f['temp_target'] == 1) & (f[level] > Thresh), ...].shape[0]
+          # Metrics dict
+          MetricsDict = dict()
+          
+          # multilabel_confusion_matrix
+          y_true = temp[TargetColumnName].to_numpy()
+          y_pred = temp['PredClass'].to_numpy()
+          MetricsDict['multilabel_confusion_matrix'] = multilabel_confusion_matrix(y_true, y_pred)
   
-            # Calculate metrics ----
-            if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
-              MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
-            else:
-              MCC = -1.0
-            if not N1 == 0:
-              Accuracy    = (TP+TN)/N1
-            else:
-              Accuracy = -1.0
-            if not P1 == 0:
-              TPR         = TP/P1
-            else:
-              TPR = -1.0
-            if not (N1-P1) == 0:
-              TNR         = TN/(N1-P1)
-            else:
-              TNR = -1.0
-            if not P1 == 0:
-              FNR         = FN / P1
-            else:
-              FNR = -1.0
-            if not N1 == 0:
-              FPR         = FP / N1
-            else:
-              FPR = -1.0
-            if not (FP + TP) == 0:
-              FDR         = FP / (FP + TP)
-            else:
-              FDR = -1.0
-            if not (FN + TN) == 0:
-              FOR         = FN / (FN + TN)
-            else:
-              FOR = -1.0
-            if not (TP + FP + FN) == 0:
-              F1_Score    = 2 * TP / (2 * TP + FP + FN)
-            else:
-              F1_Score = -1.0
-            if not (TP + FP + FN) == 0:
-              F2_Score    = 3 * TP / (2 * TP + FP + FN)
-            else:
-              F2_Score = -1.0
-            if not (TP + FP + FN) == 0:
-              F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
-            else:
-              F0_5_Score = -1.0
-            if not (TN + FN) == 0:
-              NPV         = TN / (TN + FN)
-            else:
-              NPV = -1.0
-            if not (TP + FP) == 0:
-              PPV         = TP / (TP + FP)
-            else:
-              PPV = -1.0
-            if not (TP + FN + FP) == 0:
-              ThreatScore = TP / (TP + FN + FP)
-            else:
-              ThreatScore = -1.0
-            if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
-              Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
-            else:
-              Utility = -1.0
-
-            # Fill in values ----
-            ThresholdOutput[counter, update(P = P)]
-            ThresholdOutput[counter, update(N = N)]
-            ThresholdOutput[counter, update(TN = TN)]
-            ThresholdOutput[counter, update(TP = TP)]
-            ThresholdOutput[counter, update(FP = FP)]
-            ThresholdOutput[counter, update(FN = FN)]
-            ThresholdOutput[counter, update(Utility = Utility)]
-            ThresholdOutput[counter, update(MCC = MCC)]
-            ThresholdOutput[counter, update(Accuracy = Accuracy)]
-            ThresholdOutput[counter, update(F1_Score = F1_Score)]
-            ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
-            ThresholdOutput[counter, update(F2_Score = F2_Score)]
-            ThresholdOutput[counter, update(NPV = NPV)]
-            ThresholdOutput[counter, update(TPR = TPR)]
-            ThresholdOutput[counter, update(TNR = TNR)]
-            ThresholdOutput[counter, update(FNR = FNR)]
-            ThresholdOutput[counter, update(FPR = FPR)]
-            ThresholdOutput[counter, update(FDR = FDR)]
-            ThresholdOutput[counter, update(FOR = FOR)]
-            ThresholdOutput[counter, update(PPV = PPV)]
-            ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
+          # Confusion matrix
+          MetricsDict['confusion_matrix'] = confusion_matrix(y_true, y_pred)
+  
+          # top_k_accuracy_score
+          top_acc_scores = dt.Frame(TopN = np.arange(0,lookup.shape[0], 1))
+          top_acc_scores['top_acc_scores'] = -1 * len(levels)
+          top_acc_scores['N'] = temp.shape[0]
+          for k in range(len(levels)):
+              top_acc_scores[k, f['top_acc_scores']] = top_k_accuracy_score(y_true, scores, k=k, normalize=False)
+          MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
+          
+          # other metrics
+          MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
+          MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
+          MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
+          MetricsDict['precision_recall_fscore_support'] = precision_recall_fscore_support(y_true, y_pred, average = 'micro')
+          MetricsDict['precision_score'] = precision_score(y_true, y_pred, average = 'micro')
+          MetricsDict['recall_score'] = recall_score(y_true, y_pred, average = 'micro')
+          
+          # Create temp_target
+          temp['temp_target'] = 1.0
+          
+          # Individual levels analysis
+          for level in levels:
             
-            # Increment
-            counter = counter + 1
-            
-            # Store datatables
-            MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
-
-        # Remove temp target
-        del temp[:, f['temp_target']]
-        
-        # return
-        return MetricsDict
+              # Update temp_target
+              temp[:, update(temp_target = ifelse(f[TargetColumnName] == level, 1.0, 0.0))]
+              
+              # Cost matrix
+              tpcost = CostDict['tpcost']
+              fpcost = CostDict['fpcost']
+              fncost = CostDict['fncost']
+              tncost = CostDict['tncost']
+    
+              # Build metrics table
+              Thresholds = list(np.linspace(0.0, 1.0, 101))
+              ThreshLength = [-1.0] * len(Thresholds)
+              ThresholdOutput = dt.Frame(
+                ModelName   = [FitName] * len(Thresholds),
+                FeatureSet  = [None] * len(Thresholds),
+                Grouping    = [ByVariables] * len(Thresholds),
+                CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
+                Threshold   = Thresholds,
+                TN          = ThreshLength,
+                TP          = ThreshLength,
+                FN          = ThreshLength,
+                FP          = ThreshLength,
+                N           = ThreshLength,
+                P           = ThreshLength,
+                Utility     = ThreshLength,
+                MCC         = ThreshLength,
+                Accuracy    = ThreshLength,
+                F1_Score    = ThreshLength,
+                F2_Score    = ThreshLength,
+                F0_5_Score  = ThreshLength,
+                TPR         = ThreshLength,
+                TNR         = ThreshLength,
+                FNR         = ThreshLength,
+                FPR         = ThreshLength,
+                FDR         = ThreshLength,
+                FOR         = ThreshLength,
+                NPV         = ThreshLength,
+                PPV         = ThreshLength,
+                ThreatScore = ThreshLength)
+  
+              # Generate metrics
+              counter = 0
+              for Thresh in Thresholds:
+                  TN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
+                  TP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
+                  FN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
+                  FP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
+                  N1 = temp.shape[0]
+                  N  = temp[f[level] < Thresh, ...].shape[0]
+                  P1 = temp[f['temp_target'] == 1, ...].shape[0]
+                  P  = temp[(f['temp_target'] == 1) & (f[level] > Thresh), ...].shape[0]
+      
+                # Calculate metrics ----
+                if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
+                    MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+                else:
+                    MCC = -1.0
+                if not N1 == 0:
+                    Accuracy    = (TP+TN)/N1
+                else:
+                    Accuracy = -1.0
+                if not P1 == 0:
+                    TPR         = TP/P1
+                else:
+                    TPR = -1.0
+                if not (N1-P1) == 0:
+                    TNR         = TN/(N1-P1)
+                else:
+                    TNR = -1.0
+                if not P1 == 0:
+                    FNR         = FN / P1
+                else:
+                    FNR = -1.0
+                if not N1 == 0:
+                    FPR         = FP / N1
+                else:
+                    FPR = -1.0
+                if not (FP + TP) == 0:
+                    FDR         = FP / (FP + TP)
+                else:
+                    FDR = -1.0
+                if not (FN + TN) == 0:
+                    FOR         = FN / (FN + TN)
+                else:
+                    FOR = -1.0
+                if not (TP + FP + FN) == 0:
+                    F1_Score    = 2 * TP / (2 * TP + FP + FN)
+                else:
+                    F1_Score = -1.0
+                if not (TP + FP + FN) == 0:
+                    F2_Score    = 3 * TP / (2 * TP + FP + FN)
+                else:
+                    F2_Score = -1.0
+                if not (TP + FP + FN) == 0:
+                    F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
+                else:
+                    F0_5_Score = -1.0
+                if not (TN + FN) == 0:
+                    NPV         = TN / (TN + FN)
+                else:
+                    NPV = -1.0
+                if not (TP + FP) == 0:
+                    PPV         = TP / (TP + FP)
+                else:
+                    PPV = -1.0
+                if not (TP + FN + FP) == 0:
+                    ThreatScore = TP / (TP + FN + FP)
+                else:
+                    ThreatScore = -1.0
+                if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
+                    Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
+                else:
+                    Utility = -1.0
+    
+                # Fill in values ----
+                ThresholdOutput[counter, update(P = P)]
+                ThresholdOutput[counter, update(N = N)]
+                ThresholdOutput[counter, update(TN = TN)]
+                ThresholdOutput[counter, update(TP = TP)]
+                ThresholdOutput[counter, update(FP = FP)]
+                ThresholdOutput[counter, update(FN = FN)]
+                ThresholdOutput[counter, update(Utility = Utility)]
+                ThresholdOutput[counter, update(MCC = MCC)]
+                ThresholdOutput[counter, update(Accuracy = Accuracy)]
+                ThresholdOutput[counter, update(F1_Score = F1_Score)]
+                ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
+                ThresholdOutput[counter, update(F2_Score = F2_Score)]
+                ThresholdOutput[counter, update(NPV = NPV)]
+                ThresholdOutput[counter, update(TPR = TPR)]
+                ThresholdOutput[counter, update(TNR = TNR)]
+                ThresholdOutput[counter, update(FNR = FNR)]
+                ThresholdOutput[counter, update(FPR = FPR)]
+                ThresholdOutput[counter, update(FDR = FDR)]
+                ThresholdOutput[counter, update(FOR = FOR)]
+                ThresholdOutput[counter, update(PPV = PPV)]
+                ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
+                
+                # Increment
+                counter = counter + 1
+                
+                # Store datatables
+                MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
+  
+          # Remove temp target
+          del temp[:, f['temp_target']]
+          
+          # return
+          return MetricsDict
 
