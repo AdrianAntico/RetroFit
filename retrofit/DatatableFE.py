@@ -781,4 +781,6 @@ class FE(FeatureEngineering):
     def FE3_CategoricalEncoding(
         self,
         data=None,
-        LagColumnNames=None,
+        LagColumnNames=None):
+        
+        return None

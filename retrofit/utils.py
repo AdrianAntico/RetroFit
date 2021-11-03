@@ -4,6 +4,10 @@
 # Release: retrofit 0.1.7
 # Last modified : 2021-09-21
 
+from retrofit import utils
+import pickle
+
+
 def cumsum(x):
     """
     Create a list of summed up values from another list
@@ -14,23 +18,25 @@ def cumsum(x):
   
     # Fill accumulation list
     for acc in range(len(x)):
-      if acc == 0:
-        AccumRatios[acc] = x[acc]
-      else:
-        AccumRatios[acc] = AccumRatios[acc-1] + x[acc]
+        if acc == 0:
+            AccumRatios[acc] = x[acc]
+        else:
+            AccumRatios[acc] = AccumRatios[acc-1] + x[acc]
 
     # Return list
     return(AccumRatios)
+
 
 def printdict(x):
     """
     Print out the dictionary where each key : value pair gets a new line
     """
     for z in x:
-      if not x[z] is None:
-        print(z + ': ' + str(x[z]))
+        if not x[z] is None:
+            print(z + ': ' + str(x[z]))
       else:
-        print(z + ': None')
+          print(z + ': None')
+
 
 def do_call(FUN, args=[], kwargs = {}):
     """
@@ -51,3 +57,15 @@ def do_call(FUN, args=[], kwargs = {}):
     
     """
     return FUN(*args, **kwargs)
+
+
+# Save to file
+def save(x = None, Path = None):
+    with open(f"{Path}.pkl", 'wb') as out:
+        pickle.dump(x, out, pickle.HIGHEST_PROTOCOL)
+
+
+# Load from file
+def load(Path):
+    with open(f"{Path}", 'rb') as x:
+        return pickle.load(x)
