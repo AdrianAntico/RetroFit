@@ -94,9 +94,7 @@ class FE(FeatureEngineering):
             for lp in LagPeriods:
                 Ref1 = f"Lag_{lp}_{lcn}"
                 if ByVariables:
-                    data = data[
-                        :, f[:].extend({Ref1: dt.shift(f[lcn], n=lp)}), by(ByVariables)
-                    ]
+                    data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n=lp)}), by(ByVariables)]
                 else:
                     data = data[:, f[:].extend({Ref1: dt.shift(f[lcn], n=lp)})]
                 if ImputeValue:

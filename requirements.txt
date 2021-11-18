@@ -1,8 +1,11 @@
 datatable
-pandas
-scipy
-numpy
 polars
+pandas
+numpy
+scipy
 catboost
 xgboost
 lightgbm
+torch
+plotly
+kaleido

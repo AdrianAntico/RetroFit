@@ -1003,11 +1003,14 @@ class RetroFit:
         
         # CatBoost
         if Algorithm.lower() == 'catboost':
-            catboost.save_model(fname, format="cbm", export_parameters=None, pool=None)
+            catboost.save_model(f"{Path}/{ModelID}", format="cbm", export_parameters=None, pool=None)
         
         # XGBoost
         if Algorithm.lower() == 'xgboost':
-            catboost.asdf
+            import xgboost as xgb
+            from xgboost import Booster
+            Booster.save_model(f"{Path}/{ModelID}")
+            # Booster.dump_model() # Dump model info out but not loadable afterwards
         
         # LightGBM
         if Algorithm.lower() == 'lightgbm':
