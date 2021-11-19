@@ -4,7 +4,7 @@ import plotly.express as px
 import datatable as dt
 import plotly.io as pio
 
-def scattplot(data, XVar=None, YVar=None, GroupVariables=None):
+def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
   """
   # Goal:
   Automatically generate scatterplots from datatable data
