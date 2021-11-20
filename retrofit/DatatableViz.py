@@ -20,7 +20,8 @@ def ScatterPlot(data=None,
                 SizeVar=None,
                 SymbolVar=None,
                 HoverStatsVar=None,
-                MarginalPlots = False):
+                MarginalX=None,
+                MarginalY=None):
     """
     # Goal:
     Automatically generate scatterplots from datatable data
@@ -39,7 +40,8 @@ def ScatterPlot(data=None,
     ColorVar:      String, column name of the variable to use for the color coding of dots
     SizeVar:       String, column name of the variable to use for the sizing of dots
     HoverStatsVar: String, column name of the variable to use for mouse hovering stats
-    MarginalPlots: Logical, True to add histogram plots to both axis
+    MarginalX:     String, 'histogram', 'rug', etc.
+    MarginalY:     String, 'histogram', 'rug', etc.
     """
     
     # Ensure datatable
@@ -53,7 +55,7 @@ def ScatterPlot(data=None,
     # Ensure XVar is not None
     if not YVar:
         raise Exception("YVar cannot be None")
-      
+
     # Ensure object is str
     if not isinstance(FacetColVar, str):
         raise Exception("FacetColVar should be a string or None")
@@ -85,15 +87,12 @@ def ScatterPlot(data=None,
         data = data[:, f[:].extend({"ID": np.random.uniform(0, 1, size=data.shape[0])})]
         data = data[: int(N), ...]
         del data[:, "ID"]
-    
+
     # Convert Keep columns to a pandas frame
     data_pandas = data[:, Keep].to_pandas()
     
     # Build plot object
-    if MarginalPlots:
-        fig = px.scatter(data_pandas, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar, marginal_x='histogram', marginal_y='histogram')
-    else:
-        fig = px.scatter(data_pandas, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar))
+    fig = px.scatter(data_pandas, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar, marginal_x=MarginalX, marginal_y=MarginalY)
 
     # Generate plot
     fig.show()
