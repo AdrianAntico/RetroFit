@@ -7,6 +7,7 @@
 import numpy as np
 import plotly.express as px
 import datatable as dt
+from datatable import f
 import plotly.io as pio
 
 def ScatterPlot(data=None,
