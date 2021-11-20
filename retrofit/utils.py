@@ -57,15 +57,3 @@ def do_call(FUN, args=[], kwargs = {}):
     
     """
     return FUN(*args, **kwargs)
-
-
-# Save to file
-def save(x = None, Path = None):
-    with open(f"{Path}.pkl", 'wb') as out:
-        pickle.dump(x, out, pickle.HIGHEST_PROTOCOL)
-
-
-# Load from file
-def load(Path):
-    with open(f"{Path}", 'rb') as x:
-        return pickle.load(x)

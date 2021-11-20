@@ -65,7 +65,7 @@ def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
       x = x,
       y = y,
       mode = 'markers',
-      color = GroupVariables]
+      color = GroupVariables)]
   
   # Create and show plot
   fig_dict = dict(data=config)
