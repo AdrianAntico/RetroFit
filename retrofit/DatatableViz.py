@@ -47,7 +47,7 @@ def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
         y = y,
         mode = 'markers')]
     
-  else:  
+  else:
   
     GroupVariables = data[:, GroupVariables].to_list()
     GroupVariables = list(set(GroupVariables[0]))
