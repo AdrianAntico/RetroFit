@@ -8,7 +8,7 @@ import plotly.express as px
 import datatable as dt
 import plotly.io as pio
 
-def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
+def ScatterPlot(data=None, XVar=None, YVar=None, GroupVariables=None):
     """
     # Goal:
     Automatically generate scatterplots from datatable data
@@ -25,40 +25,37 @@ def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
     # Ensure datatable
     if not isinstance(data, dt.Frame):
         raise Exception("data needs to be a datatable frame")
-   
-    
+
     # Ensure XVar is not None
     if not XVar:
         raise Exception("XVar cannot be None")
-  
+
     # Ensure XVar is not None
     if not YVar:
         raise Exception("YVar cannot be None")
-  
+
     # Define x, y, ByList for plotting by converting to lists
     x = data[:, XVar].to_list()[0]
     y = data[:, YVar].to_list()[0]
-    
+
     # Build config list
     if not GroupVariables:
         config = [dict(
-          type = 'scatter',
-          x = x,
-          y = y,
-          mode = 'markers')]
-      
+            type = 'scatter',
+            x = x,
+            y = y,
+            mode = 'markers')]
     else:
-    
       GroupVariables = data[:, GroupVariables].to_list()
       GroupVariables = list(set(GroupVariables[0]))
-    
+
       # TODO: add more color options for cases with high cardinality GroupVariable levels
       # https://matplotlib.org/stable/gallery/color/named_colors.html
-      colors=['b','g','r','c','m','y','k']
+      colors = ['b','g','r','c','m','y','k']
       Style = []
       for i in range(len(GroupVariables)):
-        Style.append(dict(target = GroupVariables[i], value = dict(marker = dict(color = colors[i]))))
-  
+          Style.append(dict(target = GroupVariables[i], value = dict(marker = dict(color = colors[i]))))
+
       # Configure
       config = [dict(
           type = 'scatter',
@@ -66,7 +63,7 @@ def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
           y = y,
           mode = 'markers',
           color = GroupVariables)]
-    
+
     # Create and show plot
     fig_dict = dict(data=config)
     pio.show(fig_dict, validate=False)
