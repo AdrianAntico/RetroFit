@@ -57,3 +57,34 @@ def do_call(FUN, args=[], kwargs = {}):
     
     """
     return FUN(*args, **kwargs)
+
+def save(x = None, Path = None):
+    """
+    # Goal:
+    Save python objects in a similar way to saving R objects in R
+  
+    # Output
+    Save objects to file
+  
+    # Parameters
+    x:    Object you wish to save
+    Path: File path + file name + extension
+    """
+    with open(f"{Path}.pkl", 'wb') as out:
+        pickle.dump(x, out, pickle.HIGHEST_PROTOCOL)
+
+
+def load(Path):
+    """
+    # Goal:
+    Load python objects in a similar way to loading R objects in R
+  
+    # Output
+    Save objects to file
+  
+    # Parameters
+    x:    Object you wish to save
+    Path: File path + file name + extension
+    """
+    with open(f"{Path}", 'rb') as x:
+        return pickle.load(x)

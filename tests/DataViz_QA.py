@@ -17,9 +17,6 @@ data = dt.fread(FilePath)
 
 data
 
-dtv.ScatterPlot()
-
-
 dtv.ScatterPlot(data, XVar='XREGS1', YVar='Leads', GroupVariables=None)
  
 
@@ -29,13 +26,15 @@ dtv.ScatterPlot(data, XVar='XREGS1', YVar='Leads', GroupVariables='MarketingSegm
 XVar='XREGS1'
 YVar='Leads'
 GroupVariables='MarketingSegments'
+ColorVar='Leads'
+SizeVar='XREGS1'
+HoverStatsVar='Leads'
+
+ScatterPlot(data=data, XVar='XREGS1', YVar='Leads', ColorVar='Leads', SizeVar='XREGS', HoverStatsVar='Leads', GroupVariables=None)
 
 
-def save(x = None, Path = None):
-    with open(f"{Path}.pkl", 'wb') as out:
-        pickle.dump(x, out, pickle.HIGHEST_PROTOCOL)
-
-
-def load(Path):
-    with open(f"{Path}", 'rb') as x:
-        return pickle.load(x)
+import plotly.express as px
+df = px.data.iris()
+fig = px.scatter(df, x="sepal_width", y="sepal_length", color="species",
+                 size='petal_length', hover_data=['petal_width'])
+fig.show()
