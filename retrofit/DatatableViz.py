@@ -1,4 +1,8 @@
-# scatter, line, bar, boxplot
+# Module: DatatableViz
+# Author: Adrian Antico <adrianantico@gmail.com>
+# License: MIT
+# Release: retrofit 0.1.7
+# Last modified : 2021-09-21
 
 import plotly.express as px
 import datatable as dt
