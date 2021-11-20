@@ -93,3 +93,6 @@ def ScatterPlot(data=None,
     
     # Generate plot
     fig.show()
+    
+    # Return plot object
+    return fig
