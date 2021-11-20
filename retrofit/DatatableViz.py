@@ -57,31 +57,31 @@ def ScatterPlot(data=None,
         raise Exception("YVar cannot be None")
 
     # Ensure object is str
-    if not isinstance(FacetColVar, list(str, None)):
+    if not isinstance(FacetColVar, (str, type(None))):
         raise Exception("FacetColVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(FacetRowVar, list(str, None)):
+    if not isinstance(FacetRowVar, (str, type(None))):
         raise Exception("FacetRowVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(ColorVar, list(str, None)):
+    if not isinstance(ColorVar, (str, type(None))):
         raise Exception("ColorVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(SizeVar, list(str, None)):
+    if not isinstance(SizeVar, (str, type(None))):
         raise Exception("SizeVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(SymbolVar, list(str, None)):
+    if not isinstance(SymbolVar, (str, type(None))):
         raise Exception("SymbolVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(HoverStatsVar, list(str, None)):
+    if not isinstance(HoverStatsVar, (str, type(None))):
         raise Exception("HoverStatsVar should be a string or None")
 
     # Ensure object is str
-    if not isinstance(MarginalX, list(str, None)):
+    if not isinstance(MarginalX, (str, type(None))):
         raise Exception("MarginalX should be a string or None")
 
     # Ensure object is str

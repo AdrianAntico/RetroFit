@@ -46,14 +46,14 @@ x = dtv.ScatterPlot(
 
 
 # Args
-# N = 10000
-# XVar = 'XREGS1'
-# YVar = 'Leads'
-# FacetColVar = 'MarketingSegments'
-# FacetRowVar = 'MarketingSegments2'
-# ColorVar = 'Leads'
-# SizeVar = 'Leads'
-# SymbolVar = None
-# HoverStatsVar = None
-# MarginalX = 'histogram'
-# MarginalY = None
+N = 10000
+XVar = 'XREGS1'
+YVar = 'Leads'
+FacetColVar = 'MarketingSegments'
+FacetRowVar = 'MarketingSegments2'
+ColorVar = 'Leads'
+SizeVar = 'Leads'
+SymbolVar = None
+HoverStatsVar = None
+MarginalX = 'histogram'
+MarginalY = None
