@@ -61,17 +61,12 @@ def ScatterPlot(data, XVar=None, YVar=None, GroupVariables=None):
 
     # Configure
     config = [dict(
-    type = 'scatter',
-    x = x,
-    y = y,
-    mode = 'markers',
-    transforms = [dict(
-      type = 'groupby',
-      groups = GroupVariables,
-      styles = Style)])]
+      type = 'scatter',
+      x = x,
+      y = y,
+      mode = 'markers',
+      color = GroupVariables]
   
   # Create and show plot
   fig_dict = dict(data=config)
   pio.show(fig_dict, validate=False)
-
-

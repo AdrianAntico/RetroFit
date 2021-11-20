@@ -34,8 +34,8 @@ def printdict(x):
     for z in x:
         if not x[z] is None:
             print(z + ': ' + str(x[z]))
-      else:
-          print(z + ': None')
+        else:
+            print(z + ': None')
 
 
 def do_call(FUN, args=[], kwargs = {}):
