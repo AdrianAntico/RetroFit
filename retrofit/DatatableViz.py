@@ -85,7 +85,7 @@ def ScatterPlot(data=None,
         raise Exception("MarginalX should be a string or None")
 
     # Ensure object is str
-    if not isinstance(MarginalY, (str, None)):
+    if not isinstance(MarginalY, (str, type(None))):
         raise Exception("MarginalY should be a string or None")
 
     # Vars to Keep
