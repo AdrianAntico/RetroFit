@@ -1,4 +1,4 @@
-# QA: Test FE0_AutoLags
+# QA
 import pkg_resources
 import timeit
 import datatable as dt
@@ -12,14 +12,14 @@ data = dt.fread(FilePath)
 
 # No marginal plots
 x = dtv.ScatterPlot(
-  data = data, 
-  N = 10000, 
-  XVar = 'XREGS1', 
-  YVar = 'Leads', 
-  FacetColVar = 'MarketingSegments',  
+  data = data,
+  N = 10000,
+  XVar = 'XREGS1',
+  YVar = 'Leads',
+  FacetColVar = 'MarketingSegments',
   FacetRowVar = 'MarketingSegments2',
   ColorVar = 'Leads',
-  SizeVar = 'Leads', 
+  SizeVar = 'Leads',
   SymbolVar = None,
   HoverStatsVar = None,
   MarginalPlots = False)
