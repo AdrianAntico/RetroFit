@@ -16,6 +16,7 @@ data = dt.fread(FilePath)
 # No marginal plots
 x = pv.ScatterPlot(
   data = data,
+  Frame = 'datatable',
   Title = 'Adrian is the best',
   N = 10000,
   XVar = 'XREGS1',
@@ -38,6 +39,7 @@ x = pv.ScatterPlot(
 # With marginal plots
 x = pv.ScatterPlot(
   data = data, 
+  Frame = 'datatable',
   Title = None,
   N = 10000, 
   XVar = 'XREGS1', 
