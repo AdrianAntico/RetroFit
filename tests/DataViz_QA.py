@@ -27,7 +27,9 @@ x = dtv.ScatterPlot(
   SymbolVar = None,
   HoverStatsVar = None,
   MarginalX = 'histogram',
-  MarginalY = 'histogram')
+  MarginalY = 'histogram',
+  TrendLine = False,
+  Copula = False)
 
 # With marginal plots
 x = dtv.ScatterPlot(
@@ -42,10 +44,17 @@ x = dtv.ScatterPlot(
   SymbolVar = None,
   HoverStatsVar = None, 
   MarginalX = 'histogram',
-  MarginalY = None)
+  MarginalY = None,
+  TrendLine = False,
+  Copula = True)
 
 
 # Args
+# import numpy as np
+# import plotly.express as px
+# import datatable as dt
+# from datatable import f, sort, update
+# import plotly.io as pio
 # N = 10000
 # XVar = 'XREGS1'
 # YVar = 'Leads'
@@ -57,3 +66,11 @@ x = dtv.ScatterPlot(
 # HoverStatsVar = None
 # MarginalX = 'histogram'
 # MarginalY = None
+# TrendLine = 'ols'
+# Copula = True
+# 
+# 
+# carlist = ['a', 'b']
+# for fuckyou, blowme in enumerate(carlist):
+#     print(f"{fuckyou} {a} {blowme}")
+# 

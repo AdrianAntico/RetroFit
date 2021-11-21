@@ -7,8 +7,9 @@
 import numpy as np
 import plotly.express as px
 import datatable as dt
-from datatable import f
+from datatable import f, sort, update
 import plotly.io as pio
+import statsmodels
 
 def ScatterPlot(data=None,
                 N=100000,
@@ -21,7 +22,9 @@ def ScatterPlot(data=None,
                 SymbolVar=None,
                 HoverStatsVar=None,
                 MarginalX=None,
-                MarginalY=None):
+                MarginalY=None,
+                TrendLine=None,
+                Copula=False):
     """
     # Goal:
     Automatically generate scatterplots from datatable data
@@ -42,6 +45,8 @@ def ScatterPlot(data=None,
     HoverStatsVar: String, column name of the variable to use for mouse hovering stats
     MarginalX:     String, 'histogram', 'rug', etc.
     MarginalY:     String, 'histogram', 'rug', etc.
+    TrendLine:     String, None or one of 'ols', 'lowess', 'rolling', 'ewm', 'expanding'
+    Copula:        Logical, Setting to True will convert your scatterplot data into percent-rank values first and then plot
     """
     
     # Ensure datatable
@@ -88,18 +93,30 @@ def ScatterPlot(data=None,
     if not isinstance(MarginalY, (str, type(None))):
         raise Exception("MarginalY should be a string or None")
 
+    # Ensure object is str
+    if not isinstance(TrendLine, (str, type(None))):
+        raise Exception("TrendLine should be a string or None")
+      
+    # Ensure logical
+    if not isinstance(Copula, bool):
+        raise Exception("Copula should be set to True or False")
+
     # Vars to Keep
     Keep = []
     Keep.append(XVar)
     Keep.append(YVar)
     if ColorVar:
         Keep.append(ColorVar)
+
     if SizeVar:
         Keep.append(SizeVar)
+
     if HoverStatsVar:
         Keep.append(HoverStatsVar)
+
     if FacetColVar:
         Keep.append(FacetColVar)
+
     if FacetRowVar:
         Keep.append(FacetRowVar)
 
@@ -112,11 +129,29 @@ def ScatterPlot(data=None,
         data = data[: int(N), ...]
         del data[:, "ID"]
 
+    # Copula / Spearman
+    if Copula:
+        
+        # Store row count for 1:n and ni / n
+        n = data.shape[0]
+        
+        # XVar
+        data = data[:, f[:], sort(XVar)]
+        data = data[:, f[:].extend({f"{XVar}_PercRank": np.arange(1, n+1) / n})]
+        Keep.append(f"{XVar}_PercRank")
+        XVar = f"{XVar}_PercRank"
+        
+        # YVar
+        data = data[:, f[:], sort(YVar)]
+        data = data[:, f[:].extend({f"{YVar}_PercRank": np.arange(1, n+1) / n})]
+        Keep.append(f"{YVar}_PercRank")
+        YVar = f"{YVar}_PercRank"
+
     # Convert Keep columns to a pandas frame
     data_pandas = data[:, Keep].to_pandas()
     
     # Build plot object
-    fig = px.scatter(data_pandas, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar, marginal_x=MarginalX, marginal_y=MarginalY)
+    fig = px.scatter(data_pandas, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar, marginal_x=MarginalX, marginal_y=MarginalY, trendline=TrendLine)
 
     # Generate plot
     fig.show()

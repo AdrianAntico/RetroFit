@@ -3,6 +3,7 @@ polars
 pandas
 numpy
 scipy
+statsmodels
 catboost
 xgboost
 lightgbm
