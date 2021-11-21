@@ -4,7 +4,7 @@ import timeit
 import datatable as dt
 from datatable import f
 import retrofit
-from retrofit import DatatableViz as dtv
+from retrofit import PlotlyViz as pv
 import numpy as np
 import plotly.express as px
 import plotly.io as pio
@@ -14,7 +14,7 @@ FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.c
 data = dt.fread(FilePath)
 
 # No marginal plots
-x = dtv.ScatterPlot(
+x = pv.ScatterPlot(
   data = data,
   Title = 'Adrian is the best',
   N = 10000,
@@ -36,7 +36,7 @@ x = dtv.ScatterPlot(
   YLim = None)
 
 # With marginal plots
-x = dtv.ScatterPlot(
+x = pv.ScatterPlot(
   data = data, 
   Title = None,
   N = 10000, 
