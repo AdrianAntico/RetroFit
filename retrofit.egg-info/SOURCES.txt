@@ -5,10 +5,10 @@ pyproject.toml
 requirements.txt
 setup.py
 retrofit/DatatableFE.py
-retrofit/DatatableViz.py
 retrofit/FeatureEngineering.py
 retrofit/MachineLearning.py
 retrofit/PandasFE.py
+retrofit/PlotlyViz.py
 retrofit/PolarsFE.py
 retrofit/__init__.py
 retrofit/utils.py

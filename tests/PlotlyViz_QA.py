@@ -1,4 +1,4 @@
-# QA
+# QA Plotly
 import pkg_resources
 import timeit
 import datatable as dt
@@ -8,7 +8,6 @@ from retrofit import DatatableViz as dtv
 import numpy as np
 import plotly.express as px
 import plotly.io as pio
-
 
 # No Group Example: datatable
 FilePath = pkg_resources.resource_filename('retrofit', 'datasets/BenchmarkData.csv')
@@ -21,8 +20,10 @@ x = dtv.ScatterPlot(
   N = 10000,
   XVar = 'XREGS1',
   YVar = 'Leads',
-  FacetColVar = None,
+  FacetColVar = None, 
+  FacetColMaxLevels=None,
   FacetRowVar = None,
+  FacetRowMaxLevels=None,
   ColorVar = 'Leads',
   SizeVar = 'Leads',
   SymbolVar = None,
@@ -43,6 +44,8 @@ x = dtv.ScatterPlot(
   YVar = 'Leads', 
   FacetColVar = 'MarketingSegments',  
   FacetRowVar = 'MarketingSegments2',
+  FacetColMaxLevels=2,
+  FacetRowMaxLevels=2,
   ColorVar = 'Leads',
   SizeVar = 'Leads', 
   SymbolVar = None,
@@ -56,32 +59,26 @@ x = dtv.ScatterPlot(
 
 
 # Args
-import numpy as np
-import plotly.express as px
-import datatable as dt
-from datatable import f, sort, update
-import plotly.io as pio
-N = 10000
-XVar = 'XREGS1'
-YVar = 'Leads'
-FacetColVar = 'MarketingSegments'
-FacetColMaxLevels=2
-FacetRowVar = 'MarketingSegments2'
-FacetRowMaxLevels=2
-ColorVar = 'Leads'
-SizeVar = 'Leads'
-SymbolVar = None
-HoverStatsVar = None
-MarginalX = 'histogram'
-MarginalY = None
-TrendLine = 'ols'
-Copula = True
-Title='aa'
-XLim = [0, 0.60]
-YLim = [0, 0.40]
-# 
-# 
-# carlist = ['a', 'b']
-# for fuckyou, blowme in enumerate(carlist):
-#     print(f"{fuckyou} {a} {blowme}")
-# 
+# import numpy as np
+# import plotly.express as px
+# import datatable as dt
+# from datatable import f, sort, update
+# import plotly.io as pio
+# N = 10000
+# XVar = 'XREGS1'
+# YVar = 'Leads'
+# FacetColVar = 'MarketingSegments'
+# FacetColMaxLevels=2
+# FacetRowVar = 'MarketingSegments2'
+# FacetRowMaxLevels=2
+# ColorVar = 'Leads'
+# SizeVar = 'Leads'
+# SymbolVar = None
+# HoverStatsVar = None
+# MarginalX = 'histogram'
+# MarginalY = None
+# TrendLine = 'ols'
+# Copula = True
+# Title='aa'
+# XLim = [0, 0.60]
+# YLim = [0, 0.40]

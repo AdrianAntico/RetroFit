@@ -1,4 +1,4 @@
-# Module: DatatableViz
+# Module: PlotlyViz
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
 # Release: retrofit 0.1.7
@@ -12,6 +12,7 @@ import plotly.io as pio
 import statsmodels
 
 def ScatterPlot(data=None,
+                Frame='datatable',
                 Title=None,
                 N=100000,
                 XVar=None, 
@@ -32,7 +33,7 @@ def ScatterPlot(data=None,
                 YLim=None):
     """
     # Goal:
-    Automatically generate scatterplots from datatable data
+    Automatically generate scatterplots using plotly
     https://plotly.com/python/line-and-scatter/
   
     # Output
@@ -40,6 +41,7 @@ def ScatterPlot(data=None,
   
     # Parameters
     data:              Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
+    Frame:             'datatable', 'polars', or 'pandas'. Default is 'datatable'
     Title:             None or string 
     N:                 Max number of records to plot
     XVar:              String, column name of the variable to use for the x-axis
@@ -146,7 +148,7 @@ def ScatterPlot(data=None,
     Keep = list(set(Keep))
     
     # Grab only top levels for col and row facets
-    if FacetRowMaxLevels:
+    if FacetRowMaxLevels and not FacetRowMaxLevels is None:
         temp = data[:, dt.count(), by(f[FacetRowVar])]
         temp = temp[:, :, sort(f[FacetRowVar], reverse=True)]
         temp = temp[:, FacetRowVar].to_list()[0]
@@ -161,7 +163,7 @@ def ScatterPlot(data=None,
         del data['TEMP__']
     
     # Grab only top levels for col and row facets
-    if FacetColMaxLevels:
+    if FacetColMaxLevels and not FacetColVar is None:
         temp = data[:, dt.count(), by(f[FacetColVar])]
         temp = temp[:, :, sort(f[FacetColVar], reverse=True)]
         temp = temp[:, FacetColVar].to_list()[0]
