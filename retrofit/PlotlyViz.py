@@ -7,15 +7,16 @@
 import numpy as np
 import plotly.express as px
 import datatable as dt
+import polars as pl
+import pandas as pd
 from datatable import f, sort, update, by, ifelse
 import plotly.io as pio
 import statsmodels
 
 def ScatterPlot(data=None,
-                Frame='datatable',
                 Title=None,
                 N=100000,
-                XVar=None, 
+                XVar=None,
                 YVar=None, 
                 FacetColVar=None,
                 FacetColMaxLevels=None,
@@ -41,7 +42,6 @@ def ScatterPlot(data=None,
   
     # Parameters
     data:              Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    Frame:             'datatable', 'polars', or 'pandas'. Default is 'datatable'
     Title:             None or string 
     N:                 Max number of records to plot
     XVar:              String, column name of the variable to use for the x-axis
@@ -60,10 +60,6 @@ def ScatterPlot(data=None,
     XLim:              None or two element list with min and max values
     YLim:              None or two element list with min and max values 
     """
-    
-    # Ensure datatable
-    if not isinstance(data, dt.Frame):
-        raise Exception("data needs to be a datatable frame")
 
     # Ensure XVar is not None
     if not XVar:
@@ -125,6 +121,13 @@ def ScatterPlot(data=None,
     if not isinstance(Title, (str, type(None))):
         raise Exception("Title should be None or a string")
 
+    # Check if data is polars frame
+    if isinstance(data, pl.DataFrame):
+        data = data.to_pandas()
+        data = dt.Frame(data)
+    elif isinstance(data, pd.DataFrame):
+        data = dt.Frame(data)
+
     # Vars to Keep
     Keep = []
     Keep.append(XVar)
@@ -148,7 +151,7 @@ def ScatterPlot(data=None,
     Keep = list(set(Keep))
     
     # Grab only top levels for col and row facets
-    if FacetRowMaxLevels and not FacetRowMaxLevels is None:
+    if not FacetRowMaxLevels is None and FacetRowMaxLevels:
         temp = data[:, dt.count(), by(f[FacetRowVar])]
         temp = temp[:, :, sort(f[FacetRowVar], reverse=True)]
         temp = temp[:, FacetRowVar].to_list()[0]
@@ -163,7 +166,7 @@ def ScatterPlot(data=None,
         del data['TEMP__']
     
     # Grab only top levels for col and row facets
-    if FacetColMaxLevels and not FacetColVar is None:
+    if not FacetColVar is None and FacetColMaxLevels:
         temp = data[:, dt.count(), by(f[FacetColVar])]
         temp = temp[:, :, sort(f[FacetColVar], reverse=True)]
         temp = temp[:, FacetColVar].to_list()[0]
@@ -202,10 +205,24 @@ def ScatterPlot(data=None,
         YVar = f"{YVar}_PercRank"
 
     # Convert Keep columns to a pandas frame
-    data_pandas = data[:, Keep].to_pandas()
+    data_pandas = data[:, Keep]o_pandas()
     
     # Build plot object
-    fig = px.scatter(data_pandas, range_x=XLim, range_y=YLim, title=Title, x=XVar, y=YVar, color=ColorVar, size=SizeVar, hover_name=HoverStatsVar, facet_col=FacetColVar, facet_row=FacetRowVar, marginal_x=MarginalX, marginal_y=MarginalY, trendline=TrendLine)
+    fig = px.scatter(
+      data_pandas,
+      range_x=XLim, 
+      range_y=YLim, 
+      title=Title, 
+      x=XVar, 
+      y=YVar, 
+      color=ColorVar, 
+      size=SizeVar, 
+      hover_name=HoverStatsVar,
+      facet_col=FacetColVar, 
+      facet_row=FacetRowVar, 
+      marginal_x=MarginalX, 
+      marginal_y=MarginalY, 
+      trendline=TrendLine)
 
     # Generate plot
     fig.show()
