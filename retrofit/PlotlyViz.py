@@ -205,7 +205,7 @@ def ScatterPlot(data=None,
         YVar = f"{YVar}_PercRank"
 
     # Convert Keep columns to a pandas frame
-    data_pandas = data[:, Keep]o_pandas()
+    data_pandas = data[:, Keep].to_pandas()
     
     # Build plot object
     fig = px.scatter(
