@@ -1127,134 +1127,134 @@ class RetroFit:
         #################################################
         if TempArgs['Algorithms'].lower() == 'catboost':
   
-          # Extract Model
-          if not ModelName is None:
-              Model = self.ModelList.get(ModelName)
-          else:
-              Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
-  
-          # Grab dataframe data
-          TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-          if NewData is None:
-              pred_data = self.DataSets[DataName]
-              if DataName == 'test_data':
-                  ScoreData = self.DataFrames.get('TestData')
-              elif DataName == 'validation_data':
-                  ScoreData = self.DataFrames.get('ValidationData')
-              elif DataName == 'train_data':
-                  ScoreData = self.DataFrames.get('TrainData')
-          else:
-              pred_data = NewData
-  
-          # Generate preds and add to datatable frame
-          if TempArgs.get('TargetType').lower() == 'regression':
-              ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
-          elif TempArgs.get('TargetType').lower() == 'classification':
-              temp = Model.predict(pred_data, prediction_type = 'Probability')
-              ScoreData['p0'] = temp[:,0]
-              ScoreData['p1'] = temp[:,1]
-          elif TempArgs.get('TargetType').lower() == 'multiclass':
-            preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
-            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                from datatable import cbind
-                temp = self.DataSets.get('ArgsList')['MultiClass']
-                counter = 0
-                for val in temp['Old'].to_list()[0]:
-                    preds.names = {f"C{counter}": val}
-                    counter += 1
+            # Extract Model
+            if not ModelName is None:
+                Model = self.ModelList.get(ModelName)
+            else:
+                Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
     
-                    # Combine ScoreData and preds
-                    ScoreData.cbind(preds)
+            # Grab dataframe data
+            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+            if NewData is None:
+                pred_data = self.DataSets[DataName]
+                if DataName == 'test_data':
+                    ScoreData = self.DataFrames.get('TestData')
+                elif DataName == 'validation_data':
+                    ScoreData = self.DataFrames.get('ValidationData')
+                elif DataName == 'train_data':
+                    ScoreData = self.DataFrames.get('TrainData')
+            else:
+                pred_data = NewData
+    
+            # Generate preds and add to datatable frame
+            if TempArgs.get('TargetType').lower() == 'regression':
+                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
+            elif TempArgs.get('TargetType').lower() == 'classification':
+                temp = Model.predict(pred_data, prediction_type = 'Probability')
+                ScoreData['p0'] = temp[:,0]
+                ScoreData['p1'] = temp[:,1]
+            elif TempArgs.get('TargetType').lower() == 'multiclass':
+                preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
+                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                    from datatable import cbind
+                    temp = self.DataSets.get('ArgsList')['MultiClass']
+                    counter = 0
+                    for val in temp['Old'].to_list()[0]:
+                        preds.names = {f"C{counter}": val}
+                        counter += 1
+        
+                        # Combine ScoreData and preds
+                        ScoreData.cbind(preds)
   
-          # Return preds
-          if not NewData is None:
-              return ScoreData
-  
-          # Store data and update names
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+            # Return preds
+            if not NewData is None:
+                return ScoreData
+    
+            # Store data and update names
+            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
 
         #################################################
         # XGBoost Method
         #################################################
         if TempArgs['Algorithms'].lower() == 'xgboost':
   
-          # Environment
-          import xgboost as xgb
-          from datatable import f
-  
-          # Extract Model
-          if not ModelName is None:
-              Model = self.FitList.get(ModelName)
-          else:
-              Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
-  
-          # Grab dataframe data
-          TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-          if NewData is None:
-              pred_data = self.DataSets[DataName]
-              if DataName == 'test_data':
-                  ScoreData = self.DataFrames.get('TestData')
-              elif DataName == 'validation_data':
-                  ScoreData = self.DataFrames.get('ValidationData')
-              elif DataName == 'train_data':
-                  ScoreData = self.DataFrames.get('TrainData')
-          else:
-            ScoreData = NewData
-            pred_data = self.DataSets[DataName]
-  
-          # Generate preds and add to datatable frame
-          if TempArgs.get('TargetType').lower() != 'multiclass':
-              
-              ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-                data = pred_data, 
-                output_margin=False, 
-                pred_leaf=False, 
-                pred_contribs=False,
-                approx_contribs=False, 
-                pred_interactions=False, 
-                validate_features=True, 
-                training=False, 
-                iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-                strict_shape=False)
-            
-              # Classification
-              if TempArgs.get('TargetType').lower() == 'classification':
-                  ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-                  ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
-            
-          else:
-              preds = dt.Frame(Model.predict(
-                data = pred_data, 
-                output_margin=False, 
-                pred_leaf=False, 
-                pred_contribs=False,
-                approx_contribs=False, 
-                pred_interactions=False, 
-                validate_features=True, 
-                training=False, 
-                iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-                strict_shape=False))
-  
-              # MultiClass Case
-              if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                  from datatable import cbind
-                  temp = self.DataSets.get('ArgsList')['MultiClass']
-                  counter = 0
-                  for val in temp['Old'].to_list()[0]:
-                      preds.names = {f"C{counter}": val}
-                      counter += 1
+            # Environment
+            import xgboost as xgb
+            from datatable import f
     
-              # Combine ScoreData and preds
-              ScoreData.cbind(preds)
-  
-          # Return preds
-          if not NewData is None:
-              return ScoreData
-  
-          # Store data and update names
-          self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-          self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+            # Extract Model
+            if not ModelName is None:
+                Model = self.FitList.get(ModelName)
+            else:
+                Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
+    
+            # Grab dataframe data
+            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
+            if NewData is None:
+                pred_data = self.DataSets[DataName]
+                if DataName == 'test_data':
+                    ScoreData = self.DataFrames.get('TestData')
+                elif DataName == 'validation_data':
+                    ScoreData = self.DataFrames.get('ValidationData')
+                elif DataName == 'train_data':
+                    ScoreData = self.DataFrames.get('TrainData')
+            else:
+                ScoreData = NewData
+                pred_data = self.DataSets[DataName]
+    
+            # Generate preds and add to datatable frame
+            if TempArgs.get('TargetType').lower() != 'multiclass':
+                
+                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
+                  data = pred_data, 
+                  output_margin=False, 
+                  pred_leaf=False, 
+                  pred_contribs=False,
+                  approx_contribs=False, 
+                  pred_interactions=False, 
+                  validate_features=True, 
+                  training=False, 
+                  iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+                  strict_shape=False)
+              
+                # Classification
+                if TempArgs.get('TargetType').lower() == 'classification':
+                    ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+                    ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+              
+            else:
+                preds = dt.Frame(Model.predict(
+                  data = pred_data, 
+                  output_margin=False, 
+                  pred_leaf=False, 
+                  pred_contribs=False,
+                  approx_contribs=False, 
+                  pred_interactions=False, 
+                  validate_features=True, 
+                  training=False, 
+                  iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
+                  strict_shape=False))
+    
+                # MultiClass Case
+                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                    from datatable import cbind
+                    temp = self.DataSets.get('ArgsList')['MultiClass']
+                    counter = 0
+                    for val in temp['Old'].to_list()[0]:
+                        preds.names = {f"C{counter}": val}
+                        counter += 1
+      
+                # Combine ScoreData and preds
+                ScoreData.cbind(preds)
+    
+            # Return preds
+            if not NewData is None:
+                return ScoreData
+    
+            # Store data and update names
+            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
+            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
       
         #################################################
         # LightGBM Method
