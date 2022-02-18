@@ -1163,8 +1163,8 @@ class RetroFit:
                     preds.names = {f"C{counter}": val}
                     counter += 1
     
-                  # Combine ScoreData and preds
-                  ScoreData.cbind(preds)
+                    # Combine ScoreData and preds
+                    ScoreData.cbind(preds)
   
           # Return preds
           if not NewData is None:
