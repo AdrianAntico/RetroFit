@@ -1205,6 +1205,7 @@ class RetroFit:
   
           # Generate preds and add to datatable frame
           if TempArgs.get('TargetType').lower() != 'multiclass':
+              
               ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
                 data = pred_data, 
                 output_margin=False, 
@@ -1217,10 +1218,10 @@ class RetroFit:
                 iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
                 strict_shape=False)
             
-            # Classification
-            if TempArgs.get('TargetType').lower() == 'classification':
-                ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-                ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+              # Classification
+              if TempArgs.get('TargetType').lower() == 'classification':
+                  ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+                  ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
             
           else:
               preds = dt.Frame(Model.predict(
