@@ -1037,7 +1037,7 @@ class RetroFit:
         
         # Ftrl
         if Algorithm.lower() == 'ftrl':
-            return u.load(Path=self.SavedModelNames[f"{}"])
+            return u.load(Path=self.SavedModelNames[f"{'ftrl}"])
         
         # CatBoost
         if Algorithm.lower() == 'catboost':
