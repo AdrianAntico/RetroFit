@@ -1236,14 +1236,14 @@ class RetroFit:
                 iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
                 strict_shape=False))
   
-            # MultiClass Case
-            if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                from datatable import cbind
-                temp = self.DataSets.get('ArgsList')['MultiClass']
-                counter = 0
-                for val in temp['Old'].to_list()[0]:
-                    preds.names = {f"C{counter}": val}
-                    counter += 1
+              # MultiClass Case
+              if not self.DataSets.get('ArgsList')['MultiClass'] is None:
+                  from datatable import cbind
+                  temp = self.DataSets.get('ArgsList')['MultiClass']
+                  counter = 0
+                  for val in temp['Old'].to_list()[0]:
+                      preds.names = {f"C{counter}": val}
+                      counter += 1
     
               # Combine ScoreData and preds
               ScoreData.cbind(preds)
@@ -1290,10 +1290,10 @@ class RetroFit:
             if TempArgs.get('TargetType').lower() != 'multiclass':
                 ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = scor)
               
-              # Non regression cases
-              if TempArgs.get('TargetType').lower() == 'classification':
-                  ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-                  ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
+                # Non regression cases
+                if TempArgs.get('TargetType').lower() == 'classification':
+                    ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
+                    ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
     
             # MultiClass
             else:
