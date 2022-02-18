@@ -1514,11 +1514,11 @@ class RetroFit:
                 # Increment
                 counter = counter + 1
 
-        # return
-        return ThresholdOutput
+            # return
+            return ThresholdOutput
       
-      # Generate metrics (requires target as categorical and preds as softmax probs split into columns)
-      if TargetType.lower() == 'multiclass':
+        # Generate metrics (requires target as categorical and preds as softmax probs split into columns)
+        if TargetType.lower() == 'multiclass':
 
           # Imports
           from datatable import ifelse, math, f, update, join
@@ -1622,96 +1622,96 @@ class RetroFit:
                   P1 = temp[f['temp_target'] == 1, ...].shape[0]
                   P  = temp[(f['temp_target'] == 1) & (f[level] > Thresh), ...].shape[0]
       
-                # Calculate metrics ----
-                if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
-                    MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
-                else:
-                    MCC = -1.0
-                if not N1 == 0:
-                    Accuracy    = (TP+TN)/N1
-                else:
-                    Accuracy = -1.0
-                if not P1 == 0:
-                    TPR         = TP/P1
-                else:
-                    TPR = -1.0
-                if not (N1-P1) == 0:
-                    TNR         = TN/(N1-P1)
-                else:
-                    TNR = -1.0
-                if not P1 == 0:
-                    FNR         = FN / P1
-                else:
-                    FNR = -1.0
-                if not N1 == 0:
-                    FPR         = FP / N1
-                else:
-                    FPR = -1.0
-                if not (FP + TP) == 0:
-                    FDR         = FP / (FP + TP)
-                else:
-                    FDR = -1.0
-                if not (FN + TN) == 0:
-                    FOR         = FN / (FN + TN)
-                else:
-                    FOR = -1.0
-                if not (TP + FP + FN) == 0:
-                    F1_Score    = 2 * TP / (2 * TP + FP + FN)
-                else:
-                    F1_Score = -1.0
-                if not (TP + FP + FN) == 0:
-                    F2_Score    = 3 * TP / (2 * TP + FP + FN)
-                else:
-                    F2_Score = -1.0
-                if not (TP + FP + FN) == 0:
-                    F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
-                else:
-                    F0_5_Score = -1.0
-                if not (TN + FN) == 0:
-                    NPV         = TN / (TN + FN)
-                else:
-                    NPV = -1.0
-                if not (TP + FP) == 0:
-                    PPV         = TP / (TP + FP)
-                else:
-                    PPV = -1.0
-                if not (TP + FN + FP) == 0:
-                    ThreatScore = TP / (TP + FN + FP)
-                else:
-                    ThreatScore = -1.0
-                if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
-                    Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
-                else:
-                    Utility = -1.0
-    
-                # Fill in values ----
-                ThresholdOutput[counter, update(P = P)]
-                ThresholdOutput[counter, update(N = N)]
-                ThresholdOutput[counter, update(TN = TN)]
-                ThresholdOutput[counter, update(TP = TP)]
-                ThresholdOutput[counter, update(FP = FP)]
-                ThresholdOutput[counter, update(FN = FN)]
-                ThresholdOutput[counter, update(Utility = Utility)]
-                ThresholdOutput[counter, update(MCC = MCC)]
-                ThresholdOutput[counter, update(Accuracy = Accuracy)]
-                ThresholdOutput[counter, update(F1_Score = F1_Score)]
-                ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
-                ThresholdOutput[counter, update(F2_Score = F2_Score)]
-                ThresholdOutput[counter, update(NPV = NPV)]
-                ThresholdOutput[counter, update(TPR = TPR)]
-                ThresholdOutput[counter, update(TNR = TNR)]
-                ThresholdOutput[counter, update(FNR = FNR)]
-                ThresholdOutput[counter, update(FPR = FPR)]
-                ThresholdOutput[counter, update(FDR = FDR)]
-                ThresholdOutput[counter, update(FOR = FOR)]
-                ThresholdOutput[counter, update(PPV = PPV)]
-                ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
-                
-                # Increment
-                counter = counter + 1
-                
-                # Store datatables
-                MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
+                  # Calculate metrics ----
+                  if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
+                      MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
+                  else:
+                      MCC = -1.0
+                  if not N1 == 0:
+                      Accuracy    = (TP+TN)/N1
+                  else:
+                      Accuracy = -1.0
+                  if not P1 == 0:
+                      TPR         = TP/P1
+                  else:
+                      TPR = -1.0
+                  if not (N1-P1) == 0:
+                      TNR         = TN/(N1-P1)
+                  else:
+                      TNR = -1.0
+                  if not P1 == 0:
+                      FNR         = FN / P1
+                  else:
+                      FNR = -1.0
+                  if not N1 == 0:
+                      FPR         = FP / N1
+                  else:
+                      FPR = -1.0
+                  if not (FP + TP) == 0:
+                      FDR         = FP / (FP + TP)
+                  else:
+                      FDR = -1.0
+                  if not (FN + TN) == 0:
+                      FOR         = FN / (FN + TN)
+                  else:
+                      FOR = -1.0
+                  if not (TP + FP + FN) == 0:
+                      F1_Score    = 2 * TP / (2 * TP + FP + FN)
+                  else:
+                      F1_Score = -1.0
+                  if not (TP + FP + FN) == 0:
+                      F2_Score    = 3 * TP / (2 * TP + FP + FN)
+                  else:
+                      F2_Score = -1.0
+                  if not (TP + FP + FN) == 0:
+                      F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
+                  else:
+                      F0_5_Score = -1.0
+                  if not (TN + FN) == 0:
+                      NPV         = TN / (TN + FN)
+                  else:
+                      NPV = -1.0
+                  if not (TP + FP) == 0:
+                      PPV         = TP / (TP + FP)
+                  else:
+                      PPV = -1.0
+                  if not (TP + FN + FP) == 0:
+                      ThreatScore = TP / (TP + FN + FP)
+                  else:
+                      ThreatScore = -1.0
+                  if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
+                      Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
+                  else:
+                      Utility = -1.0
+      
+                  # Fill in values ----
+                  ThresholdOutput[counter, update(P = P)]
+                  ThresholdOutput[counter, update(N = N)]
+                  ThresholdOutput[counter, update(TN = TN)]
+                  ThresholdOutput[counter, update(TP = TP)]
+                  ThresholdOutput[counter, update(FP = FP)]
+                  ThresholdOutput[counter, update(FN = FN)]
+                  ThresholdOutput[counter, update(Utility = Utility)]
+                  ThresholdOutput[counter, update(MCC = MCC)]
+                  ThresholdOutput[counter, update(Accuracy = Accuracy)]
+                  ThresholdOutput[counter, update(F1_Score = F1_Score)]
+                  ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
+                  ThresholdOutput[counter, update(F2_Score = F2_Score)]
+                  ThresholdOutput[counter, update(NPV = NPV)]
+                  ThresholdOutput[counter, update(TPR = TPR)]
+                  ThresholdOutput[counter, update(TNR = TNR)]
+                  ThresholdOutput[counter, update(FNR = FNR)]
+                  ThresholdOutput[counter, update(FPR = FPR)]
+                  ThresholdOutput[counter, update(FDR = FDR)]
+                  ThresholdOutput[counter, update(FOR = FOR)]
+                  ThresholdOutput[counter, update(PPV = PPV)]
+                  ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
+                  
+                  # Increment
+                  counter = counter + 1
+                  
+                  # Store datatables
+                  MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
   
           # Remove temp target
           del temp[:, f['temp_target']]
