@@ -55,7 +55,7 @@ https://github.com/AdrianAntico/AutoQuant
 import os
 import polars as pl
 from PolarsFE import datasets
-import QuickEcharts
+from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
 
