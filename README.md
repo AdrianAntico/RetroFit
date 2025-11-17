@@ -63,7 +63,6 @@ from retrofit import MachineLearning as ml
 FilePath = f'{os.getcwd()}/RetroFit/retrofit/datasets/BenchmarkData.csv'
 df = pl.read_csv(FilePath)
 
-
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
     data=df,
@@ -72,10 +71,8 @@ DataSets = datasets.partition_random(
     percentages=[0.7, 0.2, 0.1]
 )
 
-
 # Initialize RetroFit
 model = ml.RetroFit(TargetType="regression", Algorithm="catboost")
-
 
 # Create algo-specific model data
 model.create_model_data(
@@ -93,7 +90,6 @@ model.create_model_data(
 # Print default parameter settings
 model.print_algo_args()
 
-
 # Update algo args for GPU
 model.update_model_parameters(
     task_type='GPU',
@@ -101,20 +97,16 @@ model.update_model_parameters(
     rsm=1.0
 )
 
-
 # Train Model
 model.train()
 
-
 # Score train, validation, and test; store internally
 model.score()
-
 
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
 model.ScoredData["test"]
-
 
 # Evaluate scored data
 global_eval = model.evaluate(
@@ -256,13 +248,31 @@ segment_date_eval = model.evaluate(
 </details>
 
 
-## **Visualization**
+### **Model Evaluation Visuals**
 <p>
 
 <details><summary>Expand to view content</summary>
 <p>
 
-Code here
+
+
+<details><summary>MultiClass Training</summary>
+<p>
+
+```python
+
+```
+
+</p>
+</details>
+
+</p>
+</details>
+
+
+
+
+
 
 </p>
 </details>
