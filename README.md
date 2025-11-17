@@ -248,15 +248,13 @@ segment_date_eval = model.evaluate(
 </details>
 
 
+
+
 ### **Model Evaluation Visuals**
 <p>
 
-<details><summary>Expand to view content</summary>
-<p>
 
-
-
-<details><summary>MultiClass Training</summary>
+<details><summary>Preds vs Actual</summary>
 <p>
 
 ```python
@@ -265,11 +263,6 @@ segment_date_eval = model.evaluate(
 
 </p>
 </details>
-
-</p>
-</details>
-
-
 
 
 
