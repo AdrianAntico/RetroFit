@@ -1,4 +1,3 @@
-datatable
 polars
 pandas
 numpy
@@ -8,6 +7,7 @@ catboost
 xgboost
 lightgbm
 torch
-plotly
-kaleido
-dash
+QuickEcharts
+PolarsFE
+pyarrow
+scikit-learn

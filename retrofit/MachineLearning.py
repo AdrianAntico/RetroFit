@@ -1,515 +1,550 @@
 # Module: MachineLearning
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.1.7
-# Last modified : 2021-09-21
+# Release: retrofit 0.2.0
+# Last modified : 2025-11-15
 
-import retrofit
+import pickle
+from pathlib import Path
+from datetime import datetime
+import numpy as np
+from numpy import sort
 from retrofit import utils as u
+import os
+from copy import copy
+import pandas as pd
+import polars as pl
+import catboost
+from catboost import Pool, CatBoostClassifier, CatBoostRegressor
+import xgboost as xgb
+from xgboost import train, Booster
+import lightgbm as lgbm
+from lightgbm import LGBMModel
+from sklearn.metrics import (
+    explained_variance_score,
+    max_error,
+    mean_absolute_error,
+    mean_squared_error,
+    mean_squared_log_error,
+    mean_absolute_percentage_error,
+    median_absolute_error,
+    r2_score,
+    multilabel_confusion_matrix,
+    top_k_accuracy_score,
+    confusion_matrix,
+    hamming_loss,
+    f1_score,
+    fbeta_score,
+    precision_recall_fscore_support,
+    precision_score,
+    recall_score,
+    roc_auc_score
+) 
 
-def ML0_GetModelData(TrainData=None, ValidationData=None, TestData=None, ArgsList=None, TargetColumnName=None, NumericColumnNames=None, CategoricalColumnNames=None, TextColumnNames=None, WeightColumnName=None, Threads=-1, Processing='catboost', InputFrame='datatable'):
+
+class RetroFit:
     """
-    # Goal:
-    Create modeling objects for specific algorithms. E.g. create train, valid, and test objects for catboost
-    
-    # Output
-    Return frames for catboost, xgboost, and lightgbm, currently.
-    
-    # Parameters
-    TrainData:              Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ValidationData:         Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    TestData:               Source data. Either a datatable frame, polars frame, or pandas frame. The function will run either datatable code or polars code. If your input frame is pandas
-    ArgsList:               If running for the first time the function will create an ArgsList dictionary of your specified arguments. If you are running to recreate the same features for model scoring then you can pass in the ArgsList dictionary without specifying the function arguments
-    TargetColumnName:       A list of columns that will be lagged
-    NumericColumnNames:     Primary date column used for sorting
-    CategoricalColumnNames: Columns to partition over
-    TextColumnNames:        List of integers for the lookback lengths
-    WeightColumnName:       Value to fill the NA's for beginning of series
-    Threads:                Number of threads to utilize if available for the algorithm
-    Processing:             'catboost', 'xgboost', 'lightgbm', or 'ftrl'
-    InputFrame:             'datatable', 'polars', or 'pandas' If you input Frame is 'pandas', it will be converted to a datatable Frame for generating the new columns
+    Goals:
+      Training
+      Feature Tuning
+      Grid Tuning
+      Continued Training
+      Scoring
+      Model Evaluation
+      Model Interpretation
+
+    Functions:
+      train
+      score
+      save
+      load
+      evaluate
+      print_algo_args
+
+    Attributes:
+      self.TargetType = "regression"
+      self.Algorithm = "catboost"
+      self.TargetColumnName = ModelData["ArgsList"]["TargetColumnName"]
+      self.NumericColumnNames = ModelData["ArgsList"]["NumericColumnNames"]
+      self.CategoricalColumnNames = ModelData["ArgsList"]["CategoricalColumnNames"]
+      self.TextColumnNames = ModelData["ArgsList"]["TextColumnNames"]
+      self.WeightColumnName = ModelData["ArgsList"]["WeightColumnName"]
+      self.ModelArgs = ModelArgs
+      self.ModelArgsNames = [*self.ModelArgs]
+      self.Runs = len(self.ModelArgs)
+      self.DataSets = DataSets
+      self.ModelData = ModelData
+      self.self.ModelDataNames = [*self.DataSets]
+      self.ModelList = dict()
+      self.ModelListNames = []
+      self.FitList = dict()
+      self.FitListNames = []
+      self.EvaluationList = dict()
+      self.EvaluationListNames = []
+      self.InterpretationList = dict()
+      self.InterpretationListNames = []
+      self.CompareModelsList = dict()
+      self.CompareModelsListNames = []
     """
+
+    def __init__(
+        self,
+        Algorithm: str = "catboost",
+        TargetType: str = "regression"
+    ):
     
-    # For making copies of lists so originals aren't modified
-    import copy
+        # Model info
+        self.Algorithm = Algorithm.lower()
+        self.TargetType = TargetType.lower()
     
-    # Import datatable methods
-    if InputFrame.lower() == 'datatable':
-      import datatable as dt
-      from datatable import sort, f, by, ifelse, join
-
-    # Import polars methods
-    if InputFrame.lower() == 'polars':
-      import polars as pl
-      from polars import col
-      from polars.lazy import col
-
-    # ArgsList Collection
-    if not ArgsList is None:
-      TargetColumnName = ArgsList['TargetColumnName']
-      NumericColumnNames = ArgsList['NumericColumnNames']
-      CategoricalColumnNames = ArgsList['CategoricalColumnNames']
-      TextColumnNames = ArgsList['TextColumnNames']
-      WeightColumnName = ArgsList['WeightColumnName']
-      Threads = ArgsList['Threads']
-      Processing = ArgsList['Processing']
-    else:
-      ArgsList = dict(
-        TargetColumnName=TargetColumnName,
-        NumericColumnNames=NumericColumnNames,
-        CategoricalColumnNames=CategoricalColumnNames,
-        TextColumnNames=TextColumnNames,
-        WeightColumnName=WeightColumnName,
-        Threads=Threads,
-        Processing=Processing)
+        # Original data in POLARS
+        self.DataFrames = {
+            "train": None,
+            "validation": None,
+            "test": None,
+        }
     
-    # Target Variable Conversion for Multiclass
-    if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
-      def MultiClassTargetToInt(TrainData=None, ValidationData=None, TestData=None, TargetColumnName=None, ArgsList=None):
-        import numpy as np
-        import datatable as dt
-        from datatable import f, by, rbind, join
-        temp = TrainData[:, TargetColumnName, by(TargetColumnName)]
-        if not ValidationData is None:
-          temp2 = ValidationData[:, TargetColumnName, by(TargetColumnName)]
-          temp.rbind(temp2)
-          del temp2
-        if not TestData is None:
-          temp3 = TestData[:, TargetColumnName, by(TargetColumnName)]
-          temp.rbind(temp3)
-          del temp3
-        temp = temp[:, TargetColumnName, by(TargetColumnName)]
-        del temp[:, temp.names[1]]
-        temp = temp.sort(TargetColumnName)
-        temp[f"Predict_{TargetColumnName}"] = np.arange(0,temp.shape[0], 1)
-        temp.key = TargetColumnName
-        ArgsList['MultiClass'] = temp
-        TrainData = TrainData[:, :, join(temp)]
-        del TrainData[:, TargetColumnName]
-        TrainData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        if not ValidationData is None:
-          ValidationData = ValidationData[:, :, join(temp)]
-          del ValidationData[:, TargetColumnName]
-          ValidationData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        if not TestData is None:
-          TestData = TestData[:, :, join(temp)]
-          del TestData[:, TargetColumnName]
-          TestData.names = {f"Predict_{TargetColumnName}": TargetColumnName}
-        temp.names = {TargetColumnName: 'Old'}
-        return dict(TrainData = TrainData, ValidationData = ValidationData, TestData = TestData, ArgsList = ArgsList)
-
-    # Convert to datatable
-    if InputFrame.lower() == 'pandas' and Processing.lower() == 'datatable': 
-      data = dt.Frame(data)
-    elif InputFrame.lower() == 'pandas' and Processing.lower() == 'polars':
-      data = pl.from_pandas(data)
+        # Optional: store scored versions (Polars)
+        self.ScoredData = {}
     
-    # Convert to list if not already
-    if not NumericColumnNames is None and not isinstance(NumericColumnNames, list):
-      NumericColumnNames = [NumericColumnNames]
-    if not CategoricalColumnNames is None and not isinstance(CategoricalColumnNames, list):
-      CategoricalColumnNames = [CategoricalColumnNames]
-    if not TextColumnNames is None and not isinstance(TextColumnNames, list):
-      TextColumnNames = [TextColumnNames]
-
-    # Ftrl
-    if Processing.lower() == 'ftrl':
-      
-      # data (numeric features)
-      if not NumericColumnNames is None:
-        SD = copy.copy(NumericColumnNames)
-      else:
-        SD = []
-      if not CategoricalColumnNames is None:
-        SD.extend(CategoricalColumnNames)
-      if not TextColumnNames is None:
-        SD.extend(TextColumnNames)
-
-      # TrainData
-      train_data = TrainData[:, SD]
-      validation_data = ValidationData[:, SD]
-      test_data = TestData[:, SD]
-
-      # Return catboost
-      return dict(train_data=TrainData, validation_data=ValidationData, test_data=TestData, ArgsList=ArgsList)
+        # Data columns by type
+        self.TargetColumnName = None
+        self.NumericColumnNames = []
+        self.CategoricalColumnNames = []
+        self.TextColumnNames = []
+        self.WeightColumnName = None
     
-    # CatBoost
-    if Processing.lower() == 'catboost':
-      
-      # Imports
-      from catboost import Pool
-
-      # data (numeric features)
-      if not NumericColumnNames is None:
-        SD = copy.copy(NumericColumnNames)
-      else:
-        SD = []
-      if not CategoricalColumnNames is None:
-        SD.extend(CategoricalColumnNames)
-      if not TextColumnNames is None:
-        SD.extend(TextColumnNames)
-      if not WeightColumnName is None:
-        SD.extend(WeightColumnName)
-
-      # data
-      train = TrainData[:, SD].to_pandas()
-      if not ValidationData is None:
-        validation = ValidationData[:, SD].to_pandas()
-      if not TestData is None:
-        test = TestData[:, SD].to_pandas()
-
-      # Categorical target check
-      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
-        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
-        TrainData = Output['TrainData']
-        ValidationData = Output['ValidationData']
-        TestData = Output['TestData']
-        ArgsList = Output['ArgsList']
-
-      # Labels
-      trainlabel = TrainData[:, TargetColumnName].to_pandas()
-      if not ValidationData is None:
-        validationlabel = ValidationData[:, TargetColumnName].to_pandas()
-      if not TestData is None:
-        testlabel = TestData[:, TargetColumnName].to_pandas()
-
-      # TrainData
-      train_data = Pool(
-        data =  train,
-        label = trainlabel,
-        cat_features = CategoricalColumnNames,
-        text_features = TextColumnNames, 
-        weight=WeightColumnName, 
-        thread_count=Threads,
-        pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
-
-      # ValidationData
-      if not ValidationData is None:
-        validation_data = Pool(
-          data =  validation,
-          label = validationlabel,
-          cat_features = CategoricalColumnNames,
-          text_features = TextColumnNames, 
-          weight=WeightColumnName,
-          thread_count=Threads,
-          pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
-          
-      # TestData
-      if not TestData is None:
-        test_data = Pool(
-          data =  test,
-          label = testlabel,
-          cat_features = CategoricalColumnNames,
-          text_features = TextColumnNames, 
-          weight=WeightColumnName,
-          thread_count=Threads,
-          pairs=None, has_header=False, group_id=None, group_weight=None, subgroup_id=None, pairs_weight=None, baseline=None, feature_names=None)
+        # Model parameters
+        self.ModelArgs = None
+        self.ModelArgsNames = None
     
-      # Return catboost
-      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+        # Algo-specific data objects (Pool / DMatrix / Dataset)
+        self.ModelData = None
+        self.ModelDataNames = None
+    
+        # Main model handle (single-run convenience)
+        self.Model = None
+    
+        # Model info (for multiple runs / variants)
+        self.ModelList = {}
+        self.ModelListNames = []
+    
+        # Models saved
+        self.SavedModels = []
+    
+        # Models fitted (e.g., booster objects)
+        self.FitList = {}
+        self.FitListNames = []
+    
+        # Model evaluations
+        self.EvaluationList = {}
+        self.EvaluationListNames = []
+    
+        # Model interpretations
+        self.InterpretationList = {}
+        self.InterpretationListNames = []
+    
+        # Model comparisons
+        self.CompareModelsList = {}
+        self.CompareModelsListNames = []
 
-    # XGBoost
-    if Processing.lower() == 'xgboost':
-      
-      # Imports
-      import xgboost as xgb
 
-      # data (numeric features)
-      if not NumericColumnNames is None:
-        SD = copy.copy(NumericColumnNames)
-      else:
-        SD = []
-      if not WeightColumnName is None:
-        trainweightdata = TrainData['WeightColumnName'].to_pandas()
-        if not ValidationData is None:
-          validationweightdata = ValidationData['WeightColumnName'].to_pandas()
-        if not TestData is None:
-          testweightdata = TestData['WeightColumnName'].to_pandas()
-      else:
-        trainweightdata = None
-        validationweightdata = None
-        testweightdata = None
-
-      # data
-      train = TrainData[:, SD].to_pandas()
-      if not ValidationData is None:
-        validation = ValidationData[:, SD].to_pandas()
-      if not TestData is None:
-        test = TestData[:, SD].to_pandas()
-
-      # Categorical target check
-      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
-        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
-        TrainData = Output['TrainData']
-        ValidationData = Output['ValidationData']
-        TestData = Output['TestData']
-        ArgsList = Output['ArgsList']
-
-      # Target label
-      trainlabel = TrainData[:, TargetColumnName].to_pandas()
-      if not ValidationData is None:
-        validationlabel = ValidationData[:, TargetColumnName].to_pandas()
-      if not TestData is None:
-        testlabel = TestData[:, TargetColumnName].to_pandas()
-
-      # TrainData
-      if trainweightdata is None:
-        train_data = xgb.DMatrix(data = train, label = trainlabel)
-      else:
-        train_data = xgb.DMatrix(data = train, label = trainlabel, weight = trainweightdata)
-      
-      # ValidationData
-      if not ValidationData is None:
-        if validationweightdata is None:
-          validation_data = xgb.DMatrix(data = validation, label = validationlabel)
+    #################################################
+    # Function: Create Model-Data Objects
+    #################################################
+    
+    # Helper function: normalize input to POLARS
+    @staticmethod
+    def _normalize_input_df(df):
+        """
+        Normalize user-supplied dataframes to Polars internally.
+        Accepts:
+            - None
+            - polars.DataFrame
+            - pandas.DataFrame (converted to Polars)
+        """
+        if df is None:
+            return None
+    
+        if isinstance(df, pl.DataFrame):
+            return df
+    
+        if isinstance(df, pd.DataFrame):
+            return pl.from_pandas(df)
+    
+        raise ValueError("Input must be a polars or pandas DataFrame (or None).")
+    
+    
+    # Helper function: convert to pandas for model boundaries
+    @staticmethod
+    def _to_pandas(df):
+        """
+        Convert internal Polars → pandas for building algo-specific data objects.
+        Accepts:
+            - None
+            - polars.DataFrame
+            - pandas.DataFrame
+        """
+        if df is None:
+            return None
+    
+        if isinstance(df, pl.DataFrame):
+            return df.to_pandas()
+    
+        if isinstance(df, pd.DataFrame):
+            return df
+    
+        raise ValueError("Input must be a polars or pandas DataFrame (or None).")
+    
+    
+    # Helper function: CatBoost
+    @staticmethod
+    def _process_catboost(
+        TrainData=None,
+        ValidationData=None,
+        TestData=None,
+        TargetColumnName=None,
+        NumericColumnNames=None,
+        CategoricalColumnNames=None,
+        TextColumnNames=None,
+        WeightColumnName=None,
+        Threads=None
+    ):
+        """
+        Build CatBoost Pool objects from pandas DataFrames.
+        """
+        def create_pool(data, label, cat_features, text_features, weight):
+            return Pool(
+                data=data,
+                label=label,
+                cat_features=cat_features,
+                text_features=text_features,
+                weight=weight,
+                thread_count=Threads
+            ) if data is not None else None
+    
+        lists = [NumericColumnNames, CategoricalColumnNames, TextColumnNames]
+        cols = [c for group in lists if group for c in group]
+    
+        train_pool = create_pool(
+            data=TrainData[cols],
+            label=TrainData[TargetColumnName],
+            cat_features=CategoricalColumnNames,
+            text_features=TextColumnNames,
+            weight=TrainData[WeightColumnName] if WeightColumnName else None
+        )
+    
+        valid_pool = create_pool(
+            data=ValidationData[cols] if ValidationData is not None else None,
+            label=ValidationData[TargetColumnName] if ValidationData is not None else None,
+            cat_features=CategoricalColumnNames,
+            text_features=TextColumnNames,
+            weight=ValidationData[WeightColumnName] if ValidationData is not None and WeightColumnName else None
+        )
+    
+        test_pool = create_pool(
+            data=TestData[cols] if TestData is not None else None,
+            label=TestData[TargetColumnName] if TestData is not None else None,
+            cat_features=CategoricalColumnNames,
+            text_features=TextColumnNames,
+            weight=TestData[WeightColumnName] if TestData is not None and WeightColumnName else None
+        )
+    
+        return {"train_data": train_pool, "validation_data": valid_pool, "test_data": test_pool}
+    
+    
+    # Helper function: XGBoost
+    @staticmethod
+    def _process_xgboost(
+        TrainData=None,
+        ValidationData=None,
+        TestData=None,
+        TargetColumnName=None,
+        NumericColumnNames=None,
+        WeightColumnName=None
+    ):
+        """
+        Build XGBoost DMatrix objects from pandas DataFrames.
+        """
+        def create_dmatrix(data, label, weight):
+            return xgb.DMatrix(data=data, label=label, weight=weight) if data is not None else None
+    
+        train_dmatrix = create_dmatrix(
+            data=TrainData[NumericColumnNames],
+            label=TrainData[TargetColumnName],
+            weight=TrainData[WeightColumnName] if WeightColumnName else None
+        )
+    
+        valid_dmatrix = create_dmatrix(
+            data=ValidationData[NumericColumnNames] if ValidationData is not None else None,
+            label=ValidationData[TargetColumnName] if ValidationData is not None else None,
+            weight=ValidationData[WeightColumnName] if ValidationData is not None and WeightColumnName else None
+        )
+    
+        test_dmatrix = create_dmatrix(
+            data=TestData[NumericColumnNames] if TestData is not None else None,
+            label=TestData[TargetColumnName] if TestData is not None else None,
+            weight=TestData[WeightColumnName] if TestData is not None and WeightColumnName else None
+        )
+    
+        return {"train_data": train_dmatrix, "validation_data": valid_dmatrix, "test_data": test_dmatrix}
+    
+    
+    # Helper function: LightGBM
+    @staticmethod
+    def _process_lightgbm(
+        TrainData=None,
+        ValidationData=None,
+        TestData=None,
+        TargetColumnName=None,
+        NumericColumnNames=None,
+        WeightColumnName=None
+    ):
+        """
+        Build LightGBM Dataset objects from pandas DataFrames.
+        """
+        def create_dataset(data, label, weight):
+            return lgbm.Dataset(data=data, label=label, weight=weight) if data is not None else None
+    
+        train_dataset = create_dataset(
+            data=TrainData[NumericColumnNames],
+            label=TrainData[TargetColumnName],
+            weight=TrainData[WeightColumnName] if WeightColumnName else None
+        )
+    
+        valid_dataset = create_dataset(
+            data=ValidationData[NumericColumnNames] if ValidationData is not None else None,
+            label=ValidationData[TargetColumnName] if ValidationData is not None else None,
+            weight=ValidationData[WeightColumnName] if ValidationData is not None and WeightColumnName else None
+        )
+    
+        test_dataset = create_dataset(
+            data=TestData[NumericColumnNames] if TestData is not None else None,
+            label=TestData[TargetColumnName] if TestData is not None else None,
+            weight=TestData[WeightColumnName] if TestData is not None and WeightColumnName else None
+        )
+    
+        return {"train_data": train_dataset, "validation_data": valid_dataset, "test_data": test_dataset}
+    
+    
+    # Main function
+    def create_model_data(
+        self,
+        TrainData=None,
+        ValidationData=None,
+        TestData=None,
+        TargetColumnName=None,
+        NumericColumnNames=None,
+        CategoricalColumnNames=None,
+        TextColumnNames=None,
+        WeightColumnName=None,
+        Threads=-1
+    ):
+        """
+        Create modeling objects for specific algorithms (CatBoost, XGBoost, LightGBM).
+    
+        Parameters:
+            TrainData, ValidationData, TestData: pandas or polars DataFrames.
+            TargetColumnName: Target column name.
+            NumericColumnNames, CategoricalColumnNames, TextColumnNames: Lists of column names.
+            WeightColumnName: Column name for sample weights.
+            Threads: Number of threads to utilize.
+    
+        Side effects:
+            - Stores POLARS originals in self.DataFrames["train"/"validation"/"test"]
+            - Stores algo-specific objects in self.ModelData
+            - Initializes self.ModelArgs via create_model_parameters()
+        """
+    
+        # 1) Normalize all inputs to POLARS internally
+        TrainData = self._normalize_input_df(TrainData)
+        ValidationData = self._normalize_input_df(ValidationData)
+        TestData = self._normalize_input_df(TestData)
+    
+        # 2) Store metadata / column info
+        self.TargetColumnName = TargetColumnName
+        self.NumericColumnNames = NumericColumnNames or []
+        self.CategoricalColumnNames = CategoricalColumnNames or []
+        self.TextColumnNames = TextColumnNames or []
+        self.WeightColumnName = WeightColumnName
+    
+        # 3) Store original POLARS frames for later scoring/evaluation
+        self.DataFrames["train"] = TrainData
+        self.DataFrames["validation"] = ValidationData
+        self.DataFrames["test"] = TestData
+    
+        # 4) Convert to pandas for model objects
+        train_pd = self._to_pandas(TrainData)
+        valid_pd = self._to_pandas(ValidationData)
+        test_pd = self._to_pandas(TestData)
+    
+        # 5) Select processing pipeline
+        if self.Algorithm == 'catboost':
+            self.ModelData = self._process_catboost(
+                TrainData=train_pd,
+                ValidationData=valid_pd,
+                TestData=test_pd,
+                TargetColumnName=TargetColumnName,
+                NumericColumnNames=self.NumericColumnNames,
+                CategoricalColumnNames=self.CategoricalColumnNames,
+                TextColumnNames=self.TextColumnNames,
+                WeightColumnName=WeightColumnName,
+                Threads=Threads
+            )
+            self.ModelDataNames = [*self.ModelData]
+    
+        elif self.Algorithm == 'xgboost':
+            if not self.NumericColumnNames:
+                raise ValueError("NumericColumnNames must be provided for XGBoost.")
+            self.ModelData = self._process_xgboost(
+                TrainData=train_pd,
+                ValidationData=valid_pd,
+                TestData=test_pd,
+                TargetColumnName=TargetColumnName,
+                NumericColumnNames=self.NumericColumnNames,
+                WeightColumnName=WeightColumnName
+            )
+            self.ModelDataNames = [*self.ModelData]
+    
+        elif self.Algorithm == 'lightgbm':
+            if not self.NumericColumnNames:
+                raise ValueError("NumericColumnNames must be provided for LightGBM.")
+            self.ModelData = self._process_lightgbm(
+                TrainData=train_pd,
+                ValidationData=valid_pd,
+                TestData=test_pd,
+                TargetColumnName=TargetColumnName,
+                NumericColumnNames=self.NumericColumnNames,
+                WeightColumnName=WeightColumnName
+            )
+            self.ModelDataNames = [*self.ModelData]
+    
         else:
-          validation_data = xgb.DMatrix(data = validation, label = validationlabel, weight = validationweightdata)
-        
-      # TestData
-      if not TestData is None:
-        if testweightdata is None:
-          test_data = xgb.DMatrix(data = test, label = testlabel)
-        else:
-          test_data = xgb.DMatrix(data = test, label = testlabel, weights = testweightdata)
+            raise ValueError("Unsupported processing type. Choose from 'catboost', 'xgboost', or 'lightgbm'.")
     
-      # Return catboost
-      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+        # 6) Initialize base model parameters for this algorithm/target type
+        self.create_model_parameters()
+
     
-    # LightGBM
-    if Processing.lower() == 'lightgbm':
-      
-      # Imports
-      import lightgbm as lgbm
+    #################################################
+    # Function: Create Algo-Specific Args
+    #################################################
+    def create_model_parameters(self):
+        """
+        # Goal
+        Return an ArgsList appropriate for the algorithm selection, target type, and training method
+        """
 
-      # data (numeric features)
-      if not NumericColumnNames is None:
-        SD = copy.copy(NumericColumnNames)
-      else:
-        SD = []
-      if not WeightColumnName is None:
-        trainweightdata = TrainData['WeightColumnName'].to_pandas()
-        if not ValidationData is None:
-          validationweightdata = ValidationData['WeightColumnName'].to_pandas()
-        if not TestData is None:
-          testweightdata = TestData['WeightColumnName'].to_pandas()
-      else:
-        trainweightdata = None
-        validationweightdata = None
-        testweightdata = None
-        
-      # data
-      train = TrainData[:, SD].to_pandas()
-      if not ValidationData is None:
-        validation = ValidationData[:, SD].to_pandas()
-      if not TestData is None:
-        test = TestData[:, SD].to_pandas()
-
-      # Categorical target check
-      if TrainData.types[TrainData.colindex(TargetColumnName)] in [dt.Type.str32, dt.Type.str64, dt.Type.is_string]:
-        Output = MultiClassTargetToInt(TrainData=TrainData, ValidationData=ValidationData, TestData=TestData, TargetColumnName=TargetColumnName, ArgsList=ArgsList)
-        TrainData = Output['TrainData']
-        ValidationData = Output['ValidationData']
-        TestData = Output['TestData']
-        ArgsList = Output['ArgsList']
-
-      # label
-      trainlabel = TrainData[:, TargetColumnName].to_pandas()
-      if not ValidationData is None:
-        validationlabel = ValidationData[:, TargetColumnName].to_pandas()
-      if not TestData is None:
-        testlabel = TestData[:, TargetColumnName].to_pandas()
-
-      # TrainData
-      if trainweightdata is None:
-        train_data = lgbm.Dataset(data = train, label = trainlabel)
-      else:
-        train_data = lgbm.Dataset(data = train, label = trainlabel, weight = trainweightdata)
-      
-      # ValidationData
-      if not ValidationData is None:
-        if validationweightdata is None:
-          validation_data = lgbm.Dataset(data = validation, label = validationlabel)
-        else:
-          validation_data = lgbm.Dataset(data = validation, label = validationlabel, weight = validationweightdata)
-        
-      # TestData
-      if not TestData is None:
-        if testweightdata is None:
-          test_data = lgbm.Dataset(data = test, label = testlabel)
-        else:
-          test_data = lgbm.Dataset(data = test, label = testlabel, weights = testweightdata)
+        # Args Check
+        if self.Algorithm is None:
+          raise Exception('Algorithm cannot be None')
     
-      # Return catboost
-      return dict(train_data=train_data, validation_data=validation_data, test_data=test_data, ArgsList=ArgsList)
+        if self.TargetType is None:
+          raise Exception('TargetType cannot be None')
 
-
-def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
-    """
-    # Goal
-    Return an ArgsList appropriate for the algorithm selection, target type, and training method
+        # CatBoost
+        if self.Algorithm == 'catboost':
     
-    # Parameters
-    Algorithms:       Choose from CatBoost, XGBoost, LightGBM, Ftrl
-    TargetType:       Choose from 'regression', 'classification', 'multiclass'
-    TrainMethod:      Choose from 'train', 'gridtune'
+          # Initialize AlgoArgs
+          AlgoArgs = dict()
     
-    # ML0_Parameters Example
-    import pkg_resources
-    import timeit
-    import datatable as dt
-    from datatable import sort, f, by
-    import retrofit
-    from retrofit import FeatureEngineering as fe
-    from retrofit import MachineLearning as ml
-    """
+          ###############################
+          # TargetType Parameters
+          ###############################
+          if self.TargetType == 'classification':
+            AlgoArgs['loss_function'] = 'Logloss'
+            AlgoArgs['eval_metric'] = 'Logloss'
+            AlgoArgs['auto_class_weights'] = 'Balanced'
+          elif self.TargetType == 'multiclass':
+            AlgoArgs['classes_count'] = 3
+            AlgoArgs['loss_function'] = 'MultiClassOneVsAll'
+            AlgoArgs['eval_metric'] = 'MultiClassOneVsAll'
+          elif self.TargetType == 'regression':
+            AlgoArgs['loss_function'] = 'RMSE'
+            AlgoArgs['eval_metric'] = 'RMSE'
     
-    # Args Check
-    if Algorithms is None:
-      raise Exception('Algorithms cannot be None')
-    if TargetType is None:
-      raise Exception('TargetType cannot be None')
-    if TrainMethod is None:
-      raise Exception('TrainMethod cannot be None')  
+          ###############################
+          # Parameters
+          ###############################
+          AlgoArgs['train_dir'] = os.getcwd()
+          AlgoArgs['task_type'] = 'CPU'
+          AlgoArgs['learning_rate'] = None
+          AlgoArgs['l2_leaf_reg'] = None
+          AlgoArgs['has_time'] = False
+          AlgoArgs['best_model_min_trees'] = 10
+          AlgoArgs['nan_mode'] = 'Min'
+          AlgoArgs['fold_permutation_block'] = 1
+          AlgoArgs['boosting_type'] = 'Plain'
+          AlgoArgs['random_seed'] = None
+          AlgoArgs['thread_count'] = -1
+          AlgoArgs['metric_period'] = 10
     
-    # Ensure Algorithms is a list
-    if not isinstance(Algorithms, list):
-      Algorithms = [Algorithms]
-
-    # Loop through algorithms
-    MasterArgs = dict()
-    for Algo in Algorithms:
-      
-      # Initialize ArgsList
-      ArgsList = {}
-      ArgsList['Algorithms'] = Algo
-      ArgsList['TargetType'] = TargetType
-      ArgsList['TrainMethod'] = TrainMethod
-    
-      #############################################
-      # Algorithm Selection CatBoost
-      #############################################
-      if Algo.lower() == 'catboost':
-
-        # Setup Environment
-        import catboost as cb
-        import os
-
-        # Initialize AlgoArgs
-        AlgoArgs = dict()
-
-        ###############################
-        # TargetType Parameters
-        ###############################
-        if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['loss_function'] = 'Logloss'
-          AlgoArgs['eval_metric'] = 'Logloss'
-          AlgoArgs['auto_class_weights'] = 'Balanced'
-        elif ArgsList.get('TargetType').lower() == 'multiclass':
-          AlgoArgs['classes_count'] = 3
-          AlgoArgs['loss_function'] = 'MultiClassOneVsAll'
-          AlgoArgs['eval_metric'] = 'MultiClassOneVsAll'
-        elif ArgsList.get('TargetType').lower() == 'regression':
-          AlgoArgs['loss_function'] = 'RMSE'
-          AlgoArgs['eval_metric'] = 'RMSE'
-
-        ###############################
-        # Parameters
-        ###############################
-        AlgoArgs['train_dir'] = os.getcwd()
-        AlgoArgs['task_type'] = 'GPU'
-        AlgoArgs['learning_rate'] = None
-        AlgoArgs['l2_leaf_reg'] = None
-        AlgoArgs['has_time'] = False
-        AlgoArgs['best_model_min_trees'] = 10
-        AlgoArgs['nan_mode'] = 'Min'
-        AlgoArgs['fold_permutation_block'] = 1
-        AlgoArgs['boosting_type'] = 'Plain'
-        AlgoArgs['random_seed'] = None
-        AlgoArgs['thread_count'] = -1
-        AlgoArgs['metric_period'] = 10
-
-        ###############################
-        # Gridable Parameters
-        ###############################
-        if TrainMethod.lower() == 'train':
+          ###############################
+          # Gridable Parameters
+          ###############################
           AlgoArgs['iterations'] = 1000
           AlgoArgs['depth'] = 6
           AlgoArgs['langevin'] = True
           AlgoArgs['diffusion_temperature'] = 10000
           AlgoArgs['grow_policy'] = 'SymmetricTree'
           AlgoArgs['model_size_reg'] = 0.5
-        else:
-          AlgoArgs['iterations'] = [1000, 1500, 2000, 2500, 3000, 3500, 4000]
-          AlgoArgs['depth'] = [4, 5, 6, 7, 8, 9, 10]
-          AlgoArgs['langevin'] = [True, False]
-          AlgoArgs['diffusion_temperature'] = [7500, 10000, 12500]
-          AlgoArgs['grow_policy'] = ['SymmetricTree', 'Lossguide', 'Depthwise']
-          AlgoArgs['model_size_reg'] = [0.0, 0.25, 0.5, 0.75, 1.0]
-
-        ###############################
-        # Dependent Model Parameters
-        ###############################
-
-        # task_type dependent
-        if AlgoArgs['task_type'] == 'GPU':
-          AlgoArgs['bootstrap_type'] = 'Bayesian'
-          AlgoArgs['score_function'] = 'L2'
-          AlgoArgs['border_count'] = 128
-        else:
-          AlgoArgs['bootstrap_type'] = 'MVS'
-          AlgoArgs['sampling_frequency'] = 'PerTreeLevel'
-          AlgoArgs['random_strength'] = 1
-          AlgoArgs['rsm'] = 0.80
-          AlgoArgs['posterior_sampling'] = False
-          AlgoArgs['score_function'] = 'L2'
-          AlgoArgs['border_count'] = 254
-
-        # Bootstrap dependent
-        if AlgoArgs['bootstrap_type'] in ['Poisson', 'Bernoulli', 'MVS']:
-          AlgoArgs['subsample'] = 1
-        elif AlgoArgs['bootstrap_type'] in ['Bayesian']:
-          AlgoArgs['bagging_temperature'] = 1
-
-        # grow_policy
-        if AlgoArgs['grow_policy'] in ['Lossguide', 'Depthwise']:
-          AlgoArgs['min_data_in_leaf'] = 1
-          if AlgoArgs['grow_policy'] == 'Lossguide':
-            AlgoArgs['max_leaves'] = 31
-
-        # boost_from_average
-        if AlgoArgs['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
-          AlgoArgs['boost_from_average'] = True
-        else:
-          AlgoArgs['boost_from_average'] = False
-
-        # Return
-        ArgsList['AlgoArgs'] = AlgoArgs
-        MasterArgs[Algo] = ArgsList
-
-      #############################################
-      # Algorithm Selection XGBoost
-      #############################################
-      if Algo.lower() == 'xgboost':
+          
+          ###############################
+          # Dependent Model Parameters
+          ###############################
     
-        # Setup Environment
-        import xgboost as xgb
-        import os
-        AlgoArgs = dict()
-        
-        # Performance Params
-        AlgoArgs['nthread'] = os.cpu_count()
-        AlgoArgs['predictor'] = 'auto'
-        AlgoArgs['single_precision_histogram'] = False
-        AlgoArgs['early_stopping_rounds'] = 50
-        
-        # Training Params
-        AlgoArgs['tree_method'] = 'gpu_hist'
-        AlgoArgs['max_bin'] = 256
-        
-        ###############################
-        # Gridable Parameters
-        ###############################
-        if TrainMethod.lower() == 'train':
+          # task_type dependent
+          if AlgoArgs['task_type'] == 'GPU':
+            AlgoArgs['bootstrap_type'] = 'Bayesian'
+            AlgoArgs['score_function'] = 'L2'
+            AlgoArgs['border_count'] = 128
+          else:
+            AlgoArgs['bootstrap_type'] = 'MVS'
+            AlgoArgs['sampling_frequency'] = 'PerTreeLevel'
+            AlgoArgs['random_strength'] = 1
+            AlgoArgs['rsm'] = 0.80
+            AlgoArgs['posterior_sampling'] = False
+            AlgoArgs['score_function'] = 'L2'
+            AlgoArgs['border_count'] = 254
+    
+          # Bootstrap dependent
+          if AlgoArgs['bootstrap_type'] in ['Poisson', 'Bernoulli', 'MVS']:
+            AlgoArgs['subsample'] = 1
+          elif AlgoArgs['bootstrap_type'] in ['Bayesian']:
+            AlgoArgs['bagging_temperature'] = 1
+    
+          # grow_policy
+          if AlgoArgs['grow_policy'] in ['Lossguide', 'Depthwise']:
+            AlgoArgs['min_data_in_leaf'] = 1
+            if AlgoArgs['grow_policy'] == 'Lossguide':
+              AlgoArgs['max_leaves'] = 31
+    
+          # boost_from_average
+          if AlgoArgs['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
+            AlgoArgs['boost_from_average'] = True
+          else:
+            AlgoArgs['boost_from_average'] = False
+    
+        # XGBoost
+        if self.Algorithm == 'xgboost':
+      
+          # Setup Environment
+          
+          AlgoArgs = dict()
+          
+          # Performance Params
+          AlgoArgs['nthread'] = os.cpu_count()
+          AlgoArgs['predictor'] = 'auto'
+          AlgoArgs['single_precision_histogram'] = False
+          AlgoArgs['early_stopping_rounds'] = 50
+          
+          # Training Params
+          AlgoArgs['tree_method'] = 'gpu_hist'
+          AlgoArgs['max_bin'] = 256
+          
+          ###############################
+          # Gridable Parameters
+          ###############################
           AlgoArgs['num_parallel_tree'] = 1
           AlgoArgs['num_boost_round'] = 1000 
           AlgoArgs['grow_policy'] = 'depthwise'
@@ -524,64 +559,40 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
           AlgoArgs['alpha'] = 0
           AlgoArgs['lambda'] = 1
           AlgoArgs['gamma'] = 0
-        else:
-          AlgoArgs['num_parallel_tree'] = [1, 5, 10]
-          AlgoArgs['num_boost_round'] = [500, 1000, 1500, 2000, 2500]
-          AlgoArgs['grow_policy'] = ['depthwise', 'lossguide']
-          AlgoArgs['eta'] = [0.10, 0.20, 0.30]
-          AlgoArgs['max_depth'] = [4, 5, 6, 7, 8]
-          AlgoArgs['min_child_weight'] = [1, 5, 10]
-          AlgoArgs['max_delta_step'] = [0, 1, 5, 10]
-          AlgoArgs['subsample'] = [0.615, 0.8, 1]
-          AlgoArgs['colsample_bytree'] = [0.615, 0.8, 1]
-          AlgoArgs['colsample_bylevel'] = [0.615, 0.8, 1]
-          AlgoArgs['colsample_bynode'] = [0.615, 0.8, 1]
-          AlgoArgs['alpha'] = [0, 0.1, 0.2]
-          AlgoArgs['lambda'] = [0.80, 0.90, 1.0]
-          AlgoArgs['gamma'] = [0, 0.1, 0.5]
-
-        # GPU Dependent
-        if AlgoArgs['tree_method'] == 'gpu_hist':
-          AlgoArgs['sampling_method'] = 'uniform'
-
-        # Target Dependent Args
-        if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['objective'] = 'binary:logistic'
-          AlgoArgs['eval_metric'] = 'auc'
-        elif ArgsList.get('TargetType').lower() == 'regression':
-          AlgoArgs['objective'] = 'reg:squarederror'
-          AlgoArgs['eval_metric'] = 'rmse'
-        elif ArgsList.get('TargetType').lower() == 'multiclass':
-          AlgoArgs['objective'] = 'multi:softprob'
-          AlgoArgs['eval_metric'] = 'mlogloss'
-
-        # Return
-        ArgsList['AlgoArgs'] = AlgoArgs
-        MasterArgs[Algo] = ArgsList
-
-      #############################################
-      # Algorithm Selection LightGBM
-      #############################################
-      if Algo.lower() == 'lightgbm':
     
-        # Setup Environment
-        import os
-        import lightgbm as lgbm
-        AlgoArgs = dict()
-        
-        # Target Dependent Args
-        if ArgsList.get('TargetType').lower() == 'classification':
-          AlgoArgs['objective'] = 'binary'
-          AlgoArgs['metric'] = 'auc'
-        elif ArgsList.get('TargetType').lower() == 'regression':
-          AlgoArgs['objective'] = 'regression'
-          AlgoArgs['metric'] = 'rmse'
-        elif ArgsList.get('TargetType').lower() == 'multiclass':
-          AlgoArgs['objective'] = 'multiclassova'
-          AlgoArgs['metric'] = 'multi_logloss'
-
-        # Tuning Args
-        if TrainMethod.lower() == 'train':
+          # GPU Dependent
+          if AlgoArgs['tree_method'] == 'gpu_hist':
+            AlgoArgs['sampling_method'] = 'uniform'
+    
+          # Target Dependent Args
+          if self.TargetType == 'classification':
+            AlgoArgs['objective'] = 'binary:logistic'
+            AlgoArgs['eval_metric'] = 'auc'
+          elif self.TargetType == 'regression':
+            AlgoArgs['objective'] = 'reg:squarederror'
+            AlgoArgs['eval_metric'] = 'rmse'
+          elif self.TargetType == 'multiclass':
+            AlgoArgs['objective'] = 'multi:softprob'
+            AlgoArgs['eval_metric'] = 'mlogloss'
+    
+        # LightGBM
+        if self.Algorithm == 'lightgbm':
+      
+          # Setup Environment
+          AlgoArgs = dict()
+          
+          # Target Dependent Args
+          if self.TargetType == 'classification':
+            AlgoArgs['objective'] = 'binary'
+            AlgoArgs['metric'] = 'auc'
+          elif self.TargetType == 'regression':
+            AlgoArgs['objective'] = 'regression'
+            AlgoArgs['metric'] = 'rmse'
+          elif self.TargetType == 'multiclass':
+            AlgoArgs['objective'] = 'multiclassova'
+            AlgoArgs['metric'] = 'multi_logloss'
+    
+          # Tuning Args
           AlgoArgs['num_iterations'] = 1000
           AlgoArgs['learning_rate'] = None
           AlgoArgs['num_leaves'] = 31
@@ -590,1132 +601,870 @@ def ML0_Parameters(Algorithms=None, TargetType=None, TrainMethod=None):
           AlgoArgs['feature_fraction'] = 1.0
           AlgoArgs['feature_fraction_bynode'] = 1.0
           AlgoArgs['max_delta_step'] = 0.0
-        else :
-          AlgoArgs['num_iterations'] = [500, 1000, 1500, 2000, 2500]
-          AlgoArgs['learning_rate'] = [0.05, 0.10, 0.15, 0.20, 0.25]
-          AlgoArgs['num_leaves'] = [20, 25, 31, 36, 40]
-          AlgoArgs['bagging_freq'] = [0.615, 0.80, 1.0]
-          AlgoArgs['bagging_fraction'] = [0.615, 0.80, 1.0]
-          AlgoArgs['feature_fraction'] = [0.615, 0.80, 1.0]
-          AlgoArgs['feature_fraction_bynode'] = [0.615, 0.80, 1.0]
-          AlgoArgs['max_delta_step'] = [0.0, 0.10 , 0.20]
-        
-        # Args
-        AlgoArgs['task'] = 'train'
-        AlgoArgs['device_type'] = 'CPU'
-        AlgoArgs['boosting'] = 'gbdt'
-        AlgoArgs['lambda_l1'] = 0.0
-        AlgoArgs['lambda_l2'] = 0.0
-        AlgoArgs['deterministic'] = True
-        AlgoArgs['force_col_wise'] = False
-        AlgoArgs['force_row_wise'] = False
-        AlgoArgs['max_depth'] = None
-        AlgoArgs['min_data_in_leaf'] = 20
-        AlgoArgs['min_sum_hessian_in_leaf'] = 0.001
-        AlgoArgs['extra_trees'] = False
-        AlgoArgs['early_stopping_round'] = 10
-        AlgoArgs['first_metric_only'] = True
-        AlgoArgs['linear_lambda'] = 0.0
-        AlgoArgs['min_gain_to_split'] = 0
-        AlgoArgs['monotone_constraints'] = None
-        AlgoArgs['monotone_constraints_method'] = 'advanced'
-        AlgoArgs['monotone_penalty'] = 0.0
-        AlgoArgs['forcedsplits_filename'] = None
-        AlgoArgs['refit_decay_rate'] = 0.90
-        AlgoArgs['path_smooth'] = 0.0
-
-        # IO Dataset Parameters
-        AlgoArgs['max_bin'] = 255
-        AlgoArgs['min_data_in_bin'] = 3
-        AlgoArgs['data_random_seed'] = 1
-        AlgoArgs['is_enable_sparse'] = True
-        AlgoArgs['enable_bundle'] = True
-        AlgoArgs['use_missing'] = True
-        AlgoArgs['zero_as_missing'] = False
-        AlgoArgs['two_round'] = False
-
-        # Convert Parameters
-        AlgoArgs['convert_model'] = None
-        AlgoArgs['convert_model_language'] = 'cpp'
-
-        # Objective Parameters
-        AlgoArgs['boost_from_average'] = True
-        AlgoArgs['alpha'] = 0.90
-        AlgoArgs['fair_c'] = 1.0
-        AlgoArgs['poisson_max_delta_step'] = 0.70
-        AlgoArgs['tweedie_variance_power'] = 1.5
-        AlgoArgs['lambdarank_truncation_level'] = 30
-
-        # Metric Parameters (metric is in Core)
-        AlgoArgs['is_provide_training_metric'] = True
-        AlgoArgs['eval_at'] = [1,2,3,4,5]
-
-        # Network Parameters
-        AlgoArgs['num_machines'] = 1
-
-        # GPU Parameters
-        AlgoArgs['gpu_platform_id'] = -1
-        AlgoArgs['gpu_device_id'] = -1
-        AlgoArgs['gpu_use_dp'] = True
-        AlgoArgs['num_gpu'] = 1
-
-        # Return
-        ArgsList['AlgoArgs'] = AlgoArgs
-        MasterArgs[Algo] = ArgsList
-
-      #############################################
-      # Algorithm Selection Ftrl
-      #############################################
-      if Algo.lower() == 'ftrl':
+          
+          # Args
+          AlgoArgs['task'] = 'train'
+          AlgoArgs['device_type'] = 'CPU'
+          AlgoArgs['boosting'] = 'gbdt'
+          AlgoArgs['lambda_l1'] = 0.0
+          AlgoArgs['lambda_l2'] = 0.0
+          AlgoArgs['deterministic'] = True
+          AlgoArgs['force_col_wise'] = False
+          AlgoArgs['force_row_wise'] = False
+          AlgoArgs['max_depth'] = None
+          AlgoArgs['min_data_in_leaf'] = 20
+          AlgoArgs['min_sum_hessian_in_leaf'] = 0.001
+          AlgoArgs['extra_trees'] = False
+          AlgoArgs['early_stopping_round'] = 10
+          AlgoArgs['first_metric_only'] = True
+          AlgoArgs['linear_lambda'] = 0.0
+          AlgoArgs['min_gain_to_split'] = 0
+          AlgoArgs['monotone_constraints'] = None
+          AlgoArgs['monotone_constraints_method'] = 'advanced'
+          AlgoArgs['monotone_penalty'] = 0.0
+          AlgoArgs['forcedsplits_filename'] = None
+          AlgoArgs['refit_decay_rate'] = 0.90
+          AlgoArgs['path_smooth'] = 0.0
     
-        # Setup Environment
-        import datatable
-        from datatable.models import Ftrl
-        AlgoArgs = dict()
+          # IO Dataset Parameters
+          AlgoArgs['max_bin'] = 255
+          AlgoArgs['min_data_in_bin'] = 3
+          AlgoArgs['data_random_seed'] = 1
+          AlgoArgs['is_enable_sparse'] = True
+          AlgoArgs['enable_bundle'] = True
+          AlgoArgs['use_missing'] = True
+          AlgoArgs['zero_as_missing'] = False
+          AlgoArgs['two_round'] = False
     
-        # TrainMethod Train
-        model = Ftrl()
-        AlgoArgs['interactions'] = model.interactions
-        if TrainMethod.lower() == 'train':
-          AlgoArgs['alpha'] = model.alpha
-          AlgoArgs['beta'] = model.beta
-          AlgoArgs['lambda1'] = model.lambda1
-          AlgoArgs['lambda2'] = model.lambda2
-          AlgoArgs['nbins'] = model.nbins
-          AlgoArgs['mantissa_nbits'] = model.mantissa_nbits
-          AlgoArgs['nepochs'] = model.nepochs
-        else:
-          AlgoArgs['alpha'] = [model.alpha, model.alpha * 2, model.alpha * 3]
-          AlgoArgs['beta'] = [model.beta * 0.50, model.beta, model.beta * 1.5]
-          AlgoArgs['lambda1'] = [model.lambda1, model.lambda1+0.05, model.lambda1+0.10]
-          AlgoArgs['lambda2'] = [model.lambda2, model.lambda2+0.05, model.lambda2+0.10]
-          AlgoArgs['nbins'] = [int(model.nbins*0.5), model.nbins, int(model.nbins*1.5)]
-          AlgoArgs['mantissa_nbits'] = [int(model.mantissa_nbits / 2), model.mantissa_nbits, int(model.mantissa_nbits*1.5)]
-          AlgoArgs['nepochs'] = [model.nepochs, model.nepochs*2, model.nepochs*3]
+          # Convert Parameters
+          AlgoArgs['convert_model'] = None
+          AlgoArgs['convert_model_language'] = 'cpp'
     
-        # Target Type Specific Args
-        if TargetType.lower() == 'regression':
-          AlgoArgs['model_type'] = 'regression'
-        elif TargetType.lower() == 'classification':
-          AlgoArgs['model_type'] = 'binomial'
-        elif TargetType.lower() == 'multiclass':
-          AlgoArgs['negative_class'] = model.negative_class
-          AlgoArgs['model_type'] = 'multinomial'
+          # Objective Parameters
+          AlgoArgs['boost_from_average'] = True
+          AlgoArgs['alpha'] = 0.90
+          AlgoArgs['fair_c'] = 1.0
+          AlgoArgs['poisson_max_delta_step'] = 0.70
+          AlgoArgs['tweedie_variance_power'] = 1.5
+          AlgoArgs['lambdarank_truncation_level'] = 30
+    
+          # Metric Parameters (metric is in Core)
+          AlgoArgs['is_provide_training_metric'] = True
+          AlgoArgs['eval_at'] = [1,2,3,4,5]
+    
+          # Network Parameters
+          AlgoArgs['num_machines'] = 1
+    
+          # GPU Parameters
+          AlgoArgs['gpu_platform_id'] = -1
+          AlgoArgs['gpu_device_id'] = -1
+          AlgoArgs['gpu_use_dp'] = True
+          AlgoArgs['num_gpu'] = 1
 
-        # Return
-        ArgsList['AlgoArgs'] = AlgoArgs
-        MasterArgs[Algo] = ArgsList
-
-    # Return
-    return MasterArgs
-
-
-class RetroFit:
-    """
-    ####################################
-    # Goals
-    ####################################
-    
-    Training
-    Feature Tuning
-    Grid Tuning
-    Continued Training
-    Scoring
-    Model Evaluation
-    Model Interpretation
-    
-    ####################################
-    # Functions
-    ####################################
-    
-    ML1_Single_Train()
-    ML1_Single_Score()
-    PrintAlgoArgs()
-    
-    ####################################
-    # Attributes
-    ####################################
-    
-    self.ModelArgs = ModelArgs
-    self.ModelArgsNames = [*self.ModelArgs]
-    self.Runs = len(self.ModelArgs)
-    self.DataSets = DataSets
-    self.DataSetsNames = [*self.DataSets]
-    self.ModelList = dict()
-    self.ModelListNames = []
-    self.FitList = dict()
-    self.FitListNames = []
-    self.EvaluationList = dict()
-    self.EvaluationListNames = []
-    self.InterpretationList = dict()
-    self.InterpretationListNames = []
-    self.CompareModelsList = dict()
-    self.CompareModelsListNames = []
-    """
-    
-    # Define __init__
-    def __init__(self, ModelArgs, ModelData, DataFrames):
-        self.ModelArgs = ModelArgs
+        # Store Model Parameters
+        self.ModelArgs = AlgoArgs
         self.ModelArgsNames = [*self.ModelArgs]
-        self.Runs = len(self.ModelArgs)
-        self.DataFrames = DataFrames
-        self.DataSets = ModelData
-        self.DataSetsNames = [*self.DataSets]
-        self.ModelList = dict()
-        self.ModelListNames = []
-        self.SavedModels = []
-        self.FitList = dict()
-        self.FitListNames = []
-        self.EvaluationList = dict()
-        self.EvaluationListNames = []
-        self.InterpretationList = dict()
-        self.InterpretationListNames = []
-        self.CompareModelsList = dict()
-        self.CompareModelsListNames = []
-    
+
+
     #################################################
+    # Function: Update Algo-Specific Args
+    #################################################
+    def update_model_parameters(
+        self,
+        allow_new: bool = False,
+        **kwargs
+    ):
+        """
+        Update existing model parameters in self.ModelArgs.
+    
+        Example:
+            model.update_model_parameters(iterations=2000, depth=8)
+    
+        Parameters
+        ----------
+        allow_new : bool
+            If False (default), raise if a parameter name does not already
+            exist in self.ModelArgs. If True, new keys are allowed.
+        **kwargs :
+            Parameter names and values to update.
+        """
+        if self.ModelArgs is None:
+            raise RuntimeError(
+                "ModelArgs is None. Call create_model_data() (which calls "
+                "create_model_parameters()) before updating parameters."
+            )
+    
+        for key, value in kwargs.items():
+            if not allow_new and key not in self.ModelArgs:
+                raise KeyError(
+                    f"Parameter '{key}' is not in ModelArgs for algorithm "
+                    f"'{self.Algorithm}'. Existing keys: {list(self.ModelArgs.keys())}"
+                )
+            self.ModelArgs[key] = value
+
+
     #################################################
     # Function: Print Algo Args
     #################################################
-    #################################################
-    def PrintAlgoArgs(self, Algo=None):
-        from retrofit import utils
-        print(utils.printdict(self.ModelArgs[Algo]['AlgoArgs']))
+    def print_algo_args(self):
+        print(u.print_dict(self.ModelArgs))
 
-    #################################################
+
     #################################################
     # Function: Train Model
     #################################################
-    #################################################
-    def ML1_Single_Train(self, Algorithm=None):
-      
-        # Check
-        if len(self.ModelArgs) == 0:
-            raise Exception('self.ModelArgs is empty')
-  
-        # Which Algo
-        if not Algorithm is None:
-            TempArgs = self.ModelArgs[Algorithm]
-        else:
-            TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
-
-        #################################################
-        # Ftrl Method
-        #################################################
-        if TempArgs.get('Algorithms').lower() == 'ftrl':
-  
-            # Setup Environment
-            import datatable as dt
-            from datatable import f
-            from datatable.models import Ftrl
+    def train(self):
+        """
+        Train a model based on self.Algorithm and self.TargetType using self.ModelData and self.ModelArgs.
     
-            # Define training data and target variable
-            TrainData = self.DataSets.get('train_data')
-            TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
+        Uses:
+            - train_data      → for fitting
+            - validation_data → for eval / early stopping (if present)
+            - test_data       → NOT used here; reserved for evaluate()
     
-            # Initialize model
-            Model = Ftrl(**TempArgs.get('AlgoArgs'))
-            self.ModelList[f"Ftrl{str(len(self.ModelList) + 1)}"] = Model
-            self.ModelListNames.append(f"Ftrl{str(len(self.ModelList))}")
+        Populates:
+            - self.Model           (main trained model / booster)
+            - self.ModelList       (historical models)
+            - self.ModelListNames
+            - self.FitList         (same objects as Model, for now)
+            - self.FitListNames
+        """
     
-            # Train Model
-            self.FitList[f"Ftrl{str(len(self.FitList) + 1)}"] = Model.fit(TrainData[:, f[:].remove(f[TargetColumnName])], TrainData[:, TargetColumnName])
-            self.FitListNames.append(f"Ftrl{str(len(self.FitList))}")
-
+        # Basic checks
+        if self.ModelData is None:
+            raise RuntimeError("ModelData is None. Call create_model_data() before train().")
+    
+        if not self.ModelArgs:
+            raise RuntimeError("self.ModelArgs is empty. Call create_model_parameters() before train().")
+    
+        if self.Algorithm is None:
+            raise RuntimeError("self.Algorithm is None. It must be 'catboost', 'xgboost', or 'lightgbm'.")
+    
         #################################################
         # CatBoost Method
         #################################################
-        if TempArgs.get('Algorithms').lower() == 'catboost':
-  
-            # Setup Environment
-            import catboost
-            if TempArgs.get('TargetType').lower() in ['classification', 'multiclass']:
-                from catboost import CatBoostClassifier
-            else:
-                from catboost import CatBoostRegressor
-  
-            # Define training data and target variable
-            TrainData = self.DataSets.get('train_data')
-            ValidationData = self.DataSets.get('validation_data')
-            TestData = self.DataSets.get('test_data')
-            
-            # Initialize model
-            if TempArgs.get('TargetType').lower() == 'regression':
-                Model = CatBoostRegressor(**TempArgs.get('AlgoArgs'))
-            elif TempArgs.get('TargetType').lower() == 'classification':
-                Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
-            elif TempArgs.get('TargetType').lower() == 'multiclass':
-                self.ModelArgs.get('CatBoost').get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-                TempArgs.get('AlgoArgs')['classes_count'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-                Model = CatBoostClassifier(**TempArgs.get('AlgoArgs'))
-            
-            # Store Model
-            self.ModelList[f"CatBoost{str(len(self.ModelList) + 1)}"] = Model
-            self.ModelListNames.append(f"CatBoost{str(len(self.ModelList))}")
+        if self.Algorithm == 'catboost':
     
-            # Train Model
-            self.FitList[f"CatBoost{str(len(self.FitList) + 1)}"] = Model.fit(X=TrainData, eval_set=ValidationData, use_best_model=True)
-            self.FitListNames.append(f"CatBoost{str(len(self.FitList))}")
-
+            train_pool = self.ModelData["train_data"]
+            valid_pool = self.ModelData.get("validation_data")
+            # test_pool exists but is intentionally NOT used here:
+            # test_pool = self.ModelData.get("test_data")
+    
+            # Initialize model
+            if self.TargetType == "regression":
+                model = CatBoostRegressor(**self.ModelArgs)
+            elif self.TargetType == "classification":
+                model = CatBoostClassifier(**self.ModelArgs)
+            elif self.TargetType == "multiclass":
+                model = CatBoostClassifier(**self.ModelArgs)
+            else:
+                raise ValueError(f"Unsupported TargetType for CatBoost: {self.TargetType}")
+    
+            # Fit model (validation optional)
+            if valid_pool is not None:
+                model.fit(
+                    train_pool,
+                    eval_set=valid_pool,
+                    use_best_model=True
+                )
+            else:
+                model.fit(train_pool)
+    
+            # Store main handle
+            self.Model = model
+    
+            # Track in model lists
+            name = f"CatBoost{len(self.ModelList) + 1}"
+            self.ModelList[name] = model
+            self.ModelListNames.append(name)
+    
+            self.FitList[name] = model
+            self.FitListNames.append(name)
+    
+            return model  # optional convenience
+    
         #################################################
         # XGBoost Method
         #################################################
-        if TempArgs.get('Algorithms').lower() == 'xgboost':
-  
-            # Setup Environment
-            import xgboost as xgb
-            from xgboost import train
-            
-            # Define training data and target variable
-            TrainData = self.DataSets.get('train_data')
-            ValidationData = self.DataSets.get('validation_data')
-            TestData = self.DataSets.get('test_data')
+        if self.Algorithm == 'xgboost':
     
-            # Update args for multiclass
-            if TempArgs.get('TargetType').lower() == 'multiclass':
-                self.ModelArgs.get('XGBoost').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-                TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+            dtrain = self.ModelData["train_data"]
+            dvalid = self.ModelData.get("validation_data")
+            # dtest exists but is intentionally NOT used here:
+            # dtest  = self.ModelData.get("test_data")
     
-            # Initialize model
-            Model = xgb.XGBModel(**TempArgs.get('AlgoArgs'))
+            # For multiclass, require num_class to be set in ModelArgs
+            if self.TargetType == "multiclass" and "num_class" not in self.ModelArgs:
+                raise ValueError(
+                    "For multiclass XGBoost, 'num_class' must be present in self.ModelArgs."
+                )
     
-            # Store Model
-            self.ModelList[f"XGBoost{str(len(self.ModelList) + 1)}"] = Model
-            self.ModelListNames.append(f"XGBoost{str(len(self.ModelList))}")
+            # Build evaluation list: ONLY train + validation
+            evals = []
+            if dtrain is not None:
+                evals.append((dtrain, "train"))
+            if dvalid is not None:
+                evals.append((dvalid, "validation"))
     
-            # Train Model
-            self.FitList[f"XGBoost{str(len(self.FitList) + 1)}"] = xgb.train(params=TempArgs.get('AlgoArgs'), dtrain=TrainData, evals=[(ValidationData, 'Validate'), (TestData, 'Test')], num_boost_round=TempArgs.get('AlgoArgs').get('num_boost_round'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_rounds'))
-            self.FitListNames.append(f"XGBoost{str(len(self.FitList))}")
-        
+            num_boost_round = self.ModelArgs.get("num_boost_round", 100)
+            early_stopping_rounds = self.ModelArgs.get("early_stopping_rounds", None)
+    
+            booster = xgb.train(
+                params=self.ModelArgs,
+                dtrain=dtrain,
+                evals=evals if evals else None,
+                num_boost_round=num_boost_round,
+                early_stopping_rounds=early_stopping_rounds
+            )
+    
+            # Store main handle
+            self.Model = booster
+    
+            # Track in model lists
+            name = f"XGBoost{len(self.ModelList) + 1}"
+            self.ModelList[name] = booster
+            self.ModelListNames.append(name)
+    
+            self.FitList[name] = booster
+            self.FitListNames.append(name)
+    
+            return booster
+    
         #################################################
         # LightGBM Method
         #################################################
-        if TempArgs.get('Algorithms').lower() == 'lightgbm':
-  
-            # Setup Environment
-            import lightgbm as lgbm
-            from lightgbm import LGBMModel
-            
-            # Define training data and target variable
-            TrainData = self.DataSets.get('train_data')
-            ValidationData = self.DataSets.get('validation_data')
-            TestData = self.DataSets.get('test_data')
+        if self.Algorithm == 'lightgbm':
     
-            # Create temp args
-            import copy
-            temp_args = copy.deepcopy(TempArgs)
+            train_set = self.ModelData["train_data"]
+            valid_set = self.ModelData.get("validation_data")
+            # test_set exists but is intentionally NOT used here:
+            # test_set  = self.ModelData.get("test_data")
     
-            # Update args for multiclass
-            if TempArgs.get('TargetType').lower() == 'multiclass':
-                self.ModelArgs.get('LightGBM').get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-                TempArgs.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
-                temp_args.get('AlgoArgs')['num_class'] = self.DataSets.get('ArgsList')['MultiClass'].shape[0]
+            # Build valid_sets list: ONLY validation
+            valid_sets = [valid_set] if valid_set is not None else None
     
-            # Create modified args
-            del temp_args['AlgoArgs']['num_iterations']
-            del temp_args['AlgoArgs']['early_stopping_round']
+            num_boost_round = self.ModelArgs.get("num_iterations", 100)
+            early_stopping_round = self.ModelArgs.get("early_stopping_round", None)
     
-            # Initialize model
-            Model = LGBMModel(**temp_args.get('AlgoArgs'))
+            booster = lgbm.train(
+                params=self.ModelArgs,
+                train_set=train_set,
+                valid_sets=valid_sets,
+                num_boost_round=num_boost_round,
+                early_stopping_rounds=early_stopping_round
+            )
     
-            # Store Model
-            self.ModelList[f"LightGBM{str(len(self.ModelList) + 1)}"] = Model
-            self.ModelListNames.append(f"LightGBM{str(len(self.ModelList))}")
+            # Store main handle
+            self.Model = booster
     
-            # Initialize model
-            self.FitList[f"LightGBM{str(len(self.FitList) + 1)}"] = lgbm.train(params=temp_args.get('AlgoArgs'), train_set=TrainData, valid_sets=[ValidationData, TestData], num_boost_round=TempArgs.get('AlgoArgs').get('num_iterations'), early_stopping_rounds=TempArgs.get('AlgoArgs').get('early_stopping_round'))
-            self.FitListNames.append(f"LightGBM{str(len(self.FitList))}")
+            # Track in model lists
+            name = f"LightGBM{len(self.ModelList) + 1}"
+            self.ModelList[name] = booster
+            self.ModelListNames.append(name)
     
-    #################################################
-    #################################################
-    # Function: Save Models
-    #################################################
-    #################################################
-    def ML1_SaveModel(self, ModelName=None, Algorithm=None, **kwargs):
-        """
-        **kwargs are for algorithm-specific additional arguments
-        
-        # CatBoost: https://catboost.ai/en/docs/concepts/python-reference_catboostregressor_save_model
-        
-        paramter name: format='cbm'
-        
-        cbm — CatBoost binary format.
-        coreml — Apple CoreML format (only datasets without categorical features are currently supported).
-        json — JSON format. Refer to the CatBoost JSON model tutorial for format details.
-        python — Standalone Python code (multiclassification models are not currently supported). See the Python section for details on applying the resulting model.
-        cpp — Standalone C++ code (multiclassification models are not currently supported). See the C++ section for details on applying the resulting model.
-        onnx — ONNX-ML format (only datasets without categorical features are currently supported). Refer to https://onnx.ai/ for details. See the ONNX section for details on applying the resulting model.
-        pmml — PMML version 4.3 format. Categorical features must be interpreted as one-hot encoded during the training if present in the training dataset. This can be accomplished by setting the --one-hot-max-size/one_hot_max_size parameter to a value that is greater than the maximum number of unique categorical feature values among all categorical features in the dataset. See the PMML section for details on applying the resulting model.
-        
-        
-        paramter name: export_parameters=None
-        
-        Description
-        
-        Additional format-dependent parameters for:
-        
-            Apple CoreML
-        
-            Possible values (all are strings):
-        
-                prediction_type. Possible values are "probability "and "raw".
-        
-                coreml_description
-        
-                coreml_model_version
-        
-                coreml_model_author
-        
-                coreml_model_license
-        
-            ONNX-ML
-                onnx_graph_name
-                onnx_domain
-                onnx_model_version
-                onnx_doc_string
-        
-            See the ONNX-ML parameters reference for details.
-        
-            PMML
-        
-            Possible values (all are strings):
-                pmml_copyright
-                pmml_description
-                pmml_model_version
-        
-            See the PMML parameters reference for details.
+            self.FitList[name] = booster
+            self.FitListNames.append(name)
+    
+            return booster
+    
+        # If we reach here, algo was not recognized
+        raise ValueError(f"Unsupported Algorithm: {self.Algorithm}")
 
-        
-        paramter name: pool
-        
-        Description
-        
-        The dataset previously used for training.
-        
-        This parameter is required if the model contains categorical features and the output format is cpp, python, or JSON.
-        
-        """
-        
-        # Ftrl
-        if Algorithm.lower() == 'ftrl':
-            u.save(x = self.ModelList[f"{ModelName}"], Path=None)
-            self.SavedModels.append(f"CatBoost{str(len(self.SavedModels))}")
-        
-        # CatBoost
-        if Algorithm.lower() == 'catboost':
-            catboost.save_model(f"{Path}/{ModelID}", format="cbm", export_parameters=None, pool=None)
-        
-        # XGBoost
-        if Algorithm.lower() == 'xgboost':
-            import xgboost as xgb
-            from xgboost import Booster
-            Booster.save_model(f"{Path}/{ModelID}")
-            # Booster.dump_model() # Dump model info out but not loadable afterwards
-        
-        # LightGBM
-        if Algorithm.lower() == 'lightgbm':
-            catboost.asdf
-    
-    #################################################
-    #################################################
-    # Function: Load Models
-    #################################################
-    #################################################
-    def ML1_LoadModel(ModelName=None, Algorithm=None, **kwargs):
-        
-        """
-        **kwargs are for passing args to algorithm-specific load() function
-        
-        Possible values:
 
-        cbm — CatBoost binary format.
-        AppleCoreML(only datasets without categorical features are currently supported).
-        json — JSON format. Refer to the CatBoost JSON model tutorial for format details.
-        onnx — ONNX-ML format (only datasets without categorical features are currently supported). Refer to https://onnx.ai/ for details. See the ONNX section for details on applying the resulting model.
-        
-        """
-        
-        # Ftrl
-        if Algorithm.lower() == 'ftrl':
-            return u.load(Path=self.SavedModelNames[f"{ftrl}"])
-        
-        # CatBoost
-        if Algorithm.lower() == 'catboost':
-            return catboost.load_model(self.SavedModelNames[f"{ModelName}"], format='cbm')
-
-        
-        # XGBoost
-        if Algorithm.lower() == 'xgboost':
-            return catboost.asdf
-        
-        # LightGBM
-        if Algorithm.lower() == 'lightgbm':
-            return catboost.asdf
-      
-
-    #################################################
     #################################################
     # Function: Score data 
     #################################################
-    #################################################
-    def ML1_Single_Score(self, DataName=None, ModelName=None, Algorithm=None, NewData=None):
+    
+    def _score_catboost(self, model, df_pl: pl.DataFrame, feature_cols, internal_name: str | None):
+        """
+        Score a Polars DataFrame with a CatBoost model.
+        Uses pre-built Pools for train/validation/test when available.
+        """
+        import numpy as np
+    
+        # Use existing Pools for internal splits if available
+        pool = None
+        if internal_name == "train":
+            pool = self.ModelData.get("train_data")
+        elif internal_name == "validation":
+            pool = self.ModelData.get("validation_data")
+        elif internal_name == "test":
+            pool = self.ModelData.get("test_data")
+    
+        # If no pool, build one from df_pl
+        if pool is None:
+            df_pd = self._to_pandas(df_pl)
+            data_pd = df_pd[feature_cols] if feature_cols else df_pd
+            pool = Pool(
+                data=data_pd,
+                label=None,
+                cat_features=self.CategoricalColumnNames,
+                text_features=self.TextColumnNames,
+                thread_count=self.ModelArgs.get("thread_count", -1)
+            )
+    
+        # Prediction logic by TargetType
+        if self.TargetType == "regression":
+            preds = model.predict(pool, prediction_type="RawFormulaVal")
+            preds = np.asarray(preds).ravel()
+            col_name = f"Predict_{self.TargetColumnName or 'target'}"
+            return df_pl.with_columns(
+                pl.Series(col_name, preds)
+            )
+    
+        # For classification / multiclass, we use probabilities
+        preds = model.predict(pool, prediction_type="Probability")
+        preds = np.asarray(preds)
+    
+        if self.TargetType == "classification":
+            # Binary: CatBoost usually returns Nx2
+            if preds.ndim == 1:
+                p1 = preds
+            else:
+                p1 = preds[:, 1]
+            p0 = 1.0 - p1
+            return df_pl.with_columns([
+                pl.Series("p1", p1),
+                pl.Series("p0", p0),
+            ])
+    
+        if self.TargetType == "multiclass":
+            # preds shape: (N, num_classes)
+            n_classes = preds.shape[1]
+            cols = [
+                pl.Series(f"class_{i}", preds[:, i])
+                for i in range(n_classes)
+            ]
+            return df_pl.with_columns(cols)
+    
+        raise ValueError(f"Unsupported TargetType for CatBoost scoring: {self.TargetType}")
 
-        # Check
-        if len(self.ModelList) == 0:
-            raise Exception('No models found in self.ModelList')
-  
-        # Which Algo
-        if not Algorithm is None:
-            TempArgs = self.ModelArgs[Algorithm]
+    def _score_xgboost(self, model, df_pl: pl.DataFrame, internal_name: str | None):
+        """
+        Score a Polars DataFrame with an XGBoost Booster.
+        Uses self.NumericColumnNames for features.
+        """
+        import numpy as np
+    
+        if not self.NumericColumnNames:
+            raise ValueError("NumericColumnNames must be set for XGBoost scoring.")
+    
+        # Prepare features
+        df_pd = self._to_pandas(df_pl)
+        X = df_pd[self.NumericColumnNames]
+        dmat = xgb.DMatrix(X)
+    
+        # Predict
+        preds = model.predict(dmat)
+        preds = np.asarray(preds)
+    
+        # Regression
+        if self.TargetType == "regression":
+            col_name = f"Predict_{self.TargetColumnName or 'target'}"
+            return df_pl.with_columns(
+                pl.Series(col_name, preds.ravel())
+            )
+    
+        # Binary classification
+        if self.TargetType == "classification":
+            # XGBoost binary: often returns prob of class 1 as 1D array
+            if preds.ndim == 1:
+                p1 = preds
+            else:
+                # In case it returns Nx1
+                p1 = preds[:, 0]
+            p0 = 1.0 - p1
+            return df_pl.with_columns([
+                pl.Series("p1", p1),
+                pl.Series("p0", p0),
+            ])
+    
+        # Multiclass classification
+        if self.TargetType == "multiclass":
+            # preds: (N, num_classes)
+            n_classes = preds.shape[1]
+            cols = [
+                pl.Series(f"class_{i}", preds[:, i])
+                for i in range(n_classes)
+            ]
+            return df_pl.with_columns(cols)
+    
+        raise ValueError(f"Unsupported TargetType for XGBoost scoring: {self.TargetType}")
+
+    def _score_lightgbm(self, model, df_pl: pl.DataFrame, internal_name: str | None):
+        """
+        Score a Polars DataFrame with a LightGBM Booster.
+        Uses self.NumericColumnNames for features.
+        """
+        import numpy as np
+    
+        if not self.NumericColumnNames:
+            raise ValueError("NumericColumnNames must be set for LightGBM scoring.")
+    
+        df_pd = self._to_pandas(df_pl)
+        X = df_pd[self.NumericColumnNames]
+    
+        preds = model.predict(X)
+        preds = np.asarray(preds)
+    
+        # Regression
+        if self.TargetType == "regression":
+            col_name = f"Predict_{self.TargetColumnName or 'target'}"
+            return df_pl.with_columns(
+                pl.Series(col_name, preds.ravel())
+            )
+    
+        # Binary classification (preds: prob of class 1)
+        if self.TargetType == "classification":
+            if preds.ndim == 1:
+                p1 = preds
+            else:
+                p1 = preds[:, 0]
+            p0 = 1.0 - p1
+            return df_pl.with_columns([
+                pl.Series("p1", p1),
+                pl.Series("p0", p0),
+            ])
+    
+        # Multiclass classification
+        if self.TargetType == "multiclass":
+            # preds: (N, num_classes)
+            n_classes = preds.shape[1]
+            cols = [
+                pl.Series(f"class_{i}", preds[:, i])
+                for i in range(n_classes)
+            ]
+            return df_pl.with_columns(cols)
+    
+        raise ValueError(f"Unsupported TargetType for LightGBM scoring: {self.TargetType}")
+
+    def _score_one(
+        self,
+        df_pl: pl.DataFrame,
+        internal_name: str | None,
+        model,
+        store: bool,
+    ):
+        """
+        Internal helper to score a single Polars DataFrame with the current algorithm
+        and optionally store it in self.ScoredData[internal_name].
+        """
+    
+        feature_cols = (self.NumericColumnNames or []) + \
+                       (self.CategoricalColumnNames or []) + \
+                       (self.TextColumnNames or [])
+    
+        if self.Algorithm == "catboost":
+            scored = self._score_catboost(model, df_pl, feature_cols, internal_name)
+        elif self.Algorithm == "xgboost":
+            scored = self._score_xgboost(model, df_pl, internal_name)
+        elif self.Algorithm == "lightgbm":
+            scored = self._score_lightgbm(model, df_pl, internal_name)
         else:
-            TempArgs = self.ModelArgs[[*self.ModelArgs][0]]
-  
-        # Setup Environment
-        import datatable as dt
-      
-        #################################################
-        # Ftrl Method
-        #################################################
-        if TempArgs['Algorithms'].lower() == 'ftrl':
-  
-            # Setup Environment
-            from datatable import f
-            from datatable.models import Ftrl
-            
-            # Extract model
-            if not ModelName is None:
-                Model = self.ModelList.get(ModelName)
-            else:
-                Model = self.ModelList.get(f"Ftrl{str(len(self.FitList))}")
+            raise ValueError(f"Unsupported Algorithm in score(): {self.Algorithm}")
     
-            # Grab scoring data
-            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-            if NewData is None:
-                score_data = self.DataSets[DataName]
-            else:
-                score_data = NewData
-            
-            # Split frames
-            if TargetColumnName in score_data.names:
-                TargetData = score_data[:, f[TargetColumnName]]
-                score_data = score_data[:, f[:].remove(f[TargetColumnName])]
+        # Only store if this is an internal split and store=True
+        if store and internal_name is not None:
+            self.ScoredData[internal_name] = scored
     
-            # Score Model and append data set name to scoring data
-            if self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'regression':
-                score_data.cbind(Model.predict(score_data))
-                score_data.names = {TargetColumnName: f"Predict_{TargetColumnName}"}
-            elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'classification':
-                score_data.cbind(Model.predict(score_data))
-                score_data.names = {'1.0': 'p1'}
-                score_data.names = {'0.0': 'p0'}
-            elif self.ModelArgs.get('Ftrl').get('TargetType').lower() == 'multiclass':
-                score_data.cbind(Model.predict(score_data))
-    
-            # Return preds
-            if not NewData is None:
-                return ScoreData
-            
-            # cbind Target column back to score_data
-            score_data.cbind(TargetData)
-    
-            # Store data and update names
-            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = score_data
-            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+        return scored
 
-        #################################################
-        # CatBoost Method
-        #################################################
-        if TempArgs['Algorithms'].lower() == 'catboost':
-  
-            # Extract Model
-            if not ModelName is None:
-                Model = self.ModelList.get(ModelName)
-            else:
-                Model = self.ModelList.get(f"CatBoost{str(len(self.FitList))}")
+    def score(
+        self,
+        DataName: str | None = None,
+        NewData=None,
+        ModelName: str | None = None,
+        store: bool = True,
+        return_results: bool = False,
+    ):
+        """
+        Score data with the trained model.
     
-            # Grab dataframe data
-            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-            if NewData is None:
-                pred_data = self.DataSets[DataName]
-                if DataName == 'test_data':
-                    ScoreData = self.DataFrames.get('TestData')
-                elif DataName == 'validation_data':
-                    ScoreData = self.DataFrames.get('ValidationData')
-                elif DataName == 'train_data':
-                    ScoreData = self.DataFrames.get('TrainData')
-            else:
-                pred_data = NewData
+        Behavior
+        --------
+        - NewData is provided:
+            * Score ONLY NewData.
+            * Do NOT store in self.ScoredData.
+            * Always return the scored Polars DataFrame.
     
-            # Generate preds and add to datatable frame
-            if TempArgs.get('TargetType').lower() == 'regression':
-                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(pred_data, prediction_type = 'RawFormulaVal')
-            elif TempArgs.get('TargetType').lower() == 'classification':
-                temp = Model.predict(pred_data, prediction_type = 'Probability')
-                ScoreData['p0'] = temp[:,0]
-                ScoreData['p1'] = temp[:,1]
-            elif TempArgs.get('TargetType').lower() == 'multiclass':
-                preds = dt.Frame(Model.predict(pred_data, prediction_type = 'Probability'))
-                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                    from datatable import cbind
-                    temp = self.DataSets.get('ArgsList')['MultiClass']
-                    counter = 0
-                    for val in temp['Old'].to_list()[0]:
-                        preds.names = {f"C{counter}": val}
-                        counter += 1
-        
-                        # Combine ScoreData and preds
-                        ScoreData.cbind(preds)
-  
-            # Return preds
-            if not NewData is None:
-                return ScoreData
+        - NewData is None and DataName is None:
+            * Score ALL available internal splits: 'train', 'validation', 'test'.
+            * Store scored frames in self.ScoredData[split] if store=True.
+            * If return_results=True, return dict {split: pl.DataFrame}, else return None.
     
-            # Store data and update names
-            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
+        - NewData is None and DataName is one of {'train','validation','test'}:
+            * Score ONLY that split.
+            * Store scored frame in self.ScoredData[DataName] if store=True.
+            * If return_results=True, return the scored pl.DataFrame, else return None.
+        """
+    
+        # 1) Check model
+        if self.Model is None and not self.ModelList:
+            raise RuntimeError("No trained models found. Call train() before score().")
+    
+        # 2) Choose model
+        if ModelName is not None:
+            model = self.ModelList.get(ModelName) or self.FitList.get(ModelName)
+            if model is None:
+                raise KeyError(f"Model '{ModelName}' not found in ModelList or FitList.")
+        else:
+            if self.Model is None:
+                raise RuntimeError("self.Model is None and no ModelName provided.")
+            model = self.Model
+    
+        # 3) NewData path → always return, never store
+        if NewData is not None:
+            df_pl = self._normalize_input_df(NewData)
+            scored = self._score_one(
+                df_pl=df_pl,
+                internal_name=None,   # external data → no internal key
+                model=model,
+                store=False           # explicitly do not store
+            )
+            return scored  # ignore return_results in this path
+    
+        # 4) No NewData and no DataName → score ALL internal splits
+        if DataName is None:
+            out = {}
+            for split in ("train", "validation", "test"):
+                df_pl = self.DataFrames.get(split)
+                if df_pl is None:
+                    continue
+    
+                scored_split = self._score_one(
+                    df_pl=df_pl,
+                    internal_name=split,
+                    model=model,
+                    store=store,
+                )
+                if return_results:
+                    out[split] = scored_split
+    
+            if (
+                self.DataFrames.get("train") is None
+                and self.DataFrames.get("validation") is None
+                and self.DataFrames.get("test") is None
+            ):
+                raise RuntimeError(
+                    "No internal DataFrames found to score. "
+                    "Did you call create_model_data()?"
+                )
 
-        #################################################
-        # XGBoost Method
-        #################################################
-        if TempArgs['Algorithms'].lower() == 'xgboost':
-  
-            # Environment
-            import xgboost as xgb
-            from datatable import f
     
-            # Extract Model
-            if not ModelName is None:
-                Model = self.FitList.get(ModelName)
-            else:
-                Model = self.FitList.get(f"XGBoost{str(len(self.FitList))}")
+            # return dict if requested, else None
+            return out if return_results else None
     
-            # Grab dataframe data
-            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-            if NewData is None:
-                pred_data = self.DataSets[DataName]
-                if DataName == 'test_data':
-                    ScoreData = self.DataFrames.get('TestData')
-                elif DataName == 'validation_data':
-                    ScoreData = self.DataFrames.get('ValidationData')
-                elif DataName == 'train_data':
-                    ScoreData = self.DataFrames.get('TrainData')
-            else:
-                ScoreData = NewData
-                pred_data = self.DataSets[DataName]
+        # 5) Single internal split
+        if DataName not in ("train", "validation", "test"):
+            raise ValueError("DataName must be one of: 'train', 'validation', 'test'.")
     
-            # Generate preds and add to datatable frame
-            if TempArgs.get('TargetType').lower() != 'multiclass':
-                
-                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(
-                  data = pred_data, 
-                  output_margin=False, 
-                  pred_leaf=False, 
-                  pred_contribs=False,
-                  approx_contribs=False, 
-                  pred_interactions=False, 
-                  validate_features=True, 
-                  training=False, 
-                  iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-                  strict_shape=False)
-              
-                # Classification
-                if TempArgs.get('TargetType').lower() == 'classification':
-                    ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-                    ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
-              
-            else:
-                preds = dt.Frame(Model.predict(
-                  data = pred_data, 
-                  output_margin=False, 
-                  pred_leaf=False, 
-                  pred_contribs=False,
-                  approx_contribs=False, 
-                  pred_interactions=False, 
-                  validate_features=True, 
-                  training=False, 
-                  iteration_range=(0, self.FitList[f"XGBoost{str(len(self.FitList))}"].best_iteration), 
-                  strict_shape=False))
+        df_pl = self.DataFrames.get(DataName)
+        if df_pl is None:
+            raise ValueError(f"self.DataFrames['{DataName}'] is None; did you call create_model_data()?")
     
-                # MultiClass Case
-                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                    from datatable import cbind
-                    temp = self.DataSets.get('ArgsList')['MultiClass']
-                    counter = 0
-                    for val in temp['Old'].to_list()[0]:
-                        preds.names = {f"C{counter}": val}
-                        counter += 1
-      
-                # Combine ScoreData and preds
-                ScoreData.cbind(preds)
+        scored = self._score_one(
+            df_pl=df_pl,
+            internal_name=DataName,
+            model=model,
+            store=store,
+        )
     
-            # Return preds
-            if not NewData is None:
-                return ScoreData
-    
-            # Store data and update names
-            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
-      
-        #################################################
-        # LightGBM Method
-        #################################################
-        if TempArgs['Algorithms'].lower() == 'lightgbm':
-          
-            # Environment
-            import lightgbm as lgbm
-            from datatable import f
-            
-            # Extract Model
-            if not ModelName is None:
-                Model = self.FitList.get(ModelName)
-            else:
-                Model = self.FitList.get(f"LightGBM{str(len(self.FitList))}")
-              
-            # Grab dataframe data
-            TargetColumnName = self.DataSets.get('ArgsList')['TargetColumnName']
-            if NewData is None:
-                if DataName == 'test_data':
-                  ScoreData = self.DataFrames.get('TestData')
-                elif DataName == 'validation_data':
-                  ScoreData = self.DataFrames.get('ValidationData')
-                elif DataName == 'train_data':
-                  ScoreData = self.DataFrames.get('TrainData')
-            else:
-                ScoreData = NewData
-    
-            # Subset score features
-            scor = ScoreData[:, self.DataSets.get('ArgsList').get('NumericColumnNames')]
-            
-            # Regression and Classification
-            if TempArgs.get('TargetType').lower() != 'multiclass':
-                ScoreData[f"Predict_{TargetColumnName}"] = Model.predict(data = scor)
-              
-                # Non regression cases
-                if TempArgs.get('TargetType').lower() == 'classification':
-                    ScoreData.names = {f"Predict_{TargetColumnName}": "p1"}
-                    ScoreData = ScoreData[:, f[:].extend({'p0': 1 - f['p1']})]
-    
-            # MultiClass
-            else:
-                preds = dt.Frame(Model.predict(data = scor))
-                if not self.DataSets.get('ArgsList')['MultiClass'] is None:
-                    from datatable import cbind
-                    temp = self.DataSets.get('ArgsList')['MultiClass']
-                    counter = 0
-                    for val in temp['Old'].to_list()[0]:
-                      preds.names = {f"C{counter}": val}
-                      counter += 1
-    
-                    # Combine ScoreData and preds
-                    ScoreData.cbind(preds)
-    
-            # Return preds
-            if not NewData is None:
-                return ScoreData
-    
-            # Store data and update names
-            self.DataSets[f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}"] = ScoreData
-            self.DataSetsNames.append(f"Scored_{DataName}_{Algorithm}_{len(self.FitList)}")
-    
-    #################################################
+        return scored if return_results else None
+
+
     #################################################
     # Function: Evaluation
     #################################################
+    def evaluate(
+        self,
+        DataName: str | None = None,
+        df=None,
+        FitName: str | None = None,
+        ByVariables=None,
+        CostDict: dict = dict(tpcost=0.0, fpcost=1.0, fncost=1.0, tncost=0.0),
+    ):
+        """
+        Evaluate model performance on scored data.
+    
+        Parameters
+        ----------
+        DataName : {"train","validation","test"} or None
+            Name of internally scored dataset in self.ScoredData.
+            Ignored if `df` is provided.
+        df : polars.DataFrame or pandas.DataFrame or None
+            Explicit scored data to evaluate. Must contain target column and
+            prediction columns created by score().
+        FitName : str or None
+            Label for the model/run. Used in output and EvaluationList key.
+        ByVariables : str or list[str] or None
+            Column(s) to group by. If provided, metrics are computed per group.
+        CostDict : dict
+            Cost matrix for classification (tpcost, fpcost, fncost, tncost).
+    
+        Returns
+        -------
+        For regression:
+            pl.DataFrame with one row per group (or single row if no grouping).
+    
+        For binary classification:
+            pl.DataFrame with one row per (group, threshold).
+        """
+    
+        # -------------------------------
+        # 0) Normalize ByVariables
+        # -------------------------------
+        if ByVariables is None:
+            by_cols: list[str] = []
+        elif isinstance(ByVariables, str):
+            by_cols = [ByVariables]
+        elif isinstance(ByVariables, (list, tuple)):
+            by_cols = list(ByVariables)
+        else:
+            raise TypeError("ByVariables must be None, a string, or a list/tuple of strings.")
+    
+        # -------------------------------
+        # 1) Resolve scored data (Polars)
+        # -------------------------------
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df to evaluate().")
+    
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None — run score() first."
+                )
+    
+        target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError("self.TargetColumnName is None — did you call create_model_data()?")
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found in scored data.")
+    
+        # Helper: iterate groups (or single global "group")
+        if by_cols:
+            groups_iter = df_pl.group_by(by_cols, maintain_order=True)
+        else:
+            # Fake single group: no grouping columns, just the whole df
+            groups_iter = [({} , df_pl)]
+    
+        # timestamp + model name
+        create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        model_name = FitName or "RetroFitModel"
+        group_label = ",".join(by_cols) if by_cols else "GLOBAL"
+    
+        # -------------------------------
+        # 2) Regression
+        # -------------------------------
+        if self.TargetType.lower() == "regression":
+            pred_col = f"Predict_{target}"
+            if pred_col not in df_pl.columns:
+                raise ValueError(
+                    f"'{pred_col}' not found — did you run score() (regression)?"
+                )
+    
+            rows = []
+    
+            for key_vals, gdf in groups_iter:
+                # key_vals is either dict-like or scalar depending on Polars version
+                if isinstance(key_vals, dict):
+                    key_dict = key_vals
+                elif not by_cols:  # global case
+                    key_dict = {}
+                else:
+                    # older-style (tuple or scalar)
+                    if not isinstance(key_vals, tuple):
+                        key_vals = (key_vals,)
+                    key_dict = dict(zip(by_cols, key_vals))
+    
+                y_true = gdf[target].to_numpy()
+                y_pred = gdf[pred_col].to_numpy()
+    
+                if y_true.size == 0:
+                    # skip empty group
+                    continue
+    
+                # MSLE positivity check
+                msle_ok = (y_true > 0).all() and (y_pred > 0).all()
+    
+                row = {
+                    "ModelName": model_name,
+                    "CreateTime": create_time,
+                    "GroupingVars": group_label,
+                    "n_obs": int(y_true.size),
+                    "explained_variance": explained_variance_score(y_true, y_pred),
+                    "r2": r2_score(y_true, y_pred),
+                    "mae": mean_absolute_error(y_true, y_pred),
+                    "median_ae": median_absolute_error(y_true, y_pred),
+                    "mape": mean_absolute_percentage_error(y_true, y_pred),
+                    "mse": mean_squared_error(y_true, y_pred),
+                    "max_error": max_error(y_true, y_pred),
+                    "msle": mean_squared_log_error(y_true, y_pred) if msle_ok else -1.0,
+                }
+    
+                # attach group key columns
+                row.update(key_dict)
+                rows.append(row)
+    
+            out = pl.DataFrame(rows) if rows else pl.DataFrame([])
+    
+            key = FitName or f"{self.Algorithm}_regression_{DataName or 'data'}"
+            self.EvaluationList[key] = out
+            self.EvaluationListNames.append(key)
+    
+            return out
+    
+        # -------------------------------
+        # 3) Binary Classification
+        # -------------------------------
+        if self.TargetType.lower() == "classification":
+            if "p1" not in df_pl.columns:
+                raise ValueError("Missing 'p1' probability column for binary classification.")
+    
+            tpc = CostDict.get("tpcost", 0.0)
+            fpc = CostDict.get("fpcost", 1.0)
+            fnc = CostDict.get("fncost", 1.0)
+            tnc = CostDict.get("tncost", 0.0)
+    
+            thresholds = np.linspace(0.0, 1.0, 101)
+            all_rows = []
+    
+            for key_vals, gdf in groups_iter:
+                if isinstance(key_vals, dict):
+                    key_dict = key_vals
+                elif not by_cols:
+                    key_dict = {}
+                else:
+                    if not isinstance(key_vals, tuple):
+                        key_vals = (key_vals,)
+                    key_dict = dict(zip(by_cols, key_vals))
+    
+                y_true = gdf[target].to_numpy()
+                p1 = gdf["p1"].to_numpy()
+    
+                N1 = len(y_true)
+                if N1 == 0:
+                    continue
+    
+                P1 = np.sum(y_true == 1)
+                N0 = N1 - P1
+    
+                for thr in thresholds:
+                    y_pred = (p1 >= thr).astype(int)
+    
+                    TP = int(np.sum((y_pred == 1) & (y_true == 1)))
+                    TN = int(np.sum((y_pred == 0) & (y_true == 0)))
+                    FP = int(np.sum((y_pred == 1) & (y_true == 0)))
+                    FN = int(np.sum((y_pred == 0) & (y_true == 1)))
+    
+                    Accuracy = (TP + TN) / N1 if N1 else -1.0
+                    TPR = TP / P1 if P1 else -1.0
+                    TNR = TN / N0 if N0 else -1.0
+                    FNR = FN / P1 if P1 else -1.0
+                    FPR = FP / N1 if N1 else -1.0
+    
+                    denom = (TP + FP) * (TP + FN) * (TN + FP) * (TN + FN)
+                    if denom > 0:
+                        MCC = (TP * TN - FP * FN) / np.sqrt(denom)
+                    else:
+                        MCC = -1.0
+    
+                    if (TP + FP + FN) > 0:
+                        F1 = 2 * TP / (2 * TP + FP + FN)
+                        F2 = 3 * TP / (2 * TP + FP + FN)
+                        F05 = 1.5 * TP / (0.5 * TP + FP + FN)
+                    else:
+                        F1 = F2 = F05 = -1.0
+    
+                    PPV = TP / (TP + FP) if (TP + FP) else -1.0
+                    NPV = TN / (TN + FN) if (TN + FN) else -1.0
+                    Threat = TP / (TP + FP + FN) if (TP + FP + FN) else -1.0
+    
+                    if (TPR == -1.0) or (FPR == -1.0) or (N1 == 0):
+                        Utility = -1.0
+                    else:
+                        Utility = (
+                            (P1 / N1) * (tpc * TPR + fpcost * (1 - TPR))
+                            + (1 - P1 / N1) * (fnc * FPR + tnc * (1 - FPR))
+                        )
+    
+                    row = {
+                        "ModelName": model_name,
+                        "CreateTime": create_time,
+                        "GroupingVars": group_label,
+                        "Threshold": thr,
+                        "n_obs": N1,
+                        "P": int(P1),
+                        "TP": TP, "TN": TN, "FP": FP, "FN": FN,
+                        "Accuracy": Accuracy,
+                        "TPR": TPR, "TNR": TNR, "FNR": FNR, "FPR": FPR,
+                        "F1": F1, "F2": F2, "F0_5": F05,
+                        "PPV": PPV, "NPV": NPV,
+                        "ThreatScore": Threat,
+                        "MCC": MCC,
+                        "Utility": Utility,
+                    }
+    
+                    # attach group columns
+                    row.update(key_dict)
+                    all_rows.append(row)
+    
+            out = pl.DataFrame(all_rows) if all_rows else pl.DataFrame([])
+    
+            key = FitName or f"{self.Algorithm}_classification_{DataName or 'data'}"
+            self.EvaluationList[key] = out
+            self.EvaluationListNames.append(key)
+    
+            return out
+    
+        # -------------------------------
+        # 4) Multiclass placeholder
+        # -------------------------------
+        raise NotImplementedError("Multiclass evaluation not yet implemented.")
+
+
     #################################################
-    
-    # Evaluation Attribute Update
-    def ML1_Single_Evaluate(self, FitName=None, TargetType=None, ScoredDataName=None, ByVariables=None, CostDict=dict(tpcost = 0.0, fpcost = 1.0, fncost = 1.0, tncost = 0.0)):
-      
-        # TargetType Agnostic Imports
-        import datatable as dt
-        from datetime import datetime
-        import numpy as np
-      
-        # Get Data
-        TargetColumnName = self.DataSets.get('ArgsList').get('TargetColumnName')
-        temp = self.DataSets.get(ScoredDataName)
+    # Function: Save / Load entire RetroFit object
+    #################################################
+    def save_retrofit(self, path):
+        """
+        Save the entire RetroFit object (including models, args,
+        scored data, etc.) to disk via pickle.
+        
+        Parameters
+        ----------
+        path : str or Path
+            File path to save to, e.g. "models/my_project_retrofit.pkl"
+        """
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Generate metrics
-        if TargetType.lower() == 'regression':
+        with path.open("wb") as f:
+            pickle.dump(self, f, protocol=pickle.HIGHEST_PROTOCOL)
 
-            # Environment
-            from sklearn.metrics import explained_variance_score, max_error, mean_absolute_error, mean_squared_error, mean_squared_log_error, mean_absolute_percentage_error, median_absolute_error, r2_score
-    
-            # Actuals and preds
-            y_true = temp[TargetColumnName]
-            y_pred = temp[f"Predict_{TargetColumnName}"]
-    
-            # checks
-            Min_y_true = min(y_true.to_numpy())[0]
-            Min_y_pred = min(y_pred.to_numpy())[0]
-            check = (Min_y_true > 0) & (Min_y_pred > 0)
-    
-            # Metrics
-            Metrics = dt.Frame(ModelName = [FitName])
-            Metrics['FeatureSet'] = None
-            Metrics['CreateTime'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            if ByVariables:
-                Metrics['Grouping'] = ByVariables
-            else:
-                Metrics['Grouping'] = 'NA'
-            Metrics['explained_variance_score'] = explained_variance_score(y_true, y_pred)
-            Metrics['r2_score'] = r2_score(y_true, y_pred)
-            Metrics['mean_absolute_percentage_error'] = mean_absolute_percentage_error(y_true, y_pred)
-            Metrics['mean_absolute_error'] = mean_absolute_error(y_true, y_pred)
-            Metrics['median_absolute_error'] = median_absolute_error(y_true, y_pred)
-            Metrics['mean_squared_error'] = mean_squared_error(y_true, y_pred)
-            if check:
-                Metrics['mean_squared_log_error'] = mean_squared_log_error(y_true, y_pred) 
-            else:
-                Metrics['mean_squared_log_error'] = -1
-            Metrics['max_error'] = max_error(y_true, y_pred)
-            return Metrics
+    @classmethod
+    def load_retrofit(cls, path):
+        """
+        Load a RetroFit object that was saved with `save_retrofit`.
+        
+        Parameters
+        ----------
+        path : str or Path
+            File path of the saved pickle.
+        
+        Returns
+        -------
+        RetroFit
+        """
+        path = Path(path)
+        with path.open("rb") as f:
+            obj = pickle.load(f)
 
-        # Generate metrics
-        if TargetType.lower() == 'classification':
-  
-            # Imports
-            from datatable import ifelse, math, f, update
-    
-            # Cost matrix
-            tpcost = CostDict['tpcost']
-            fpcost = CostDict['fpcost']
-            fncost = CostDict['fncost']
-            tncost = CostDict['tncost']
-    
-            # Build metrics table
-            Thresholds = list(np.linspace(0.0, 1.0, 101))
-            ThreshLength = [-1.0] * len(Thresholds)
-            ThresholdOutput = dt.Frame(
-              ModelName   = [FitName] * len(Thresholds),
-              FeatureSet  = [None] * len(Thresholds),
-              Grouping    = [ByVariables] * len(Thresholds),
-              CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
-              Threshold   = Thresholds,
-              TN          = ThreshLength,
-              TP          = ThreshLength,
-              FN          = ThreshLength,
-              FP          = ThreshLength,
-              N           = ThreshLength,
-              P           = ThreshLength,
-              Utility     = ThreshLength,
-              MCC         = ThreshLength,
-              Accuracy    = ThreshLength,
-              F1_Score    = ThreshLength,
-              F2_Score    = ThreshLength,
-              F0_5_Score  = ThreshLength,
-              TPR         = ThreshLength,
-              TNR         = ThreshLength,
-              FNR         = ThreshLength,
-              FPR         = ThreshLength,
-              FDR         = ThreshLength,
-              FOR         = ThreshLength,
-              NPV         = ThreshLength,
-              PPV         = ThreshLength,
-              ThreatScore = ThreshLength)
-
-            # Generate metrics
-            counter = 0
-            for Thresh in Thresholds:
-                TN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
-                TP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
-                FN = temp[:, dt.sum(ifelse((f['p1'] < Thresh) & (f[TargetColumnName] == 1), 1, 0))].to_list()[0][0]
-                FP = temp[:, dt.sum(ifelse((f['p1'] > Thresh) & (f[TargetColumnName] == 0), 1, 0))].to_list()[0][0]
-                N1 = temp.shape[0]
-                N  = temp[f["p1"] < Thresh, ...].shape[0]
-                P1 = temp[f[TargetColumnName] == 1, ...].shape[0]
-                P  = temp[(f[TargetColumnName] == 1) & (f['p1'] > Thresh), ...].shape[0]
-    
-                # Calculate metrics ----
-                if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
-                    MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
-                else:
-                  MCC = -1.0
-                if not N1 == 0:
-                    Accuracy    = (TP+TN)/N1
-                else:
-                    Accuracy = -1.0
-                if not P1 == 0:
-                    TPR         = TP/P1
-                else:
-                    TPR = -1.0
-                if not (N1-P1) == 0:
-                    TNR         = TN/(N1-P1)
-                else:
-                    TNR = -1.0
-                if not P1 == 0:
-                    FNR         = FN / P1
-                else:
-                    FNR = -1.0
-                if not N1 == 0:
-                    FPR         = FP / N1
-                else:
-                    FPR = -1.0
-                if not (FP + TP) == 0:
-                    FDR         = FP / (FP + TP)
-                else:
-                    FDR = -1.0
-                if not (FN + TN) == 0:
-                    FOR         = FN / (FN + TN)
-                else:
-                    FOR = -1.0
-                if not (TP + FP + FN) == 0:
-                    F1_Score    = 2 * TP / (2 * TP + FP + FN)
-                else:
-                    F1_Score = -1.0
-                if not (TP + FP + FN) == 0:
-                    F2_Score    = 3 * TP / (2 * TP + FP + FN)
-                else:
-                    F2_Score = -1.0
-                if not (TP + FP + FN) == 0:
-                    F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
-                else:
-                    F0_5_Score = -1.0
-                if not (TN + FN) == 0:
-                    NPV         = TN / (TN + FN)
-                else:
-                    NPV = -1.0
-                if not (TP + FP) == 0:
-                    PPV         = TP / (TP + FP)
-                else:
-                    PPV = -1.0
-                if not (TP + FN + FP) == 0:
-                    ThreatScore = TP / (TP + FN + FP)
-                else:
-                    ThreatScore = -1.0
-                if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
-                    Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
-                else:
-                    Utility = -1.0
-    
-                # Fill in values ----
-                ThresholdOutput[counter, update(P = P)]
-                ThresholdOutput[counter, update(N = N)]
-                ThresholdOutput[counter, update(TN = TN)]
-                ThresholdOutput[counter, update(TP = TP)]
-                ThresholdOutput[counter, update(FP = FP)]
-                ThresholdOutput[counter, update(FN = FN)]
-                ThresholdOutput[counter, update(Utility = Utility)]
-                ThresholdOutput[counter, update(MCC = MCC)]
-                ThresholdOutput[counter, update(Accuracy = Accuracy)]
-                ThresholdOutput[counter, update(F1_Score = F1_Score)]
-                ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
-                ThresholdOutput[counter, update(F2_Score = F2_Score)]
-                ThresholdOutput[counter, update(NPV = NPV)]
-                ThresholdOutput[counter, update(TPR = TPR)]
-                ThresholdOutput[counter, update(TNR = TNR)]
-                ThresholdOutput[counter, update(FNR = FNR)]
-                ThresholdOutput[counter, update(FPR = FPR)]
-                ThresholdOutput[counter, update(FDR = FDR)]
-                ThresholdOutput[counter, update(FOR = FOR)]
-                ThresholdOutput[counter, update(PPV = PPV)]
-                ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
-              
-                # Increment
-                counter = counter + 1
-
-            # return
-            return ThresholdOutput
-      
-        # Generate metrics (requires target as categorical and preds as softmax probs split into columns)
-        if TargetType.lower() == 'multiclass':
-
-          # Imports
-          from datatable import ifelse, math, f, update, join
-          from numpy import sort
-          from sklearn.metrics import multilabel_confusion_matrix, top_k_accuracy_score, confusion_matrix, hamming_loss, f1_score, fbeta_score, precision_recall_fscore_support, precision_score, recall_score, roc_auc_score
-          
-          # All levels analysis
-          levels = list(np.sort(list(set(temp[TargetColumnName].to_list()[0]))))
-          scores = temp[:, levels].to_numpy()
-          lookup = dt.Frame(PredClass = levels)
-          lookup['Levels'] = np.arange(0,lookup.shape[0], 1)
-          targets = temp[:, levels].to_numpy()
-          ClassPreds = dt.Frame(Levels = list(targets.argmax(axis = 1)))
-          lookup.key = 'Levels'
-          ClassPreds = ClassPreds[:, :, join(lookup)]
-          del ClassPreds[:, f.Levels]
-          temp.cbind(ClassPreds)
-          
-          # Metrics dict
-          MetricsDict = dict()
-          
-          # multilabel_confusion_matrix
-          y_true = temp[TargetColumnName].to_numpy()
-          y_pred = temp['PredClass'].to_numpy()
-          MetricsDict['multilabel_confusion_matrix'] = multilabel_confusion_matrix(y_true, y_pred)
-  
-          # Confusion matrix
-          MetricsDict['confusion_matrix'] = confusion_matrix(y_true, y_pred)
-  
-          # top_k_accuracy_score
-          top_acc_scores = dt.Frame(TopN = np.arange(0,lookup.shape[0], 1))
-          top_acc_scores['top_acc_scores'] = -1 * len(levels)
-          top_acc_scores['N'] = temp.shape[0]
-          for k in range(len(levels)):
-              top_acc_scores[k, f['top_acc_scores']] = top_k_accuracy_score(y_true, scores, k=k, normalize=False)
-          MetricsDict['top_k_accuracy_score'] = top_acc_scores[:, f[:].extend({'Percent': f['top_acc_scores'] / f['N']})]
-          
-          # other metrics
-          MetricsDict['hamming_loss'] = hamming_loss(y_true, y_pred)
-          MetricsDict['f1_score'] = f1_score(y_true, y_pred, average = 'micro')
-          MetricsDict['fbeta_score'] = fbeta_score(y_true, y_pred, average = 'micro', beta = 0.5)
-          MetricsDict['precision_recall_fscore_support'] = precision_recall_fscore_support(y_true, y_pred, average = 'micro')
-          MetricsDict['precision_score'] = precision_score(y_true, y_pred, average = 'micro')
-          MetricsDict['recall_score'] = recall_score(y_true, y_pred, average = 'micro')
-          
-          # Create temp_target
-          temp['temp_target'] = 1.0
-          
-          # Individual levels analysis
-          for level in levels:
-            
-              # Update temp_target
-              temp[:, update(temp_target = ifelse(f[TargetColumnName] == level, 1.0, 0.0))]
-              
-              # Cost matrix
-              tpcost = CostDict['tpcost']
-              fpcost = CostDict['fpcost']
-              fncost = CostDict['fncost']
-              tncost = CostDict['tncost']
-    
-              # Build metrics table
-              Thresholds = list(np.linspace(0.0, 1.0, 101))
-              ThreshLength = [-1.0] * len(Thresholds)
-              ThresholdOutput = dt.Frame(
-                ModelName   = [FitName] * len(Thresholds),
-                FeatureSet  = [None] * len(Thresholds),
-                Grouping    = [ByVariables] * len(Thresholds),
-                CreateTime  = [datetime.now().strftime("%Y-%m-%d %H:%M:%S")] * len(Thresholds),
-                Threshold   = Thresholds,
-                TN          = ThreshLength,
-                TP          = ThreshLength,
-                FN          = ThreshLength,
-                FP          = ThreshLength,
-                N           = ThreshLength,
-                P           = ThreshLength,
-                Utility     = ThreshLength,
-                MCC         = ThreshLength,
-                Accuracy    = ThreshLength,
-                F1_Score    = ThreshLength,
-                F2_Score    = ThreshLength,
-                F0_5_Score  = ThreshLength,
-                TPR         = ThreshLength,
-                TNR         = ThreshLength,
-                FNR         = ThreshLength,
-                FPR         = ThreshLength,
-                FDR         = ThreshLength,
-                FOR         = ThreshLength,
-                NPV         = ThreshLength,
-                PPV         = ThreshLength,
-                ThreatScore = ThreshLength)
-  
-              # Generate metrics
-              counter = 0
-              for Thresh in Thresholds:
-                  TN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
-                  TP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
-                  FN = temp[:, dt.sum(ifelse((f[level] < Thresh) & (f['temp_target'] == 1), 1, 0))].to_list()[0][0]
-                  FP = temp[:, dt.sum(ifelse((f[level] > Thresh) & (f['temp_target'] == 0), 1, 0))].to_list()[0][0]
-                  N1 = temp.shape[0]
-                  N  = temp[f[level] < Thresh, ...].shape[0]
-                  P1 = temp[f['temp_target'] == 1, ...].shape[0]
-                  P  = temp[(f['temp_target'] == 1) & (f[level] > Thresh), ...].shape[0]
-      
-                  # Calculate metrics ----
-                  if not ((TP+FP) == 0 or (TP+FN) == 0 or (TN+FP) == 0 or (TN+FN) == 0):
-                      MCC         = (TP*TN-FP*FN)/np.sqrt((TP+FP)*(TP+FN)*(TN+FP)*(TN+FN))
-                  else:
-                      MCC = -1.0
-                  if not N1 == 0:
-                      Accuracy    = (TP+TN)/N1
-                  else:
-                      Accuracy = -1.0
-                  if not P1 == 0:
-                      TPR         = TP/P1
-                  else:
-                      TPR = -1.0
-                  if not (N1-P1) == 0:
-                      TNR         = TN/(N1-P1)
-                  else:
-                      TNR = -1.0
-                  if not P1 == 0:
-                      FNR         = FN / P1
-                  else:
-                      FNR = -1.0
-                  if not N1 == 0:
-                      FPR         = FP / N1
-                  else:
-                      FPR = -1.0
-                  if not (FP + TP) == 0:
-                      FDR         = FP / (FP + TP)
-                  else:
-                      FDR = -1.0
-                  if not (FN + TN) == 0:
-                      FOR         = FN / (FN + TN)
-                  else:
-                      FOR = -1.0
-                  if not (TP + FP + FN) == 0:
-                      F1_Score    = 2 * TP / (2 * TP + FP + FN)
-                  else:
-                      F1_Score = -1.0
-                  if not (TP + FP + FN) == 0:
-                      F2_Score    = 3 * TP / (2 * TP + FP + FN)
-                  else:
-                      F2_Score = -1.0
-                  if not (TP + FP + FN) == 0:
-                      F0_5_Score  = 1.5 * TP / (0.5 * TP + FP + FN)
-                  else:
-                      F0_5_Score = -1.0
-                  if not (TN + FN) == 0:
-                      NPV         = TN / (TN + FN)
-                  else:
-                      NPV = -1.0
-                  if not (TP + FP) == 0:
-                      PPV         = TP / (TP + FP)
-                  else:
-                      PPV = -1.0
-                  if not (TP + FN + FP) == 0:
-                      ThreatScore = TP / (TP + FN + FP)
-                  else:
-                      ThreatScore = -1.0
-                  if not ((N1 == 0) or (TPR == -1.0) or (FPR == -1.0)):
-                      Utility     = P1/N1 * (tpcost * TPR + fpcost * (1 - TPR)) + (1 - P1/N1) * (fncost * FPR + tncost * (1 - FPR))
-                  else:
-                      Utility = -1.0
-      
-                  # Fill in values ----
-                  ThresholdOutput[counter, update(P = P)]
-                  ThresholdOutput[counter, update(N = N)]
-                  ThresholdOutput[counter, update(TN = TN)]
-                  ThresholdOutput[counter, update(TP = TP)]
-                  ThresholdOutput[counter, update(FP = FP)]
-                  ThresholdOutput[counter, update(FN = FN)]
-                  ThresholdOutput[counter, update(Utility = Utility)]
-                  ThresholdOutput[counter, update(MCC = MCC)]
-                  ThresholdOutput[counter, update(Accuracy = Accuracy)]
-                  ThresholdOutput[counter, update(F1_Score = F1_Score)]
-                  ThresholdOutput[counter, update(F0_5_Score= F0_5_Score)]
-                  ThresholdOutput[counter, update(F2_Score = F2_Score)]
-                  ThresholdOutput[counter, update(NPV = NPV)]
-                  ThresholdOutput[counter, update(TPR = TPR)]
-                  ThresholdOutput[counter, update(TNR = TNR)]
-                  ThresholdOutput[counter, update(FNR = FNR)]
-                  ThresholdOutput[counter, update(FPR = FPR)]
-                  ThresholdOutput[counter, update(FDR = FDR)]
-                  ThresholdOutput[counter, update(FOR = FOR)]
-                  ThresholdOutput[counter, update(PPV = PPV)]
-                  ThresholdOutput[counter, update(ThreatScore = ThreatScore)]
-                  
-                  # Increment
-                  counter = counter + 1
-                  
-                  # Store datatables
-                  MetricsDict[f"BinaryEval_{level}"] = ThresholdOutput
-  
-          # Remove temp target
-          del temp[:, f['temp_target']]
-          
-          # return
-          return MetricsDict
-
+        if not isinstance(obj, cls):
+            raise TypeError(
+                f"Pickle at {path} is a {type(obj)} not {cls.__name__}"
+            )
+        return obj
