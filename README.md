@@ -53,13 +53,10 @@ https://github.com/AdrianAntico/AutoQuant
 ```python
 # Setup Environment
 import os
-import timeit
 import polars as pl
 from PolarsFE import datasets
 import QuickEcharts
-import retrofit
 from retrofit import MachineLearning as ml
-from retrofit import utils
 
 
 # Load some data
