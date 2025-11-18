@@ -539,7 +539,7 @@ class RetroFit:
           AlgoArgs['early_stopping_rounds'] = 50
           
           # Training Params
-          AlgoArgs['tree_method'] = 'gpu_hist'
+          AlgoArgs['tree_method'] = 'hist'
           AlgoArgs['max_bin'] = 256
           
           ###############################
