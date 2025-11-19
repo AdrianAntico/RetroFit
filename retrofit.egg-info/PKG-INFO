@@ -36,7 +36,6 @@ Dynamic: requires-dist
 Dynamic: summary
 
 ![Version: 0.1.7](https://img.shields.io/static/v1?label=Version&message=0.1.7&color=blue&?style=plastic)
-![Python](https://img.shields.io/badge/Python-3.6%20%7C%203.7%20%7C%203.8%20%7C%203.9-blue)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
@@ -71,7 +70,7 @@ https://github.com/AdrianAntico/AutoQuant
 
 ## **Machine Learning Note**
 
-> Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from datatable or polars which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. Scoring should be seamless, from regenerating features for scoring to the actual scoring. The RetroFit class makes this super easy, fast, with minimal memory utilization.
+> Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from pandas or polars (polars preferred) which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. Scoring should be seamless, from regenerating features for scoring to the actual scoring. The RetroFit class makes this super easy, fast, with minimal memory utilization.
 
 
 
@@ -88,155 +87,79 @@ https://github.com/AdrianAntico/AutoQuant
 <p>
 
 ```python
-####################################
-# CatBoost Regression
-####################################
-
 # Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
+import os
+import polars as pl
+from PolarsFE import datasets
+from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
+
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
-data = dt.fread(FilePath)
+FilePath = f'{os.getcwd()}/RetroFit/retrofit/datasets/BenchmarkData.csv'
+df = pl.read_csv(FilePath)
 
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'catboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'CatBoost', 
-    TargetType = 'Regression', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
+# Get TrainData, ValidationData, and TestData
+DataSets = datasets.partition_random(
+    data=df,
+    num_partitions=3,
+    seed=42,
+    percentages=[0.7, 0.2, 0.1]
+)
 
 # Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+model = ml.RetroFit(TargetType="regression", Algorithm="catboost")
+
+# Create algo-specific model data
+model.create_model_data(
+  TrainData=DataSets[0],
+  ValidationData=DataSets[1],
+  TestData=DataSets[2],
+  TargetColumnName="Leads",
+  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
+  CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'],
+  TextColumnNames=None,
+  WeightColumnName=None,
+  Threads=-1
+)
+
+# Print default parameter settings
+model.print_algo_args()
+
+# Update algo args for GPU
+model.update_model_parameters(
+    task_type='GPU',
+    sampling_frequency=None,
+    rsm=1.0
+)
 
 # Train Model
-x.ML1_Single_Train(Algorithm = 'CatBoost')
+model.train()
 
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2], 
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'CatBoost',
-    NewData = None)
+# Score train, validation, and test; store internally
+model.score()
+
+# Inspect scored data
+model.ScoredData["train"]
+model.ScoredData["validation"]
+model.ScoredData["test"]
 
 # Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=None)
+global_eval = model.evaluate(
+    DataName="test"
+)
 
-# Metrics
-metrics.keys()
+# Per segment
+segment_eval = model.evaluate(
+    DataName="test",
+    ByVariables="MarketingSegments"
+)
 
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_CatBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'CatBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
+# Per (Segment, Month)
+segment_date_eval = model.evaluate(
+    DataName="test",
+    ByVariables=["MarketingSegments", "CalendarDateColumn"]
+)
 ```
 
 </p>
@@ -247,155 +170,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# CatBoost Classification
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'catboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = [z for z in list(data.names) if z not in ['Factor_1','Factor_2','Factor_3','Adrian']],
-    CategoricalColumnNames = ['Factor_1', 'Factor_2', 'Factor_3'],
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'CatBoost', 
-    TargetType = 'Classification', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'CatBoost')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2], 
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'CatBoost',
-    NewData = None)
-
-# Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
-
-# Metrics
-metrics.keys()
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_CatBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'CatBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -406,120 +181,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# CatBoost MultiClass
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features for modeling
-Features = [z for z in list(data.names) if z not in ['Factor_2','Factor_3','Adrian']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'catboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = ['Factor_2', 'Factor_3'],
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'CatBoost',
-    TargetType = 'MultiClass',
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('CatBoost').get('AlgoArgs')['iterations'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'CatBoost')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2], 
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'CatBoost',
-    NewData = None)
-
-# Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('CatBoost')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
-
-# Metrics
-metrics.keys()
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_CatBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'CatBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -540,165 +202,122 @@ x.FitListNames
 
 
 ```python
-####################################
-# XGBoost Regression
-####################################
-
 # Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
+import os
+import polars as pl
+from PolarsFE import datasets, character
+from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
-data = dt.fread(FilePath)
+FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
+df = pl.read_csv(FilePath)
 
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
+# Get TrainData, ValidationData, and TestData
+DataSets = datasets.partition_random(
+    data=df,
+    num_partitions=3,
+    seed=42,
+    percentages=[0.7, 0.2, 0.1]
+)
 
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
+# Create target encodings for categorical variables
+categorical_cols = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3']
+output = character.categorical_encoding(
+    data=DataSets[0],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=False,
+    keep_original_factors=False
+)
 
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
+# Collect data and encodings
+DataSets[0] = output['data']
+encodings = output['factor_components']
 
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
+# Note parameter: scoring=True
+DataSets[1] = character.categorical_encoding(
+    data=DataSets[1],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=True,
+    supply_factor_level_list=encodings,
+    keep_original_factors=False
+)
 
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'xgboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'XGBoost', 
-    TargetType = "Regression", 
-    TrainMethod = "Train")
-
-# Update iterations to run quickly
-ModelArgs['XGBoost']['AlgoArgs']['num_boost_round'] = 50
+# Note parameter: scoring=True
+DataSets[2] = character.categorical_encoding(
+    data=DataSets[2],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=True,
+    supply_factor_level_list=encodings,
+    keep_original_factors=False
+)
 
 # Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
+model = ml.RetroFit(TargetType="regression", Algorithm="xgboost")
+
+# Create algo-specific model data
+model.create_model_data(
+  TrainData=DataSets[0],
+  ValidationData=DataSets[1],
+  TestData=DataSets[2],
+  TargetColumnName="Leads",
+  NumericColumnNames=[
+    'XREGS1',
+    'XREGS2',
+    'XREGS3',
+    'MarketingSegments_TargetEncode',
+    'MarketingSegments2_TargetEncode',
+    'MarketingSegments3_TargetEncode'
+  ],
+  Threads=-1
+)
+
+# Print default parameter settings
+model.print_algo_args()
+
+# Update algo args
+model.update_model_parameters(
+    num_boost_round=200,
+    num_parallel_tree=4,
+    max_depth=4
+)
 
 # Train Model
-x.ML1_Single_Train(Algorithm = 'XGBoost')
+model.train()
 
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'XGBoost',
-    NewData = None)
+# Score train, validation, and test; store internally
+model.score()
+
+# Inspect scored data
+model.ScoredData["train"]
+model.ScoredData["validation"]
+model.ScoredData["test"]
 
 # Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=None)
+global_eval = model.evaluate(
+    DataName="test"
+)
 
-# Metrics
-metrics.keys()
+# Per segment
+segment_eval = model.evaluate(
+    DataName="test",
+    ByVariables="MarketingSegments_TargetEncode"
+)
 
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_XGBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'XGBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
+# Per (Segment, Month)
+segment_date_eval = model.evaluate(
+    DataName="test",
+    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
+)
 ```
 
 </p>
@@ -709,165 +328,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# XGBoost Classification
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
-
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'xgboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'XGBoost', 
-    TargetType = 'Classification', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'XGBoost')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'XGBoost',
-    NewData = None)
-
-# Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('XGBoost')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
-
-# Metrics
-metrics.keys()
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_XGBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'XGBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -878,116 +339,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# XGBoost MultiClass
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'xgboost',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'XGBoost',
-    TargetType = 'MultiClass',
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('XGBoost').get('AlgoArgs')['num_boost_round'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'XGBoost')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'XGBoost',
-    NewData = None)
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_XGBoost_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'XGBoost')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -1005,153 +357,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# LightGBM Regression
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/RegressionData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
-
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'lightgbm',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'LightGBM', 
-    TargetType = 'Regression', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'LightGBM')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'LightGBM')
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_LightGBM_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'LightGBM')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -1162,164 +368,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# LightGBM Classification
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/ClassificationData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Create some lags
-data = FE.FE0_AutoLags(
-    data,
-    LagColumnNames=['Independent_Variable1', 'Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    LagPeriods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some rolling stats
-data = FE.FE0_AutoRollStats(
-    data,
-    RollColumnNames=['Independent_Variable1','Independent_Variable2'],
-    DateColumnName='DateTime',
-    ByVariables='Factor_1',
-    MovingAvg_Periods=[1,2],
-    MovingSD_Periods=[2,3],
-    MovingMin_Periods=[1,2],
-    MovingMax_Periods=[1,2],
-    ImputeValue=-1,
-    Sort=True,
-    use_saved_args=False)
-
-# Create some diffs
-data = FE.FE0_AutoDiff(
-    data,
-    DateColumnName='DateTime',
-    ByVariables=['Factor_1','Factor_2','Factor_3'],
-    DiffNumericVariables='Independent_Variable1',
-    DiffDateVariables=None,
-    DiffGroupVariables=None,
-    NLag1=0,
-    NLag2=1,
-    Sort=True,
-    use_saved_args=False)
-
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_1','Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_1','Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'lightgbm',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'LightGBM', 
-    TargetType = 'Classification', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'LightGBM')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'LightGBM')
-
-# Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
-
-# Metrics
-metrics.keys()
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_LightGBM_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'LightGBM')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -1330,126 +379,7 @@ x.FitListNames
 <p>
 
 ```python
-####################################
-# LightGBM MultiClass
-####################################
 
-# Setup Environment
-import pkg_resources
-import timeit
-import datatable as dt
-import retrofit
-from retrofit import DatatableFE as dtfe
-from retrofit import MachineLearning as ml
-
-# Load some data
-FilePath = pkg_resources.resource_filename('retrofit', 'datasets/MultiClassData.csv') 
-data = dt.fread(FilePath)
-
-# Instantiate Feature Engineering Class
-FE = dtfe.FE()
-
-# Dummify
-data = FE.FE1_DummyVariables(
-    data = data, 
-    CategoricalColumnNames = ['Factor_2','Factor_3'],
-    use_saved_args=False)
-data = data[:, [name not in ['Factor_2','Factor_3'] for name in data.names]]
-
-# Create Calendar Vars
-data = FE.FE1_AutoCalendarVariables(
-    data,
-    DateColumnNames='DateTime',
-    CalendarVariables=['wday','month','quarter'],
-    use_saved_args=False)
-
-# Type conversions for modeling
-data = FE.FE2_ColTypeConversions(
-    data,
-    Int2Float=True,
-    Bool2Float=True,
-    RemoveDateCols=True,
-    RemoveStrCols=False,
-    SkipCols=None,
-    use_saved_args=False)
-
-# Drop Text Cols (no word2vec yet)
-data = data[:, [z for z in data.names if z not in ['Comment']]]
-
-# Create partitioned data sets
-DataFrames = FE.FE2_AutoDataPartition(
-    data, 
-    DateColumnName = None, 
-    PartitionType = 'random', 
-    Ratios = [0.7,0.2,0.1], 
-    ByVariables = None, 
-    Sort = False,
-    use_saved_args = False)
-
-# Features
-Features = [z for z in list(data.names) if not z in ['Adrian','DateTime','Comment','Weights']]
-
-# Prepare modeling data sets
-ModelData = ml.ML0_GetModelData(
-    Processing = 'lightgbm',
-    TrainData = DataFrames['TrainData'],
-    ValidationData = DataFrames['ValidationData'],
-    TestData = DataFrames['TestData'],
-    ArgsList = None,
-    TargetColumnName = 'Adrian',
-    NumericColumnNames = Features,
-    CategoricalColumnNames = None,
-    TextColumnNames = None,
-    WeightColumnName = None,
-    Threads = -1,
-    InputFrame = 'datatable')
-
-# Get args list for algorithm and target type
-ModelArgs = ml.ML0_Parameters(
-    Algorithms = 'LightGBM', 
-    TargetType = 'MultiClass', 
-    TrainMethod = 'Train')
-
-# Update iterations to run quickly
-ModelArgs.get('LightGBM').get('AlgoArgs')['num_iterations'] = 50
-
-# Initialize RetroFit
-x = ml.RetroFit(ModelArgs, ModelData, DataFrames)
-
-# Train Model
-x.ML1_Single_Train(Algorithm = 'LightGBM')
-
-# Score data
-x.ML1_Single_Score(
-    DataName = x.DataSetsNames[2],
-    ModelName = x.ModelListNames[0],
-    Algorithm = 'LightGBM')
-
-# Evaluate scored data
-metrics = x.ML1_Single_Evaluate(
-    FitName=x.FitListNames[0],
-    TargetType=x.ModelArgs.get('LightGBM')['TargetType'],
-    ScoredDataName=x.DataSetsNames[-1],
-    ByVariables=None,
-    CostDict=dict(tpcost=0, fpcost=1, fncost=1, tncost=0))
-
-# Metrics
-metrics.keys()
-
-# Scoring data names
-x.DataSetsNames
-
-# Scoring data
-x.DataSets.get('Scored_test_data_LightGBM_1')
-
-# Check ModelArgs Dict
-x.PrintAlgoArgs(Algo = 'LightGBM')
-
-# List of model names
-x.ModelListNames
-
-# List of model fitted names
-x.FitListNames
 ```
 
 </p>
@@ -1469,13 +399,24 @@ x.FitListNames
 </details>
 
 
-## **Visualization**
+
+
+### **Model Evaluation Visuals**
 <p>
 
-<details><summary>Expand to view content</summary>
+
+<details><summary>Preds vs Actual</summary>
 <p>
 
-Code here
+```python
+
+```
+
+</p>
+</details>
+
+
+
 
 </p>
 </details>

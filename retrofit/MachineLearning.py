@@ -844,14 +844,12 @@ class RetroFit:
             valid_sets = [valid_set] if valid_set is not None else None
     
             num_boost_round = self.ModelArgs.get("num_iterations", 100)
-            early_stopping_round = self.ModelArgs.get("early_stopping_round", None)
-    
+            
             booster = lgbm.train(
                 params=self.ModelArgs,
                 train_set=train_set,
                 valid_sets=valid_sets,
-                num_boost_round=num_boost_round,
-                early_stopping_rounds=early_stopping_round
+                num_boost_round=num_boost_round
             )
     
             # Store main handle
