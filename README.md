@@ -123,6 +123,12 @@ segment_date_eval = model.evaluate(
     DataName="test",
     ByVariables=["MarketingSegments", "CalendarDateColumn"]
 )
+
+# Get variable importance
+imp = model.compute_feature_importance()
+
+# Get interaction importance
+interact = model.compute_catboost_interaction_importance()
 ```
 
 </p>
@@ -436,6 +442,9 @@ segment_date_eval = model.evaluate(
     DataName="test",
     ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
 )
+
+# Get variable importance
+imp = model.compute_feature_importance()
 ```
 
 </p>

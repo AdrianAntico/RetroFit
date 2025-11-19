@@ -160,6 +160,12 @@ segment_date_eval = model.evaluate(
     DataName="test",
     ByVariables=["MarketingSegments", "CalendarDateColumn"]
 )
+
+# Get variable importance
+imp = model.compute_feature_importance()
+
+# Get interaction importance
+interact = model.compute_catboost_interaction_importance()
 ```
 
 </p>
@@ -357,7 +363,125 @@ segment_date_eval = model.evaluate(
 <p>
 
 ```python
+# Setup Environment
+import os
+import polars as pl
+from PolarsFE import datasets, character
+from QuickEcharts import Charts
+from retrofit import MachineLearning as ml
 
+# Load some data
+FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
+df = pl.read_csv(FilePath)
+
+# Get TrainData, ValidationData, and TestData
+DataSets = datasets.partition_random(
+    data=df,
+    num_partitions=3,
+    seed=42,
+    percentages=[0.7, 0.2, 0.1]
+)
+
+# Create target encodings for categorical variables
+categorical_cols = ['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3']
+output = character.categorical_encoding(
+    data=DataSets[0],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=False,
+    keep_original_factors=False
+)
+
+# Collect data and encodings
+DataSets[0] = output['data']
+encodings = output['factor_components']
+
+# Note parameter: scoring=True
+DataSets[1] = character.categorical_encoding(
+    data=DataSets[1],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=True,
+    supply_factor_level_list=encodings,
+    keep_original_factors=False
+)
+
+# Note parameter: scoring=True
+DataSets[2] = character.categorical_encoding(
+    data=DataSets[2],
+    ML_Type="regression",
+    group_variables=categorical_cols,
+    target_variable="Leads",
+    method="target_encoding",
+    scoring=True,
+    supply_factor_level_list=encodings,
+    keep_original_factors=False
+)
+
+# Initialize RetroFit
+model = ml.RetroFit(TargetType="regression", Algorithm="lightgbm")
+
+# Create algo-specific model data
+model.create_model_data(
+  TrainData=DataSets[0],
+  ValidationData=DataSets[1],
+  TestData=DataSets[2],
+  TargetColumnName="Leads",
+  NumericColumnNames=[
+    'XREGS1',
+    'XREGS2',
+    'XREGS3',
+    'MarketingSegments_TargetEncode',
+    'MarketingSegments2_TargetEncode',
+    'MarketingSegments3_TargetEncode'
+  ],
+  Threads=-1
+)
+
+# Print default parameter settings
+model.print_algo_args()
+
+# Update algo args
+model.update_model_parameters(
+    num_iterations=200,
+    max_depth=6,
+    min_data_in_leaf=2
+)
+
+# Train Model
+model.train()
+
+# Score train, validation, and test; store internally
+model.score()
+
+# Inspect scored data
+model.ScoredData["train"]
+model.ScoredData["validation"]
+model.ScoredData["test"]
+
+# Evaluate scored data
+global_eval = model.evaluate(
+    DataName="test"
+)
+
+# Per segment
+segment_eval = model.evaluate(
+    DataName="test",
+    ByVariables="MarketingSegments_TargetEncode"
+)
+
+# Per (Segment, Month)
+segment_date_eval = model.evaluate(
+    DataName="test",
+    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
+)
+
+# Get variable importance
+imp = model.compute_feature_importance()
 ```
 
 </p>

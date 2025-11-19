@@ -148,6 +148,14 @@ class RetroFit:
         self.CompareModelsList = {}
         self.CompareModelsListNames = []
 
+        # Model importance (single-feature importance)
+        self.ImportanceList = {}
+        self.ImportanceListNames = []
+
+        # Model interaction importance (e.g., CatBoost pairwise)
+        self.InteractionImportanceList = {}
+        self.InteractionImportanceListNames = []
+
 
     #################################################
     # Function: Create Model-Data Objects
@@ -527,53 +535,99 @@ class RetroFit:
     
         # XGBoost
         if self.Algorithm == 'xgboost':
-      
-          # Setup Environment
-          
+
+          # Initialize AlgoArgs
           AlgoArgs = dict()
           
-          # Performance Params
-          AlgoArgs['nthread'] = os.cpu_count()
-          AlgoArgs['predictor'] = 'auto'
-          AlgoArgs['single_precision_histogram'] = False
-          AlgoArgs['early_stopping_rounds'] = 50
+          ################################
+          # Performance / Environment
+          ################################
           
-          # Training Params
+          # Threads: default: use all cores
+          AlgoArgs['nthread'] = os.cpu_count()
+          
+          # Tree construction method
+          # 'hist' is modern default; use 'gpu_hist' if you want GPU training.
           AlgoArgs['tree_method'] = 'hist'
+          
+          # Max number of discrete bins for continuous features
           AlgoArgs['max_bin'] = 256
           
-          ###############################
-          # Gridable Parameters
-          ###############################
-          AlgoArgs['num_parallel_tree'] = 1
-          AlgoArgs['num_boost_round'] = 1000 
+          # Grow policy for trees
           AlgoArgs['grow_policy'] = 'depthwise'
+          
+          ################################
+          # Core Booster Parameters
+          ################################
+          # Learning rate
           AlgoArgs['eta'] = 0.30
+          
+          # Maximum depth of a tree
           AlgoArgs['max_depth'] = 6
+          
+          # Minimum sum of instance weight (Hessian) needed in a child
           AlgoArgs['min_child_weight'] = 1
+          
+          # Maximum delta step we allow each leaf output to be
           AlgoArgs['max_delta_step'] = 0
+          
+          # Subsample ratio of the training instances
           AlgoArgs['subsample'] = 1.0
+          
+          # Subsample ratio of columns for each tree
           AlgoArgs['colsample_bytree'] = 1.0
+          
+          # Subsample ratio of columns for each level
           AlgoArgs['colsample_bylevel'] = 1.0
+          
+          # Subsample ratio of columns for each split
           AlgoArgs['colsample_bynode'] = 1.0
-          AlgoArgs['alpha'] = 0
-          AlgoArgs['lambda'] = 1
-          AlgoArgs['gamma'] = 0
-    
-          # GPU Dependent
-          if AlgoArgs['tree_method'] == 'gpu_hist':
-            AlgoArgs['sampling_method'] = 'uniform'
-    
-          # Target Dependent Args
+          
+          # L1 regularization term on weights
+          AlgoArgs['alpha'] = 0.0
+          
+          # L2 regularization term on weights
+          AlgoArgs['lambda'] = 1.0
+          
+          # Minimum loss reduction required to make a further partition on a leaf
+          AlgoArgs['gamma'] = 0.0
+          
+          ################################
+          # Booster type & parallel trees
+          ################################
+          
+          # Number of parallel trees (1 for standard boosting)
+          AlgoArgs['num_parallel_tree'] = 1         # default: 1
+          
+          # Booster type: leave at default ('gbtree') not usually changed.
+          AlgoArgs['booster'] = 'gbtree'
+          
+          ################################
+          # Target-dependent parameters
+          ################################
           if self.TargetType == 'classification':
             AlgoArgs['objective'] = 'binary:logistic'
             AlgoArgs['eval_metric'] = 'auc'
+          
           elif self.TargetType == 'regression':
             AlgoArgs['objective'] = 'reg:squarederror'
             AlgoArgs['eval_metric'] = 'rmse'
+          
           elif self.TargetType == 'multiclass':
             AlgoArgs['objective'] = 'multi:softprob'
             AlgoArgs['eval_metric'] = 'mlogloss'
+            # num_class MUST be set by user or externally before training
+            # e.g. model.update_model_parameters(num_class=K, allow_new=True)
+          
+          ################################
+          # Training loop controls (not passed to xgb.train params)
+          ################################
+          
+          # These are *not* XGBoost params, they’re for xgb.train() itself.
+          # We store them here for convenience, but we will strip them
+          # out before passing params into xgb.train().
+          AlgoArgs['num_boost_round'] = 1000
+          AlgoArgs['early_stopping_rounds'] = 50
     
         # LightGBM
         if self.Algorithm == 'lightgbm':
@@ -806,11 +860,15 @@ class RetroFit:
             if dvalid is not None:
                 evals.append((dvalid, "validation"))
     
-            num_boost_round = self.ModelArgs.get("num_boost_round", 100)
-            early_stopping_rounds = self.ModelArgs.get("early_stopping_rounds", None)
-    
+            num_boost_round = self.ModelArgs.get("num_boost_round", 1000)
+            early_stopping_rounds = self.ModelArgs.get("early_stopping_rounds", 50)
+            
+            # Remove from ModelArgs because xgb.train() does NOT accept these inside params
+            params = {k: v for k, v in self.ModelArgs.items()
+                      if k not in ("num_boost_round", "early_stopping_rounds")}
+
             booster = xgb.train(
-                params=self.ModelArgs,
+                params=params,
                 dtrain=dtrain,
                 evals=evals if evals else None,
                 num_boost_round=num_boost_round,
@@ -1466,3 +1524,306 @@ class RetroFit:
                 f"Pickle at {path} is a {type(obj)} not {cls.__name__}"
             )
         return obj
+
+
+    #################################################
+    # Function: Feature Importance
+    #################################################
+    def compute_feature_importance(
+        self,
+        ModelName: str | None = None,
+        normalize: bool = True,
+        sort: bool = True,
+        importance_type: str = "gain",
+    ) -> pl.DataFrame:
+        """
+        Compute feature importance for the current algorithm (catboost/xgboost/lightgbm).
+
+        Parameters
+        ----------
+        ModelName : str or None
+            If provided, use that model from self.ModelList / self.FitList.
+            If None, use self.Model.
+        normalize : bool
+            If True, add 'importance_norm' that sums to 1.
+        sort : bool
+            If True, sort descending by importance and add 'rank'.
+        importance_type : str
+            - CatBoost: ignored (always uses FeatureImportance).
+            - XGBoost: one of {'weight','gain','cover','total_gain','total_cover'}.
+            - LightGBM: one of {'split','gain'}.
+
+        Returns
+        -------
+        pl.DataFrame
+            Columns:
+                - feature
+                - importance
+                - importance_norm (if normalize=True)
+                - rank (if sort=True)
+        """
+
+        # 1) Resolve model
+        if self.Model is None and not self.ModelList:
+            raise RuntimeError(
+                "No trained models found. Call train() before compute_feature_importance()."
+            )
+
+        if ModelName is not None:
+            model = self.ModelList.get(ModelName) or self.FitList.get(ModelName)
+            if model is None:
+                raise KeyError(f"Model '{ModelName}' not found in ModelList or FitList.")
+        else:
+            if self.Model is None:
+                raise RuntimeError("self.Model is None and no ModelName provided.")
+            model = self.Model
+
+        algo = self.Algorithm  # already lowercased in __init__
+
+        # 2) Determine feature names used by this algorithm
+        if algo == "xgboost":
+            feature_cols = self.NumericColumnNames or []
+        else:
+            feature_cols = (self.NumericColumnNames or []) + \
+                           (self.CategoricalColumnNames or []) + \
+                           (self.TextColumnNames or [])
+
+        if not feature_cols:
+            raise RuntimeError(
+                "No feature columns found; check Numeric/Categorical/Text column lists."
+            )
+
+        # 3) Algorithm-specific importance extraction
+        if algo == "catboost":
+            importances = np.array(
+                model.get_feature_importance(type="FeatureImportance")
+            )
+
+            if len(importances) != len(feature_cols):
+                raise ValueError(
+                    f"CatBoost importance length {len(importances)} != "
+                    f"number of feature columns {len(feature_cols)}. "
+                    "Check that your feature lists match training order."
+                )
+
+            df_imp = pl.DataFrame(
+                {
+                    "feature": feature_cols,
+                    "importance": importances.astype(float),
+                }
+            )
+
+        elif algo == "xgboost":
+            # XGBoost Booster.get_score returns dict: {feature_name_or_fid: score}
+            valid_types = {"weight", "gain", "cover", "total_gain", "total_cover"}
+            if importance_type not in valid_types:
+                raise ValueError(
+                    f"importance_type '{importance_type}' not valid for XGBoost. "
+                    f"Choose from {valid_types}."
+                )
+
+            score_dict = model.get_score(importance_type=importance_type)
+
+            # Helper to detect "f0", "f1", ... style keys
+            def _is_f_index(k: str) -> bool:
+                return isinstance(k, str) and k.startswith("f") and k[1:].isdigit()
+
+            keys = list(score_dict.keys())
+            use_index_keys = bool(keys) and all(_is_f_index(k) for k in keys)
+
+            importances = []
+
+            if use_index_keys:
+                # Map feature_cols by position → "f0", "f1", ...
+                for idx, feat in enumerate(feature_cols):
+                    key = f"f{idx}"
+                    val = score_dict.get(key, 0.0)
+                    importances.append(val)
+            else:
+                # Assume keys are actual feature names
+                for feat in feature_cols:
+                    val = score_dict.get(feat, 0.0)
+                    importances.append(val)
+
+            df_imp = pl.DataFrame(
+                {
+                    "feature": feature_cols,
+                    "importance": np.array(importances, dtype=float),
+                }
+            )
+
+        elif algo == "lightgbm":
+            # LightGBM Booster: feature_importance + feature_name
+            lgb_type = "gain" if importance_type == "gain" else "split"
+
+            importances = np.array(
+                model.feature_importance(importance_type=lgb_type),
+                dtype=float
+            )
+            names = model.feature_name()
+
+            if len(importances) != len(names):
+                raise ValueError(
+                    f"LightGBM returned {len(importances)} importances for "
+                    f"{len(names)} features."
+                )
+
+            df_imp = pl.DataFrame(
+                {
+                    "feature": names,
+                    "importance": importances,
+                }
+            )
+
+        else:
+            raise ValueError(
+                f"compute_feature_importance not implemented for algorithm '{self.Algorithm}'."
+            )
+
+        # 4) Normalize and sort
+        if normalize:
+            total = df_imp["importance"].sum()
+            if total != 0:
+                df_imp = df_imp.with_columns(
+                    (pl.col("importance") / total).alias("importance_norm")
+                )
+            else:
+                df_imp = df_imp.with_columns(
+                    pl.lit(0.0).alias("importance_norm")
+                )
+
+        if sort:
+            df_imp = df_imp.sort("importance", descending=True)
+            df_imp = df_imp.with_columns(
+                pl.arange(1, df_imp.height + 1).alias("rank")
+            )
+
+        # 5) Store in ImportanceList for downstream plots / reports
+        key_name = ModelName or "MainModel"
+        imp_key = f"{self.Algorithm}_feature_importance_{key_name}"
+        self.ImportanceList[imp_key] = df_imp
+        self.ImportanceListNames.append(imp_key)
+
+        return df_imp
+
+
+    #################################################
+    # Function: CatBoost Interaction Importance
+    #################################################
+    def compute_catboost_interaction_importance(
+        self,
+        ModelName: str | None = None,
+        top_n: int | None = None,
+        normalize: bool = True,
+    ) -> pl.DataFrame:
+        """
+        Compute pairwise interaction importance for a CatBoost model.
+
+        Uses CatBoost's get_feature_importance(type='Interaction'), which
+        returns [feat_idx_1, feat_idx_2, score].
+
+        Parameters
+        ----------
+        ModelName : str or None
+            If provided, use that model from self.ModelList / self.FitList.
+            If None, use self.Model.
+        top_n : int or None
+            If provided, keep only the top_n interactions by importance.
+        normalize : bool
+            If True, add 'importance_norm' that sums to 1.
+
+        Returns
+        -------
+        pl.DataFrame with columns:
+            - feature_1
+            - feature_2
+            - importance
+            - importance_norm (if normalize=True)
+            - rank
+        """
+        if self.Algorithm != "catboost":
+            raise ValueError(
+                "compute_catboost_interaction_importance is only available for CatBoost models."
+            )
+
+        # Resolve model
+        if self.Model is None and not self.ModelList:
+            raise RuntimeError(
+                "No trained models found. Call train() before compute_catboost_interaction_importance()."
+            )
+
+        if ModelName is not None:
+            model = self.ModelList.get(ModelName) or self.FitList.get(ModelName)
+            if model is None:
+                raise KeyError(f"Model '{ModelName}' not found in ModelList or FitList.")
+        else:
+            if self.Model is None:
+                raise RuntimeError("self.Model is None and no ModelName provided.")
+            model = self.Model
+
+        # Feature columns used by CatBoost
+        feature_cols = (self.NumericColumnNames or []) + \
+                       (self.CategoricalColumnNames or []) + \
+                       (self.TextColumnNames or [])
+
+        if not feature_cols:
+            raise RuntimeError(
+                "No feature columns found; check Numeric/Categorical/Text column lists."
+            )
+
+        # Get interaction importances
+        interactions = np.array(
+            model.get_feature_importance(type="Interaction")
+        )
+        # Expected shape: (n_interactions, 3) → [idx1, idx2, score]
+        if interactions.ndim != 2 or interactions.shape[1] < 3:
+            raise ValueError(
+                "Unexpected shape from CatBoost get_feature_importance(type='Interaction')."
+            )
+
+        idx1 = interactions[:, 0].astype(int)
+        idx2 = interactions[:, 1].astype(int)
+        scores = interactions[:, 2].astype(float)
+
+        max_idx = max(idx1.max(), idx2.max())
+        if max_idx >= len(feature_cols):
+            raise ValueError(
+                "Interaction indices exceed number of feature columns. "
+                "Check that feature column lists match training."
+            )
+
+        df_int = pl.DataFrame(
+            {
+                "feature_1": [feature_cols[i] for i in idx1],
+                "feature_2": [feature_cols[j] for j in idx2],
+                "importance": scores,
+            }
+        )
+
+        df_int = df_int.sort("importance", descending=True)
+
+        if top_n is not None and top_n > 0 and top_n < df_int.height:
+            df_int = df_int.head(top_n)
+
+        if normalize:
+            total = df_int["importance"].sum()
+            if total != 0:
+                df_int = df_int.with_columns(
+                    (pl.col("importance") / total).alias("importance_norm")
+                )
+            else:
+                df_int = df_int.with_columns(
+                    pl.lit(0.0).alias("importance_norm")
+                )
+
+        df_int = df_int.with_columns(
+            pl.arange(1, df_int.height + 1).alias("rank")
+        )
+
+        # Store in InteractionImportanceList
+        key_name = ModelName or "MainModel"
+        int_key = f"catboost_interaction_importance_{key_name}"
+        self.InteractionImportanceList[int_key] = df_int
+        self.InteractionImportanceListNames.append(int_key)
+
+        return df_int
