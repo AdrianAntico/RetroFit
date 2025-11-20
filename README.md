@@ -43,7 +43,9 @@ https://github.com/AdrianAntico/AutoQuant
 ### **RetroFit Class**
 <p>
 
-<details><summary>CatBoost Examples</summary>
+### CatBoost
+
+<details><summary>Code Examples</summary>
 <p>
 
 <details><summary>Regression Training</summary>
@@ -245,8 +247,9 @@ interact = model.compute_catboost_interaction_importance()
 </details>
 
 
+### XGBoost
 
-<details><summary>XGBoost Examples</summary>
+<details><summary>Code Examples</summary>
 <p>
 
 
@@ -527,7 +530,9 @@ imp = model.compute_feature_importance()
 </details>
 
 
-<details><summary>LightGBM Examples</summary>
+### LightGBM
+
+<details><summary>Code Examples</summary>
 <p>
 
 
