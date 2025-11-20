@@ -1380,10 +1380,10 @@ class RetroFit:
             if "p1" not in df_pl.columns:
                 raise ValueError("Missing 'p1' probability column for binary classification.")
     
-            tpc = CostDict.get("tpcost", 0.0)
-            fpc = CostDict.get("fpcost", 1.0)
-            fnc = CostDict.get("fncost", 1.0)
-            tnc = CostDict.get("tncost", 0.0)
+            tpc = CostDict.get("tpcost", 1.0)
+            fpc = CostDict.get("fpcost", -1.0)
+            fnc = CostDict.get("fncost", -2.0)
+            tnc = CostDict.get("tncost", 0.5)
     
             thresholds = np.linspace(0.0, 1.0, 101)
             all_rows = []
@@ -1443,7 +1443,7 @@ class RetroFit:
                         Utility = -1.0
                     else:
                         Utility = (
-                            (P1 / N1) * (tpc * TPR + fpcost * (1 - TPR))
+                            (P1 / N1) * (tpc * TPR + fpc * (1 - TPR))
                             + (1 - P1 / N1) * (fnc * FPR + tnc * (1 - FPR))
                         )
     
