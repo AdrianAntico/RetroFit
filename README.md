@@ -43,6 +43,12 @@ https://github.com/AdrianAntico/AutoQuant
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG' align='center' width='1000' />
 
 
+## Supervised Learning
+<details><summary>Code Examples</summary>
+<p>
+
+
+
 <p>
 
 ### CatBoost
