@@ -1141,7 +1141,7 @@ imp = model.compute_feature_importance()
 <p>
 
 
-<details><summary>Preds vs Actual</summary>
+<details><summary>Regression Calibration Plot</summary>
 <p>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
