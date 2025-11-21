@@ -20,6 +20,7 @@ import xgboost as xgb
 from xgboost import train, Booster
 import lightgbm as lgbm
 from lightgbm import LGBMModel
+from QuickEcharts import Charts
 from sklearn.metrics import (
     explained_variance_score,
     max_error,
@@ -156,7 +157,11 @@ class RetroFit:
         # Model interaction importance (e.g., CatBoost pairwise)
         self.InteractionImportanceList = {}
         self.InteractionImportanceListNames = []
-        
+
+        # Calibration Table Storage
+        self.CalibrationList = {}
+        self.CalibrationListNames = []
+
         # Label encoding (for classification / multiclass)
         self.LabelMapping = None
         self.LabelMappingInverse = None
@@ -2209,11 +2214,6 @@ class RetroFit:
 
         return df_imp
 
-
-    #################################################
-    # Function: CatBoost Interaction Importance
-    #################################################
-    
     # Main interaction importance function
     def compute_catboost_interaction_importance(
         self,
@@ -2332,3 +2332,653 @@ class RetroFit:
         self.InteractionImportanceListNames.append(int_key)
 
         return df_int
+    
+
+    #################################################
+    # Function: Calibration Tables
+    #################################################
+
+    # Helper
+    def _store_calibration_table(self, key: str, table):
+        """
+        Store a calibration table inside CalibrationList and track the key.
+        """
+        self.CalibrationList[key] = table
+        self.CalibrationListNames.append(key)
+
+    # Regression
+    def build_regression_calibration_table(
+        self,
+        DataName: str | None = None,
+        df=None,
+        ByVariables=None,
+        n_bins: int = 20,
+        binning: str = "equal_width",   # "equal_width" or "quantile"
+        store: bool = True,
+    ) -> pl.DataFrame:
+        """
+        Build calibration data for regression.
+
+        Each row corresponds to a (group, bin) with:
+          - mean predicted
+          - mean actual
+          - count
+          - bin range (lower/upper)
+          - bin_center_frac (for plotting / reference)
+
+        Parameters
+        ----------
+        DataName : str or None
+            Name of scored dataset in self.ScoredData. Ignored if `df` is supplied.
+        df : polars.DataFrame or pandas.DataFrame or None
+            Explicit scored data.
+        ByVariables : str | list[str] | None
+            Grouping columns (e.g., segment, month).
+        n_bins : int
+            Number of bins.
+        binning : {"equal_width","quantile"}
+            - "equal_width": bins over prediction range [min, max] with equal width.
+            - "quantile": bins based on global rank (approx equal counts per bin).
+        """
+
+        # ---- Normalize ByVariables ----
+        if ByVariables is None:
+            by_cols: list[str] = []
+        elif isinstance(ByVariables, str):
+            by_cols = [ByVariables]
+        elif isinstance(ByVariables, (list, tuple)):
+            by_cols = list(ByVariables)
+        else:
+            raise TypeError("ByVariables must be None, a string, or a list/tuple of strings.")
+
+        # ---- Resolve scored data (Polars) ----
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df to build_regression_calibration_table().")
+
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None — run score() first."
+                )
+
+        target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError("self.TargetColumnName is None — did you call create_model_data()?")
+
+        pred_col = f"Predict_{target}"
+        if pred_col not in df_pl.columns:
+            raise ValueError(
+                f"Column '{pred_col}' not found in scored data. "
+                "Did you run score() for regression?"
+            )
+
+        if self.TargetType.lower() != "regression":
+            raise ValueError("build_regression_calibration_table() is only valid for regression.")
+
+        if binning not in ("equal_width", "quantile"):
+            raise ValueError("binning must be 'equal_width' or 'quantile'.")
+
+        # ---- Assign bins ----
+        if binning == "equal_width":
+            # Global min/max over predictions
+            stats = df_pl.select(
+                pl.col(pred_col).min().alias("min_pred"),
+                pl.col(pred_col).max().alias("max_pred"),
+            ).to_dicts()[0]
+
+            min_pred = float(stats["min_pred"])
+            max_pred = float(stats["max_pred"])
+            if max_pred == min_pred:
+                max_pred = min_pred + 1e-9
+
+            width = max_pred - min_pred
+
+            df_pl = df_pl.with_columns(
+                (
+                    ((pl.col(pred_col) - min_pred) / width * n_bins)
+                    .floor()
+                    .cast(pl.Int64)
+                    .clip(0, n_bins - 1)
+                ).alias("bin_id")
+            )
+
+        else:  # "quantile"
+            n_rows = df_pl.height
+            if n_rows == 0:
+                return pl.DataFrame([])
+
+            df_pl = df_pl.with_columns(
+                pl.col(pred_col)
+                .rank(method="average")
+                .alias("__rank__")
+            ).with_columns(
+                (
+                    ((pl.col("__rank__") - 1) / float(n_rows) * n_bins)
+                    .floor()
+                    .cast(pl.Int64)
+                    .clip(0, n_bins - 1)
+                ).alias("bin_id")
+            ).drop("__rank__")
+
+        # ---- Group & aggregate ----
+        group_cols = by_cols + ["bin_id"]
+
+        agg_df = (
+            df_pl
+            .group_by(group_cols, maintain_order=True)
+            .agg([
+                pl.count().alias("n_obs"),
+                pl.col(pred_col).mean().alias("pred_mean"),
+                pl.col(target).mean().alias("actual_mean"),
+                pl.col(pred_col).min().alias("pred_min_bin"),
+                pl.col(pred_col).max().alias("pred_max_bin"),
+            ])
+        )
+
+        # Bin range / center for plotting
+        if binning == "equal_width":
+            # reuse min_pred/max_pred from above
+            # (safe since only computed in equal_width branch)
+            agg_df = agg_df.with_columns([
+                (pl.col("bin_id").cast(pl.Float64) / n_bins).alias("bin_frac_lower"),
+                ((pl.col("bin_id") + 1).cast(pl.Float64) / n_bins).alias("bin_frac_upper"),
+                ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center_frac"),
+            ])
+        else:
+            # For quantile bins, fractions are still nice to have, but
+            # the actual numeric boundaries come from min/max in bin.
+            agg_df = agg_df.with_columns([
+                (pl.col("bin_id").cast(pl.Float64) / n_bins).alias("bin_frac_lower"),
+                ((pl.col("bin_id") + 1).cast(pl.Float64) / n_bins).alias("bin_frac_upper"),
+                ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center_frac"),
+            ])
+
+        # Numeric bin bounds in prediction space
+        agg_df = agg_df.with_columns([
+            pl.col("pred_min_bin").alias("bin_lower"),
+            pl.col("pred_max_bin").alias("bin_upper"),
+        ])
+
+        # ---- Metadata columns ----
+        create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        model_name = "RetroFitModel"
+        grouping_label = ",".join(by_cols) if by_cols else "GLOBAL"
+
+        agg_df = agg_df.with_columns([
+            pl.lit(model_name).alias("ModelName"),
+            pl.lit(create_time).alias("CreateTime"),
+            pl.lit(grouping_label).alias("GroupingVars"),
+            pl.lit(f"calibration_regression_{binning}").alias("EvalLevel"),
+        ])
+
+        front_cols = ["ModelName", "CreateTime", "GroupingVars", "EvalLevel"]
+        other_cols = [c for c in agg_df.columns if c not in front_cols]
+        agg_df = agg_df.select(front_cols + other_cols)
+
+        # 1) Sort by bin_id first (while still numeric)
+        agg_df = agg_df.sort("bin_id")
+
+        # 2) Cast bin boundary fields to string for categorical handling in charts
+        bin_label_cols = [
+            "bin_frac_lower",
+            "bin_frac_upper",
+            "bin_center_frac",
+            "bin_lower",
+            "bin_upper",
+        ]
+
+        agg_df = agg_df.with_columns([
+            pl.col(c).cast(pl.Utf8) for c in bin_label_cols
+        ])
+
+        # Optional store
+        if store:
+            key = f"{self.Algorithm}_regression_calibration_{binning}_{DataName or 'data'}"
+            self._store_calibration_table(key, agg_df)
+
+        return agg_df
+
+    # Classification
+    def build_binary_calibration_table(
+        self,
+        DataName: str | None = None,
+        df=None,
+        ByVariables=None,
+        n_bins: int = 20,
+        binning: str = "equal_width",   # "equal_width" or "quantile"
+        store: bool = True,
+    ) -> pl.DataFrame:
+        """
+        Build calibration data for binary classification.
+
+        Each row corresponds to a (group, prob_bin) with:
+          - mean predicted probability (p1_mean)
+          - mean actual (event_rate)
+          - count
+          - bin range [bin_lower, bin_upper]
+          - bin_center (for plotting)
+
+        Parameters
+        ----------
+        DataName : str or None
+            Name of scored dataset in self.ScoredData. Ignored if `df` is supplied.
+        df : polars.DataFrame or pandas.DataFrame or None
+            Explicit scored data.
+        ByVariables : str | list[str] | None
+            Grouping columns.
+        n_bins : int
+            Number of probability bins.
+        binning : {"equal_width","quantile"}
+            - "equal_width": bins over [0,1] with equal width.
+            - "quantile": bins based on global rank of p1 (equal-ish counts per bin).
+        """
+
+        # ---- Normalize ByVariables ----
+        if ByVariables is None:
+            by_cols: list[str] = []
+        elif isinstance(ByVariables, str):
+            by_cols = [ByVariables]
+        elif isinstance(ByVariables, (list, tuple)):
+            by_cols = list(ByVariables)
+        else:
+            raise TypeError("ByVariables must be None, a string, or a list/tuple of strings.")
+
+        # ---- Resolve scored data (Polars) ----
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df to build_binary_calibration_table().")
+
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None — run score() first."
+                )
+
+        target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError("self.TargetColumnName is None — did you call create_model_data()?")
+
+        if self.TargetType.lower() != "classification":
+            raise ValueError("build_binary_calibration_table() is only valid for binary classification.")
+
+        if "p1" not in df_pl.columns:
+            raise ValueError(
+                "Column 'p1' not found in scored data. "
+                "Did you run score() for classification?"
+            )
+
+        if binning not in ("equal_width", "quantile"):
+            raise ValueError("binning must be 'equal_width' or 'quantile'.")
+
+        # Clip probabilities into [0, 1]
+        df_pl = df_pl.with_columns(
+            pl.col("p1").clip(0.0, 1.0).alias("p1")
+        )
+
+        # ---- Assign bins ----
+        if binning == "equal_width":
+            df_pl = df_pl.with_columns(
+                (
+                    (pl.col("p1") * n_bins)
+                    .floor()
+                    .cast(pl.Int64)
+                    .clip(0, n_bins - 1)
+                ).alias("bin_id")
+            )
+        else:  # "quantile"
+            n_rows = df_pl.height
+            if n_rows == 0:
+                return pl.DataFrame([])
+
+            df_pl = df_pl.with_columns(
+                pl.col("p1")
+                .rank(method="average")
+                .alias("__rank__")
+            ).with_columns(
+                (
+                    ((pl.col("__rank__") - 1) / float(n_rows) * n_bins)
+                    .floor()
+                    .cast(pl.Int64)
+                    .clip(0, n_bins - 1)
+                ).alias("bin_id")
+            ).drop("__rank__")
+
+        group_cols = by_cols + ["bin_id"]
+
+        agg_df = (
+            df_pl
+            .group_by(group_cols, maintain_order=True)
+            .agg([
+                pl.count().alias("n_obs"),
+                pl.col("p1").mean().alias("p1_mean"),
+                pl.col(target).mean().alias("event_rate"),
+                pl.col("p1").min().alias("p1_min_bin"),
+                pl.col("p1").max().alias("p1_max_bin"),
+            ])
+        )
+
+        # Fractions and numeric bounds
+        agg_df = agg_df.with_columns([
+            (pl.col("bin_id").cast(pl.Float64) / n_bins).alias("bin_frac_lower"),
+            ((pl.col("bin_id") + 1).cast(pl.Float64) / n_bins).alias("bin_frac_upper"),
+            ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center"),
+            pl.col("p1_min_bin").alias("bin_lower"),
+            pl.col("p1_max_bin").alias("bin_upper"),
+        ])
+
+        # ---- Metadata ----
+        create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        model_name = "RetroFitModel"
+        grouping_label = ",".join(by_cols) if by_cols else "GLOBAL"
+
+        agg_df = agg_df.with_columns([
+            pl.lit(model_name).alias("ModelName"),
+            pl.lit(create_time).alias("CreateTime"),
+            pl.lit(grouping_label).alias("GroupingVars"),
+            pl.lit(f"calibration_binary_{binning}").alias("EvalLevel"),
+        ])
+
+        front_cols = ["ModelName", "CreateTime", "GroupingVars", "EvalLevel"]
+        other_cols = [c for c in agg_df.columns if c not in front_cols]
+        agg_df = agg_df.select(front_cols + other_cols)
+
+        # 1) Sort by bin_id first
+        agg_df = agg_df.sort("bin_id")
+
+        # 2) Cast bin boundary fields to string
+        bin_label_cols = [
+            "bin_frac_lower",
+            "bin_frac_upper",
+            "bin_center_frac",
+            "bin_lower",
+            "bin_upper",
+        ]
+
+        agg_df = agg_df.with_columns([
+            pl.col(c).cast(pl.Utf8) for c in bin_label_cols
+        ])
+
+        # Optional store
+        if store:
+            key = f"{self.Algorithm}_binary_calibration_{binning}_{DataName or 'data'}"
+            self._store_calibration_table(key, agg_df)
+
+        return agg_df
+
+
+    #################################################
+    # Function: Calibration Plots
+    #################################################
+
+    # Helper for regression calibration plot
+    def _get_regression_calibration_metrics(
+        self,
+        DataName: str = "test",
+        n_bins: int = 20,
+        binning: str = "quantile",
+    ) -> dict:
+        """
+        PRIVATE:
+          Computes calibration summary metrics (RMSE, MACE) for regression.
+          Not exposed to the user; called internally by plotting functions.
+        """
+        import polars as pl
+    
+        if self.TargetType.lower() != "regression":
+            raise ValueError("_get_regression_calibration_metrics is only for regression.")
+    
+        df = self.ScoredData.get(DataName)
+        if df is None:
+            raise ValueError(f"Scored data for '{DataName}' not found. Run score() first.")
+    
+        target = self.TargetColumnName
+        pred_col = f"Predict_{target}"
+    
+        # 1. RMSE
+        rmse = ((df[target] - df[pred_col]) ** 2).mean() ** 0.5
+
+        # 2. MACE via calibration table
+        cal = self.build_regression_calibration_table(
+            DataName=DataName,
+            n_bins=n_bins,
+            binning=binning,
+            store=False
+        )
+    
+        mace = (
+            cal.select(
+                (pl.col("actual_mean") - pl.col("pred_mean"))
+                .abs()
+                .mean()
+                .alias("mace")
+            )["mace"][0]
+        )
+    
+        return {"rmse": float(rmse), "mace": float(mace)}
+
+    # Helper for classification calibration plot
+    def _get_classification_calibration_metrics(
+        self,
+        DataName: str = "test",
+        n_bins: int = 20,
+        binning: str = "quantile",   # "quantile" or "equal_width"
+    ) -> dict:
+        """
+        PRIVATE:
+          Compute summary calibration metrics for a binary classification model.
+    
+        Returns a dict with:
+          - 'brier': Brier score on the scored data
+          - 'mace' : Mean Absolute Calibration Error across bins
+                     (mean |actual_mean - pred_mean| over calibration bins)
+        """
+        if self.TargetType.lower() != "classification":
+            raise ValueError(
+                "_get_classification_calibration_metrics is only valid for binary classification."
+            )
+    
+        df = self.ScoredData.get(DataName)
+        if df is None:
+            raise ValueError(
+                f"Scored data for DataName='{DataName}' not found. "
+                f"Run score(DataName='{DataName}') first."
+            )
+    
+        target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError("self.TargetColumnName is None — did you call create_model_data()?")
+    
+        if "p1" not in df.columns:
+            raise ValueError(
+                "Column 'p1' not found in scored data. "
+                "For classification, score() must produce a 'p1' probability column."
+            )
+    
+        # Ensure numeric 0/1 target (if user gave bool or int it should already be fine)
+        # If they gave string labels, they'd need to convert before modeling.
+        # We keep it simple here and just trust it's 0/1.
+        # Brier score: mean((p1 - y)^2)
+        brier = (
+            df.select(
+                ((pl.col("p1") - pl.col(target)) ** 2)
+                .mean()
+                .alias("brier")
+            )["brier"][0]
+        )
+    
+        # Calibration table for MACE
+        cal = self.build_binary_calibration_table(
+            DataName=DataName,
+            df=None,
+            ByVariables=None,
+            n_bins=n_bins,
+            binning=binning,
+            store=False,   # this call is just for metrics
+        )
+    
+        if not {"actual_mean", "pred_mean"}.issubset(set(cal.columns)):
+            raise ValueError(
+                "Calibration table missing 'actual_mean' or 'pred_mean' columns."
+            )
+    
+        mace = (
+            cal.select(
+                (pl.col("actual_mean") - pl.col("pred_mean"))
+                .abs()
+                .mean()
+                .alias("mace")
+            )["mace"][0]
+        )
+    
+        return {
+            "brier": float(brier),
+            "mace": float(mace),
+        }
+
+    # Regression Calibration Plot
+    def plot_regression_calibration(
+        self,
+        DataName: str = "test",
+        n_bins: int = 20,
+        binning: str = "quantile",
+        Store: bool = False,
+        plot_name: str = None,
+    ):
+        """
+        Build and visualize a regression calibration plot using QuickEcharts.
+    
+        Produces:
+          - Calibration table
+          - RMSE + MACE summary
+          - QuickEcharts line chart (pred_mean vs actual_mean)
+    
+        Parameters
+        ----------
+        DataName : str
+            Dataset name to evaluate ('train', 'validation', 'test').
+        n_bins : int
+            Number of bins used for calibration.
+        binning : {"quantile", "equal_width"}
+            Binning method.
+        Store : bool
+            If True, stores the calibration table in self.CalibrationList.
+        plot_name : str
+            Optional HTML filename for QuickEcharts plot output.
+        """
+
+        # Build the calibration table
+        cal = self.build_regression_calibration_table(
+            DataName=DataName,
+            n_bins=n_bins,
+            binning=binning,
+            store=Store
+        )
+    
+        # Compute metrics (Private)
+        metrics = self._get_regression_calibration_metrics(
+            DataName=DataName,
+            n_bins=n_bins,
+            binning=binning
+        )
+    
+        subtitle = f"RMSE = {metrics['rmse']:.4f} · MACE = {metrics['mace']:.4f}"
+    
+        # Ensure sorted
+        cal = cal.sort("bin_id")
+    
+        # Plot
+        Charts.Line(
+            dt=cal,
+            PreAgg=True,
+            YVar=["pred_mean", "actual_mean"],
+            XVar="bin_center_frac",
+            Title=f"Regression Calibration ({DataName})",
+            SubTitle=subtitle,
+            YAxisTitle="Predicted & Actual",
+            XAxisTitle="Quantile Bins of Predicted Values",
+            Theme="dark",
+            RenderHTML=plot_name,
+        )
+    
+        return cal
+
+    # Classification Calibration Plot
+    def plot_classification_calibration(
+        self,
+        DataName: str = "test",
+        n_bins: int = 20,
+        binning: str = "quantile",   # "quantile" or "equal_width"
+        Store: bool = False,
+        plot_name: str | None = None,
+    ):
+        """
+        Build and visualize a binary classification calibration plot using QuickEcharts.
+    
+        Produces:
+          - Calibration table (probability bins)
+          - Brier score + MACE summary
+          - QuickEcharts line chart (pred_mean vs actual_mean)
+    
+        Parameters
+        ----------
+        DataName : str
+            Dataset name to evaluate ('train', 'validation', 'test').
+        n_bins : int
+            Number of bins used for calibration.
+        binning : {"quantile", "equal_width"}
+            Binning method for predicted probabilities.
+        Store : bool
+            If True, stores the calibration table in self.CalibrationList.
+        plot_name : str or None
+            Name passed through to QuickEcharts (e.g., HTML output identifier).
+        """
+        if self.TargetType != "classification":
+            raise ValueError(
+                "plot_classification_calibration is only valid when TargetType='classification'."
+            )
+    
+        # 1) Build calibration table (this should already sort by bin_id and cast bin labels)
+        cal = self.build_binary_calibration_table(
+            DataName=DataName,
+            df=None,
+            ByVariables=None,
+            n_bins=n_bins,
+            binning=binning,
+            store=Store,
+        )
+    
+        # 2) Compute calibration metrics (private helper)
+        metrics = self._get_classification_calibration_metrics(
+            DataName=DataName,
+            n_bins=n_bins,
+            binning=binning,
+        )
+    
+        subtitle = f"Brier = {metrics['brier']:.4f} · MACE = {metrics['mace']:.4f}"
+    
+        # 3) Ensure sorted by bin_id (just in case)
+        cal = cal.sort("bin_id")
+    
+        # 4) Plot with QuickEcharts
+        Charts.Line(
+            dt=cal,
+            PreAgg=True,
+            YVar=["pred_mean", "actual_mean"],
+            XVar="bin_center_frac",
+            Title=f"Classification Calibration ({DataName})",
+            SubTitle=subtitle,
+            YAxisTitle="Observed Positive Rate & Mean Predicted Probability",
+            XAxisTitle="Quantile Bins of Predicted Probabilities"
+            if binning == "quantile"
+            else "Equal-Width Bins of Predicted Probabilities",
+            Theme="dark",
+            plot_name=plot_name,
+        )
+    
+        # Return table for further inspection if needed
+        return cal

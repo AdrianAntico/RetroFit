@@ -140,6 +140,20 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
@@ -288,7 +302,8 @@ model.update_model_parameters(
     bootstrap_type='Bayesian',
     rsm=1.0,
     iterations=200,
-    subsample=None
+    subsample=None,
+    sampling_frequency=None
 )
 
 # Train Model
@@ -1119,6 +1134,7 @@ imp = model.compute_feature_importance()
 </details>
 
 
+<br>
 
 
 ## **Model Evaluation Visuals**
@@ -1128,9 +1144,7 @@ imp = model.compute_feature_importance()
 <details><summary>Preds vs Actual</summary>
 <p>
 
-```python
-
-```
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
 </p>
 </details>
