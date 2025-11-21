@@ -476,6 +476,23 @@ segment_date_eval = model.evaluate(
     DataName="test",
     ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
 )
+
+# Get variable importance
+imp = model.compute_feature_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
@@ -864,6 +881,20 @@ segment_date_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
