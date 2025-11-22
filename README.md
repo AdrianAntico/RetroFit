@@ -43,7 +43,7 @@ https://github.com/AdrianAntico/AutoQuant
 # Code Examples
 
 
-## Supervised Learning
+### Supervised Learning
 <details><summary>Code Examples</summary>
 <p>
 
@@ -1220,7 +1220,7 @@ imp = model.compute_feature_importance()
 <br>
 
 
-## **Model Evaluation Visuals**
+### **Model Evaluation Visuals**
 <p>
 
 <details><summary>Examples</summary>
