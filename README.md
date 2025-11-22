@@ -6,20 +6,6 @@
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
 
-Table of Contents
-- [**Quick Note**](#quick-note)
-- [**Installation**](#installation)
-- [**Machine Learning Note**](#machine-learning-note)
-
-Documentation + Code Examples
-- [**Supervised Learning**](#supervised-learning)
-
-
-## **Quick Note**
-This package is currently in its beginning stages. Starting off will be supervised learning functions for regression, classification, and multiclass types. I incorporate usage of my companion packages:
-
-- `PolarsFE`: feature engineering with polars
-- `QuickEcharts`: visualization with Echarts.js
 
 ## **Installation**
 ```python
@@ -33,16 +19,176 @@ pip install retrofit==0.1.7
 https://github.com/AdrianAntico/AutoQuant
 ```
 
+# 📦 RetroFit  
+### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 
-## **Machine Learning Note**
+**RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models** using state-of-the-art tree-based algorithms (CatBoost, XGBoost, LightGBM).
 
-<details><summary>Expand to view content</summary>
-<p>
+Built from the ground up with **Polars**, **GPU acceleration**, and a **scalable evaluation engine**, RetroFit provides a unified interface for:
 
-> Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from pandas or polars (polars preferred) which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. The RetroFit class makes this super easy, fast, with minimal memory utilization.
+- 🧪 Model data creation & preprocessing (Polars-first)  
+- 🚀 Fast training with automatic CPU/GPU switching  
+- 📊 Unified scoring engine with inverse-transformation support  
+- 📈 Full evaluation suite for regression, binary, and multiclass  
+- 🎯 Calibration plots & tables  
+- 📉 ROC, PR, and PR-ROC curves (QuickEcharts visuals)  
+- 🔧 Automatic label encoding for classification/multiclass  
+- 🔄 Target variable transformations (log, shifted-log, Box-Cox)
 
-</p>
-</details>
+RetroFit is designed for data scientists who want **speed**, **modern tooling**, and **high-quality diagnostics** without boilerplate.
+
+---
+
+## 🔥 Key Features
+
+### ⚙️ 1. Polars-Native Modeling Pipeline  
+RetroFit uses Polars internally for:  
+- Numeric & categorical handling  
+- Efficient grouping and slicing  
+- Scored-data postprocessing  
+- Calibration table generation  
+- Data preparation for CatBoost/XGBoost/LightGBM  
+
+Everything is vectorized whenever possible.
+
+---
+
+### 🎯 2. Target Transformations (Regression)
+
+RetroFit supports:
+
+- `"none"`  
+- `"log"` (auto detects ≤0 and applies min-shift)  
+- `"boxcox"` (with optional lambda)  
+- Custom transforms
+
+Transformation is applied automatically in `create_model_data()` and reversed in `score()`.
+
+---
+
+### ⚡ 3. GPU-Ready Training
+
+Enable GPU training with:
+
+```python
+model = RetroFit(Algorithm="catboost", TargetType="regression", GPU=True)
+```
+
+RetroFit automatically:
+
+- Switches tree construction method  
+- Adjusts booster settings  
+- Removes CPU-only parameters  
+- Ensures full CatBoost/XGBoost/LightGBM compatibility  
+
+---
+
+### 📊 4. Unified Scoring Engine
+
+```python
+model.score(DataName="test")
+```
+
+Or score external data:
+
+```python
+model.score(NewData=df)
+```
+
+Outputs a Polars DataFrame with:
+
+- Predictions (`Predict_target`)  
+- Probabilities (`p1`, `class_k`)  
+- Inverse-transformed regression predictions  
+
+---
+
+### 🧮 5. Full Evaluation Suite
+
+#### **Regression Metrics**
+- R²  
+- Explained variance  
+- MAE / MedianAE  
+- MAPE  
+- MSE / RMSE  
+- MSLE (auto-disabled if invalid)
+
+#### **Binary Classification**
+- Accuracy, Recall, Precision  
+- TPR, FPR, TNR, FNR  
+- F1, F0.5, F2  
+- MCC  
+- Threat score  
+- Utility (custom cost matrix)  
+- Full 101-point threshold curve  
+
+#### **Multiclass Classification**
+- Overall: Accuracy, macro/micro/weighted F1  
+- One-vs-all threshold evaluation  
+- Uses label decoder to restore original class names  
+
+---
+
+## 🎛️ 6. Calibration Tables & Plots
+
+Regression + Classification calibration:  
+- Equal-width or quantile binning  
+- MACE, RMSE, MAE, R²  
+- Per-group calibration  
+- QuickEcharts visualization  
+- Metadata: timestamp, model name, grouping vars  
+
+---
+
+## 📈 7. ROC / PR / PR-ROC Curves
+
+RetroFit generates:
+
+- Standard ROC  
+- Standard PR  
+- PR-ROC (1 – Recall vs Precision)  
+- AUC and Average Precision  
+- QuickEcharts Area plots with gradient shading  
+
+---
+
+## 🎨 8. QuickEcharts Visuals
+
+All plots are powered by your QuickEcharts engine:  
+- Line / Area plots  
+- Gradient fills  
+- Themes (light/dark)  
+- Auto subtitles with metrics  
+- HTML export  
+
+---
+
+# 🚀 Next Features Coming Soon  
+## Partial Dependence Plots (PDP)
+
+RetroFit's next major addition will bring full AutoQuant-style interpretability:
+
+### ✔ Numeric PDP
+- Grid over each numeric feature  
+- Model predictions over perturbed dataset  
+- Main effect curve  
+- Optional ICE overlays  
+- QuickEcharts line/area chart  
+
+### ✔ Categorical PDP
+- Per-category partial dependence  
+- Bar or point-line chart  
+- Sorted or alphabetical category ordering  
+
+### ✔ Batch PDP Builder
+Planned API:
+
+```python
+model.plot_pdp_numeric(...)
+model.plot_pdp_categorical(...)
+model.plot_pdp_all(...)
+```
+
 
 <br>
 
