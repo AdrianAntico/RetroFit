@@ -36,7 +36,13 @@ https://github.com/AdrianAntico/AutoQuant
 
 ## **Machine Learning Note**
 
+<details><summary>Expand to view content</summary>
+<p>
+
 > Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from pandas or polars (polars preferred) which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. The RetroFit class makes this super easy, fast, with minimal memory utilization.
+
+</p>
+</details>
 
 <br>
 
