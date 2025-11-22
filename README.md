@@ -18,8 +18,8 @@ Documentation + Code Examples
 ## **Quick Note**
 This package is currently in its beginning stages. Starting off will be supervised learning functions for regression, classification, and multiclass types. I incorporate usage of my companion packages:
 
-- PolarsFE: feature engineering using polars
-- QuickEcharts: visualization using Echarts.js
+- `PolarsFE`: feature engineering with polars
+- `QuickEcharts`: visualization with Echarts.js
 
 ## **Installation**
 ```python
