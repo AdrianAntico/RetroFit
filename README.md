@@ -12,7 +12,7 @@ Table of Contents
 - [**Machine Learning Note**](#machine-learning-note)
 
 Documentation + Code Examples
-- [**Machine Learning**](#machine-learning)
+- [**Supervised Learning**](#supervised-learning)
 
 
 ## **Quick Note**
