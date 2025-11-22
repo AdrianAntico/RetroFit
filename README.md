@@ -203,8 +203,8 @@ model.create_model_data(
   ValidationData=DataSets[1],
   TestData=DataSets[2],
   TargetColumnName="Label_binary",
-  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
-  CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'],
+  NumericColumnNames=['XREGS1','XREGS2','XREGS3'],
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3'],
   TextColumnNames=None,
   WeightColumnName=None,
   Threads=-1
@@ -255,6 +255,18 @@ model.plot_classification_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
 )
 ```
 
@@ -630,6 +642,26 @@ segment_date_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Store plot in working directory
+model.plot_classification_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
+)
 ```
 
 </p>
@@ -1033,6 +1065,25 @@ segment_date_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
+# Store plot in working directory
+model.plot_classification_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
+)
 ```
 
 </p>
@@ -1172,6 +1223,10 @@ imp = model.compute_feature_importance()
 ## **Model Evaluation Visuals**
 <p>
 
+<details><summary>Examples</summary>
+<p>
+
+
 
 <details><summary>Calibration Plot</summary>
 <p>
@@ -1197,11 +1252,34 @@ imp = model.compute_feature_importance()
 
 
 
+<details><summary>ROC Plot</summary>
+<p>
+
+<br> 
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
+
+</p>
+</details>
+
+
+
+<details><summary>Precision-Recall Plot</summary>
+<p>
+
+<br> 
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
+
+</p>
+</details>
 
 
 
 
 
+</p>
+</details>
 
 
 </p>

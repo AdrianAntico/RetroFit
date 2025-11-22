@@ -39,7 +39,10 @@ from sklearn.metrics import (
     precision_recall_fscore_support,
     precision_score,
     recall_score,
-    roc_auc_score
+    roc_auc_score,
+    roc_curve,
+    auc,
+    precision_recall_curve
 ) 
 
 
@@ -92,12 +95,14 @@ class RetroFit:
     def __init__(
         self,
         Algorithm: str = "catboost",
-        TargetType: str = "regression"
+        TargetType: str = "regression",
+        GPU: bool = False,
     ):
     
         # Model info
         self.Algorithm = Algorithm.lower()
         self.TargetType = TargetType.lower()
+        self.GPU = bool(GPU)
     
         # Original data in POLARS
         self.DataFrames = {
@@ -115,7 +120,11 @@ class RetroFit:
         self.CategoricalColumnNames = []
         self.TextColumnNames = []
         self.WeightColumnName = None
-    
+
+        # Transformations
+        self.TargetTransform: str | None = None
+        self.TargetTransformParams: dict = {}
+
         # Model parameters
         self.ModelArgs = None
         self.ModelArgsNames = None
@@ -212,7 +221,144 @@ class RetroFit:
             return df
     
         raise ValueError("Input must be a polars or pandas DataFrame (or None).")
+
+    # Target Transformations (regression)
+    def set_target_transform(self, transform: str | None):
+        if transform is None:
+            self.TargetTransform = None
+            self.TargetTransformParams = {}
+            return
     
+        t = transform.lower()
+        if t not in ("none", "log", "sqrt", "standardize"):
+            raise ValueError(
+                "Unsupported TargetTransform. "
+                "Choose from: None, 'log', 'sqrt', 'standardize'."
+            )
+    
+        self.TargetTransform = t
+        self.TargetTransformParams = {}
+
+    # Prepare transformation
+    def _prepare_target_transform_params(self, train_df: pl.DataFrame):
+        """
+        Compute and store any parameters needed for the target transform
+        (e.g. shift for 'log', mean/std for 'standardize') using TRAIN data only.
+        """
+        t = self._normalize_target_transform()
+    
+        # No transform
+        if t == "none":
+            self.TargetTransformParams = {}
+            return
+    
+        if self.TargetColumnName is None:
+            raise RuntimeError("TargetColumnName is None; cannot prepare target transform params.")
+    
+        col = self.TargetColumnName
+    
+        if t == "log":
+            # Adaptive shift: only if there are zero or negative values
+            stats = train_df.select(pl.col(col).min().alias("min_val")).to_dicts()[0]
+            min_y = float(stats["min_val"])
+            eps = 1e-6
+    
+            if min_y <= 0:
+                shift = -min_y + eps   # just enough to push min slightly > 0
+            else:
+                shift = 0.0
+    
+            self.TargetTransformParams = {"shift": shift}
+    
+        elif t == "sqrt":
+            # Strict: require >= 0
+            stats = train_df.select(pl.col(col).min().alias("min_val")).to_dicts()[0]
+            min_y = float(stats["min_val"])
+            if min_y < 0:
+                raise ValueError(
+                    f"TargetTransform='sqrt' requires all target values >= 0. "
+                    f"Found minimum {min_y}."
+                )
+            self.TargetTransformParams = {}
+    
+        elif t == "standardize":
+            stats = train_df.select(
+                [
+                    pl.col(col).mean().alias("mean"),
+                    pl.col(col).std().alias("std"),
+                ]
+            ).to_dicts()[0]
+    
+            if stats["std"] is None or stats["std"] == 0 or np.isnan(stats["std"]):
+                raise ValueError(
+                    "Target standard deviation is zero or NaN; cannot apply standardize transform."
+                )
+    
+            self.TargetTransformParams = {
+                "mean": float(stats["mean"]),
+                "std": float(stats["std"]),
+            }
+    
+        else:
+            raise ValueError(f"Unsupported TargetTransform '{t}'.")
+
+    # Build transform expression
+    def _target_transform_expr(self, col_name: str) -> pl.Expr:
+        """
+        Build a Polars expression that applies the target transform
+        to the given column. Used in create_model_data().
+        """
+        t = self._normalize_target_transform()
+    
+        if t == "none":
+            return pl.col(col_name)
+    
+        if t == "log":
+            shift = float(self.TargetTransformParams.get("shift", 0.0))
+            # If shift == 0, this is just log(y)
+            return (pl.col(col_name) + shift).log()
+    
+        if t == "sqrt":
+            return pl.col(col_name).sqrt()
+    
+        if t == "standardize":
+            mean = float(self.TargetTransformParams["mean"])
+            std = float(self.TargetTransformParams["std"])
+            return (pl.col(col_name) - mean) / std
+    
+        raise ValueError(f"Unsupported TargetTransform '{t}'.")
+
+    # Apply transformation
+    def _apply_target_transform_to_internal_frames(self):
+        """
+        Apply the target transform (if any) to the target column
+        in self.DataFrames['train'/'validation'/'test'] using Polars.
+    
+        Only used for regression.
+        """
+        t = self._normalize_target_transform()
+        if t == "none":
+            return
+    
+        if self.TargetColumnName is None:
+            raise RuntimeError("TargetColumnName is None; cannot apply target transform.")
+    
+        col = self.TargetColumnName
+    
+        for split in ("train", "validation", "test"):
+            df_pl = self.DataFrames.get(split)
+            if df_pl is None:
+                continue
+            if col not in df_pl.columns:
+                raise ValueError(
+                    f"Target column '{col}' not found in DataFrames['{split}']; "
+                    "cannot apply target transform."
+                )
+    
+            self.DataFrames[split] = df_pl.with_columns(
+                self._target_transform_expr(col).alias(col)
+            )
+
     # Helper function: CatBoost
     @staticmethod
     def _process_catboost(
@@ -267,7 +413,7 @@ class RetroFit:
         )
     
         return {"train_data": train_pool, "validation_data": valid_pool, "test_data": test_pool}
-    
+
     # Helper function: XGBoost
     @staticmethod
     def _process_xgboost(
@@ -303,7 +449,7 @@ class RetroFit:
         )
     
         return {"train_data": train_dmatrix, "validation_data": valid_dmatrix, "test_data": test_dmatrix}
-    
+
     # Helper function: LightGBM
     @staticmethod
     def _process_lightgbm(
@@ -442,7 +588,7 @@ class RetroFit:
         self.DataFrames["train"] = _apply_mapping(self.DataFrames.get("train"))
         self.DataFrames["validation"] = _apply_mapping(self.DataFrames.get("validation"))
         self.DataFrames["test"] = _apply_mapping(self.DataFrames.get("test"))
-    
+
     # Main function
     def create_model_data(
         self,
@@ -454,7 +600,8 @@ class RetroFit:
         CategoricalColumnNames=None,
         TextColumnNames=None,
         WeightColumnName=None,
-        Threads=-1
+        Threads=-1,
+        TargetTransform: str | None = None,
     ):
         """
         Create modeling objects for specific algorithms (CatBoost, XGBoost, LightGBM).
@@ -465,30 +612,44 @@ class RetroFit:
             NumericColumnNames, CategoricalColumnNames, TextColumnNames: Lists of column names.
             WeightColumnName: Column name for sample weights.
             Threads: Number of threads to utilize.
+            TargetTransform : {"log", "log1p", "sqrt", "standardize", None, "none"}, optional
+              Optional target transform for regression:
+                - None / "none" → no transform
+                - "log"        → log(y)
+                - "log1p"      → log(1 + y)
+                - "sqrt"       → sqrt(y)
+                - "standardize"→ (y - mean) / std  (params learned from TrainData)
+      
+              Applied in create_model_data() for regression and inverted in score().
     
         Side effects:
             - Stores POLARS originals in self.DataFrames["train"/"validation"/"test"]
             - Stores algo-specific objects in self.ModelData
             - Initializes self.ModelArgs via create_model_parameters()
         """
-    
+
+        # 0) Optionally set / override target transform
+        if TargetTransform is not None:
+            # this normalizes "none" → None and validates
+            self.set_target_transform(TargetTransform)
+
         # 1) Normalize all inputs to POLARS internally
         TrainData = self._normalize_input_df(TrainData)
         ValidationData = self._normalize_input_df(ValidationData)
         TestData = self._normalize_input_df(TestData)
-    
+
         # 2) Store metadata / column info
         self.TargetColumnName = TargetColumnName
         self.NumericColumnNames = NumericColumnNames or []
         self.CategoricalColumnNames = CategoricalColumnNames or []
         self.TextColumnNames = TextColumnNames or []
         self.WeightColumnName = WeightColumnName
-    
+
         # 3) Store original POLARS frames for later scoring/evaluation
         self.DataFrames["train"] = TrainData
         self.DataFrames["validation"] = ValidationData
         self.DataFrames["test"] = TestData
-        
+
         # 3b) Encode target labels to integers for classification / multiclass
         self._encode_target_labels()
 
@@ -496,12 +657,12 @@ class RetroFit:
         TrainData = self.DataFrames["train"]
         ValidationData = self.DataFrames["validation"]
         TestData = self.DataFrames["test"]
-    
+
         # 4) Convert to pandas for model objects
         train_pd = self._to_pandas(TrainData)
         valid_pd = self._to_pandas(ValidationData)
         test_pd = self._to_pandas(TestData)
-    
+
         # 5) Select processing pipeline
         if self.Algorithm == 'catboost':
             self.ModelData = self._process_catboost(
@@ -516,7 +677,7 @@ class RetroFit:
                 Threads=Threads
             )
             self.ModelDataNames = [*self.ModelData]
-    
+
         elif self.Algorithm == 'xgboost':
             if not self.NumericColumnNames:
                 raise ValueError("NumericColumnNames must be provided for XGBoost.")
@@ -529,7 +690,7 @@ class RetroFit:
                 WeightColumnName=WeightColumnName
             )
             self.ModelDataNames = [*self.ModelData]
-    
+
         elif self.Algorithm == 'lightgbm':
             if not self.NumericColumnNames:
                 raise ValueError("NumericColumnNames must be provided for LightGBM.")
@@ -542,14 +703,14 @@ class RetroFit:
                 WeightColumnName=WeightColumnName
             )
             self.ModelDataNames = [*self.ModelData]
-    
+
         else:
             raise ValueError("Unsupported processing type. Choose from 'catboost', 'xgboost', or 'lightgbm'.")
-    
+
         # 6) Initialize base model parameters for this algorithm/target type
         self.create_model_parameters()
 
-    
+
     #################################################
     # Function: Create Algo-Specific Args
     #################################################
@@ -569,255 +730,291 @@ class RetroFit:
             raise Exception('TargetType cannot be None')
 
         # CatBoost
-        if self.Algorithm == 'catboost':
-    
-            # Initialize AlgoArgs
-            AlgoArgs = dict()
-      
+        if self.Algorithm == "catboost":
+        
+            AlgoArgs: dict[str, t.Any] = {}
+        
             ###############################
             # TargetType Parameters
             ###############################
-            if self.TargetType == 'classification':
-                AlgoArgs['loss_function'] = 'Logloss'
-                AlgoArgs['eval_metric'] = 'Logloss'
-                AlgoArgs['auto_class_weights'] = 'Balanced'
-            elif self.TargetType == 'multiclass':
-                AlgoArgs['loss_function'] = 'MultiClassOneVsAll'
-                AlgoArgs['eval_metric'] = 'MultiClassOneVsAll'
-            elif self.TargetType == 'regression':
-                AlgoArgs['loss_function'] = 'RMSE'
-                AlgoArgs['eval_metric'] = 'RMSE'
-      
+            if self.TargetType == "classification":
+                AlgoArgs["loss_function"] = "Logloss"
+                AlgoArgs["eval_metric"] = "Logloss"
+                AlgoArgs["auto_class_weights"] = "Balanced"
+        
+            elif self.TargetType == "multiclass":
+                AlgoArgs["loss_function"] = "MultiClassOneVsAll"
+                AlgoArgs["eval_metric"] = "MultiClassOneVsAll"
+        
+            elif self.TargetType == "regression":
+                AlgoArgs["loss_function"] = "RMSE"
+                AlgoArgs["eval_metric"] = "RMSE"
+        
+            else:
+                raise ValueError(
+                    f"Unsupported TargetType '{self.TargetType}' for CatBoost. "
+                    "Choose from 'classification', 'multiclass', 'regression'."
+                )
+        
             ###############################
-            # Parameters
+            # GPU / CPU Parameters
             ###############################
-            AlgoArgs['train_dir'] = os.getcwd()
-            AlgoArgs['task_type'] = 'CPU'
-            AlgoArgs['learning_rate'] = None
-            AlgoArgs['l2_leaf_reg'] = None
-            AlgoArgs['has_time'] = False
-            AlgoArgs['best_model_min_trees'] = 10
-            AlgoArgs['nan_mode'] = 'Min'
-            AlgoArgs['fold_permutation_block'] = 1
-            AlgoArgs['boosting_type'] = 'Plain'
-            AlgoArgs['random_seed'] = None
-            AlgoArgs['thread_count'] = -1
-            AlgoArgs['metric_period'] = 10
-      
+            if self.GPU:
+                AlgoArgs["task_type"] = "GPU"
+                AlgoArgs["rsm"] = 1.0
+                AlgoArgs["bootstrap_type"] = "Bayesian"
+            else:
+                AlgoArgs["task_type"] = "CPU"
+                AlgoArgs["sampling_frequency"] = "PerTreeLevel"
+                AlgoArgs["rsm"] = 0.80
+                AlgoArgs["bootstrap_type"] = "MVS"
+                AlgoArgs["langevin"] = True
+                AlgoArgs["diffusion_temperature"] = 10000
+                AlgoArgs["subsample"] = 1.0
+        
+            ###############################
+            # Core Parameters
+            ###############################
+            AlgoArgs["allow_writing_files"] = False
+            AlgoArgs["learning_rate"] = None          # let grid/AutoTune handle
+            AlgoArgs["l2_leaf_reg"] = None            # gridable
+            AlgoArgs["has_time"] = False
+            AlgoArgs["best_model_min_trees"] = 10
+            AlgoArgs["nan_mode"] = "Min"
+            AlgoArgs["fold_permutation_block"] = 1
+            AlgoArgs["boosting_type"] = "Plain"
+            AlgoArgs["random_seed"] = None
+            AlgoArgs["thread_count"] = -1
+            AlgoArgs["metric_period"] = 10
+        
             ###############################
             # Gridable Parameters
             ###############################
-            AlgoArgs['iterations'] = 1000
-            AlgoArgs['depth'] = 6
-            AlgoArgs['langevin'] = True
-            AlgoArgs['diffusion_temperature'] = 10000
-            AlgoArgs['grow_policy'] = 'SymmetricTree'
-            AlgoArgs['model_size_reg'] = 0.5
-            
+            AlgoArgs["iterations"] = 1000
+            AlgoArgs["depth"] = 6
+            AlgoArgs["grow_policy"] = "SymmetricTree"
+            AlgoArgs["model_size_reg"] = 0.5
+        
             ###############################
             # Dependent Model Parameters
             ###############################
-      
-            # task_type dependent
-            AlgoArgs['bootstrap_type'] = 'MVS'
-            AlgoArgs['sampling_frequency'] = 'PerTreeLevel'
-            AlgoArgs['random_strength'] = 1
-            AlgoArgs['rsm'] = 0.80
-            AlgoArgs['posterior_sampling'] = False
-            AlgoArgs['score_function'] = 'L2'
-            AlgoArgs['border_count'] = 254
-
-            # Bootstrap dependent
-            AlgoArgs['subsample'] = 1
-
+        
+            # task_type dependent (kept same for now)
+            AlgoArgs["random_strength"] = 1.0
+            AlgoArgs["posterior_sampling"] = False
+            AlgoArgs["score_function"] = "L2"
+            AlgoArgs["border_count"] = 254
+        
+            # Langevin is typically paired with Bayesian bootstrap & posterior_sampling
+            if AlgoArgs.get("langevin", False):
+                AlgoArgs["bootstrap_type"] = "Bayesian"
+                AlgoArgs["posterior_sampling"] = True
+        
             # boost_from_average
-            if AlgoArgs['loss_function'] in ['RMSE', 'Logloss', 'CrossEntropy', 'Quantile', 'MAE', 'MAPE']:
-                AlgoArgs['boost_from_average'] = True
+            if AlgoArgs["loss_function"] in ["RMSE", "Logloss", "CrossEntropy", "Quantile", "MAE", "MAPE"]:
+                AlgoArgs["boost_from_average"] = True
             else:
-                AlgoArgs['boost_from_average'] = False
-    
-        # XGBoost
-        if self.Algorithm == 'xgboost':
+                AlgoArgs["boost_from_average"] = False
 
+        # XGBoost
+        if self.Algorithm == "xgboost":
+        
             # Initialize AlgoArgs
             AlgoArgs = dict()
-            
+        
             ################################
             # Performance / Environment
             ################################
-            
-            # Threads: default: use all cores
-            AlgoArgs['nthread'] = os.cpu_count()
-            
-            # Tree construction method
-            # 'hist' is modern default; use 'gpu_hist' if you want GPU training.
-            AlgoArgs['tree_method'] = 'hist'
-            
+        
+            # Threads: default: use all cores (fall back to -1 if os.cpu_count() fails)
+            AlgoArgs["nthread"] = os.cpu_count() or -1
+        
+            # GPU / CPU tree method & predictor
+            if self.GPU:
+                # Requires a GPU-enabled XGBoost build
+                AlgoArgs["tree_method"] = "gpu_hist"
+                AlgoArgs["predictor"] = "gpu_predictor"
+            else:
+                # CPU defaults
+                AlgoArgs["tree_method"] = "hist"
+                AlgoArgs["predictor"] = "auto"
+        
             # Max number of discrete bins for continuous features
-            AlgoArgs['max_bin'] = 256
-            
+            AlgoArgs["max_bin"] = 256
+        
             # Grow policy for trees
-            AlgoArgs['grow_policy'] = 'depthwise'
-            
+            AlgoArgs["grow_policy"] = "depthwise"
+        
             ################################
             # Core Booster Parameters
             ################################
             # Learning rate
-            AlgoArgs['eta'] = 0.30
-            
+            AlgoArgs["eta"] = 0.30
+        
             # Maximum depth of a tree
-            AlgoArgs['max_depth'] = 6
-            
+            AlgoArgs["max_depth"] = 6
+        
             # Minimum sum of instance weight (Hessian) needed in a child
-            AlgoArgs['min_child_weight'] = 1
-            
+            AlgoArgs["min_child_weight"] = 1
+        
             # Maximum delta step we allow each leaf output to be
-            AlgoArgs['max_delta_step'] = 0
-            
+            AlgoArgs["max_delta_step"] = 0
+        
             # Subsample ratio of the training instances
-            AlgoArgs['subsample'] = 1.0
-            
+            AlgoArgs["subsample"] = 1.0
+        
             # Subsample ratio of columns for each tree
-            AlgoArgs['colsample_bytree'] = 1.0
-            
+            AlgoArgs["colsample_bytree"] = 1.0
+        
             # Subsample ratio of columns for each level
-            AlgoArgs['colsample_bylevel'] = 1.0
-            
+            AlgoArgs["colsample_bylevel"] = 1.0
+        
             # Subsample ratio of columns for each split
-            AlgoArgs['colsample_bynode'] = 1.0
-            
+            AlgoArgs["colsample_bynode"] = 1.0
+        
             # L1 regularization term on weights
-            AlgoArgs['alpha'] = 0.0
-            
+            AlgoArgs["alpha"] = 0.0
+        
             # L2 regularization term on weights
-            AlgoArgs['lambda'] = 1.0
-            
+            AlgoArgs["lambda"] = 1.0
+        
             # Minimum loss reduction required to make a further partition on a leaf
-            AlgoArgs['gamma'] = 0.0
-            
+            AlgoArgs["gamma"] = 0.0
+        
             ################################
             # Booster type & parallel trees
             ################################
-            
+        
             # Number of parallel trees (1 for standard boosting)
-            AlgoArgs['num_parallel_tree'] = 1         # default: 1
-            
+            AlgoArgs["num_parallel_tree"] = 1  # default: 1
+        
             # Booster type: leave at default ('gbtree') not usually changed.
-            AlgoArgs['booster'] = 'gbtree'
-            
+            AlgoArgs["booster"] = "gbtree"
+        
             ################################
             # Target-dependent parameters
             ################################
-            if self.TargetType == 'classification':
-                AlgoArgs['objective'] = 'binary:logistic'
-                AlgoArgs['eval_metric'] = 'auc'
-            
-            elif self.TargetType == 'regression':
-                AlgoArgs['objective'] = 'reg:squarederror'
-                AlgoArgs['eval_metric'] = 'rmse'
-            
-            elif self.TargetType == 'multiclass':
-                AlgoArgs['objective'] = 'multi:softprob'
-                AlgoArgs['eval_metric'] = 'mlogloss'
-                # num_class MUST be set by user or externally before training
-                # e.g. model.update_model_parameters(num_class=K, allow_new=True)
-            
-            ################################
-            # Training loop controls (not passed to xgb.train params)
-            ################################
-            
-            # These are *not* XGBoost params, they’re for xgb.train() itself.
-            # We store them here for convenience, but we will strip them
-            # out before passing params into xgb.train().
-            AlgoArgs['num_boost_round'] = 1000
-            AlgoArgs['early_stopping_rounds'] = 50
-    
+            if self.TargetType == "classification":
+                AlgoArgs["objective"] = "binary:logistic"
+                # You chose AUC as default; totally fine. Could also be "logloss".
+                AlgoArgs["eval_metric"] = "auc"
+        
+            elif self.TargetType == "regression":
+                AlgoArgs["objective"] = "reg:squarederror"
+                AlgoArgs["eval_metric"] = "rmse"
+        
+            elif self.TargetType == "multiclass":
+                AlgoArgs["objective"] = "multi:softprob"
+                AlgoArgs["eval_metric"] = "mlogloss"
+                # num_class MUST be set later when you know K
+                # e.g. via: update_model_parameters(num_class=K, allow_new=True)
+        
+            else:
+                raise ValueError(
+                    f"Unsupported TargetType '{self.TargetType}' for XGBoost. "
+                    "Choose from 'classification', 'regression', or 'multiclass'."
+                )
+
         # LightGBM
-        if self.Algorithm == 'lightgbm':
-      
+        if self.Algorithm == "lightgbm":
+        
             # Setup Environment
             AlgoArgs = dict()
-            
+        
             # Target Dependent Args
-            if self.TargetType == 'classification':
-                AlgoArgs['objective'] = 'binary'
-                AlgoArgs['metric'] = 'auc'
-            elif self.TargetType == 'regression':
-                AlgoArgs['objective'] = 'regression'
-                AlgoArgs['metric'] = 'rmse'
-            elif self.TargetType == 'multiclass':
-                AlgoArgs['objective'] = 'multiclassova'
-                AlgoArgs['metric'] = 'multi_logloss'
-      
+            if self.TargetType == "classification":
+                AlgoArgs["objective"] = "binary"
+                AlgoArgs["metric"] = "auc"
+        
+            elif self.TargetType == "regression":
+                AlgoArgs["objective"] = "regression"
+                AlgoArgs["metric"] = "rmse"
+        
+            elif self.TargetType == "multiclass":
+                AlgoArgs["objective"] = "multiclassova"
+                AlgoArgs["metric"] = "multi_logloss"
+        
+            else:
+                raise ValueError(
+                    f"Unsupported TargetType '{self.TargetType}' for LightGBM. "
+                    "Choose from 'classification', 'regression', or 'multiclass'."
+                )
+        
             # Tuning Args
-            AlgoArgs['num_iterations'] = 1000
-            AlgoArgs['learning_rate'] = None
-            AlgoArgs['num_leaves'] = 31
-            AlgoArgs['bagging_freq'] = 0
-            AlgoArgs['bagging_fraction'] = 1.0
-            AlgoArgs['feature_fraction'] = 1.0
-            AlgoArgs['feature_fraction_bynode'] = 1.0
-            AlgoArgs['max_delta_step'] = 0.0
-            
-            # Args
-            AlgoArgs['task'] = 'train'
-            AlgoArgs['device_type'] = 'CPU'
-            AlgoArgs['boosting'] = 'gbdt'
-            AlgoArgs['lambda_l1'] = 0.0
-            AlgoArgs['lambda_l2'] = 0.0
-            AlgoArgs['deterministic'] = True
-            AlgoArgs['force_col_wise'] = False
-            AlgoArgs['force_row_wise'] = False
-            AlgoArgs['max_depth'] = None
-            AlgoArgs['min_data_in_leaf'] = 20
-            AlgoArgs['min_sum_hessian_in_leaf'] = 0.001
-            AlgoArgs['extra_trees'] = False
-            AlgoArgs['early_stopping_round'] = 10
-            AlgoArgs['first_metric_only'] = True
-            AlgoArgs['linear_lambda'] = 0.0
-            AlgoArgs['min_gain_to_split'] = 0
-            AlgoArgs['monotone_constraints'] = None
-            AlgoArgs['monotone_constraints_method'] = 'advanced'
-            AlgoArgs['monotone_penalty'] = 0.0
-            AlgoArgs['forcedsplits_filename'] = None
-            AlgoArgs['refit_decay_rate'] = 0.90
-            AlgoArgs['path_smooth'] = 0.0
-      
-            # IO Dataset Parameters
-            AlgoArgs['max_bin'] = 255
-            AlgoArgs['min_data_in_bin'] = 3
-            AlgoArgs['data_random_seed'] = 1
-            AlgoArgs['is_enable_sparse'] = True
-            AlgoArgs['enable_bundle'] = True
-            AlgoArgs['use_missing'] = True
-            AlgoArgs['zero_as_missing'] = False
-            AlgoArgs['two_round'] = False
-      
+            AlgoArgs["num_iterations"] = 1000
+            AlgoArgs["learning_rate"] = None
+            AlgoArgs["num_leaves"] = 31
+            AlgoArgs["bagging_freq"] = 0
+            AlgoArgs["bagging_fraction"] = 1.0
+            AlgoArgs["feature_fraction"] = 1.0
+            AlgoArgs["feature_fraction_bynode"] = 1.0
+            AlgoArgs["max_delta_step"] = 0.0
+        
+            # Core Args
+            AlgoArgs["task"] = "train"
+            AlgoArgs["boosting"] = "gbdt"
+            AlgoArgs["lambda_l1"] = 0.0
+            AlgoArgs["lambda_l2"] = 0.0
+            AlgoArgs["deterministic"] = True
+            AlgoArgs["force_col_wise"] = False
+            AlgoArgs["force_row_wise"] = False
+            AlgoArgs["max_depth"] = None
+            AlgoArgs["min_data_in_leaf"] = 20
+            AlgoArgs["min_sum_hessian_in_leaf"] = 0.001
+            AlgoArgs["extra_trees"] = False
+            AlgoArgs["early_stopping_round"] = 10
+            AlgoArgs["first_metric_only"] = True
+            AlgoArgs["linear_lambda"] = 0.0
+            AlgoArgs["min_gain_to_split"] = 0
+            AlgoArgs["monotone_constraints"] = None
+            AlgoArgs["monotone_constraints_method"] = "advanced"
+            AlgoArgs["monotone_penalty"] = 0.0
+            AlgoArgs["forcedsplits_filename"] = None
+            AlgoArgs["refit_decay_rate"] = 0.90
+            AlgoArgs["path_smooth"] = 0.0
+        
+            # IO / Dataset Parameters
+            AlgoArgs["max_bin"] = 255
+            AlgoArgs["min_data_in_bin"] = 3
+            AlgoArgs["data_random_seed"] = 1
+            AlgoArgs["is_enable_sparse"] = True
+            AlgoArgs["enable_bundle"] = True
+            AlgoArgs["use_missing"] = True
+            AlgoArgs["zero_as_missing"] = False
+            AlgoArgs["two_round"] = False
+        
             # Convert Parameters
-            AlgoArgs['convert_model'] = None
-            AlgoArgs['convert_model_language'] = 'cpp'
-      
+            AlgoArgs["convert_model"] = None
+            AlgoArgs["convert_model_language"] = "cpp"
+        
             # Objective Parameters
-            AlgoArgs['boost_from_average'] = True
-            AlgoArgs['alpha'] = 0.90
-            AlgoArgs['fair_c'] = 1.0
-            AlgoArgs['poisson_max_delta_step'] = 0.70
-            AlgoArgs['tweedie_variance_power'] = 1.5
-            AlgoArgs['lambdarank_truncation_level'] = 30
-      
+            AlgoArgs["boost_from_average"] = True
+            AlgoArgs["alpha"] = 0.90
+            AlgoArgs["fair_c"] = 1.0
+            AlgoArgs["poisson_max_delta_step"] = 0.70
+            AlgoArgs["tweedie_variance_power"] = 1.5
+            AlgoArgs["lambdarank_truncation_level"] = 30
+        
             # Metric Parameters (metric is in Core)
-            AlgoArgs['is_provide_training_metric'] = True
-            AlgoArgs['eval_at'] = [1,2,3,4,5]
-      
+            AlgoArgs["is_provide_training_metric"] = True
+            AlgoArgs["eval_at"] = [1, 2, 3, 4, 5]
+        
             # Network Parameters
-            AlgoArgs['num_machines'] = 1
-      
-            # GPU Parameters
-            AlgoArgs['gpu_platform_id'] = -1
-            AlgoArgs['gpu_device_id'] = -1
-            AlgoArgs['gpu_use_dp'] = True
-            AlgoArgs['num_gpu'] = 1
-  
+            AlgoArgs["num_machines"] = 1
+        
+            # GPU / CPU Parameters
+            if self.GPU:
+                AlgoArgs["device_type"] = "gpu"
+                AlgoArgs["num_gpu"] = 1
+                # Leave platform/device IDs at defaults (-1 means "auto-detect")
+                AlgoArgs["gpu_platform_id"] = -1
+                AlgoArgs["gpu_device_id"] = -1
+                AlgoArgs["gpu_use_dp"] = True
+            else:
+                AlgoArgs["device_type"] = "cpu"
+                # These GPU params are ignored on CPU but we can omit them for clarity
+                AlgoArgs["num_gpu"] = 0
+
         # Store Model Parameters
         self.ModelArgs = AlgoArgs
         self.ModelArgsNames = [*self.ModelArgs]
@@ -855,7 +1052,7 @@ class RetroFit:
                     f"'{self.Algorithm}'. Existing keys: {list(self.ModelArgs.keys())}"
                 )
             self.ModelArgs[key] = value
-    
+
     # Print params and args
     def print_algo_args(self):
         print(u.print_dict(self.ModelArgs))
@@ -864,7 +1061,7 @@ class RetroFit:
     #################################################
     # Function: Train Model
     #################################################
-    
+
     # Multiclass class counter
     def _infer_num_classes(self):
         """
@@ -1062,6 +1259,42 @@ class RetroFit:
     # Function: Score data 
     #################################################
 
+    # Helper
+    def _normalize_target_transform(self) -> str:
+        """
+        Return normalized transform name, or 'none' if not set.
+        """
+        if self.TargetTransform is None:
+            return "none"
+        return self.TargetTransform.lower()
+
+    # Build inverse transform expression
+    def _inverse_target_transform_expr(self, col_name: str) -> pl.Expr:
+        """
+        Build a Polars expression that inverts the target transform
+        on the given prediction column. Used in score().
+        """
+        t = self._normalize_target_transform()
+    
+        if t == "none":
+            return pl.col(col_name)
+    
+        if t == "log":
+            shift = float(self.TargetTransformParams.get("shift", 0.0))
+            # Inverse of log(y + shift) = exp(pred) - shift
+            return pl.col(col_name).exp() - shift
+    
+        if t == "sqrt":
+            # Inverse of sqrt(y) = y^2
+            return pl.col(col_name) ** 2
+    
+        if t == "standardize":
+            mean = float(self.TargetTransformParams["mean"])
+            std = float(self.TargetTransformParams["std"])
+            return pl.col(col_name) * std + mean
+    
+        raise ValueError(f"Unsupported TargetTransform '{t}'.")
+
     # Catboost helper
     def _score_catboost(self, model, df_pl: pl.DataFrame, feature_cols, internal_name: str | None):
         """
@@ -1227,6 +1460,35 @@ class RetroFit:
             return df_pl.with_columns(cols)
     
         raise ValueError(f"Unsupported TargetType for LightGBM scoring: {self.TargetType}")
+
+    # Apply inverse transform
+    def _inverse_transform_predictions_inplace(self, df_pl: pl.DataFrame) -> pl.DataFrame:
+        """
+        Given a scored Polars DataFrame with prediction column Predict_<TargetColumnName>,
+        invert the target transform on that prediction column (for regression only).
+    
+        Returns a new Polars DataFrame (Polars is immutable).
+        """
+        if self.TargetType.lower() != "regression":
+            return df_pl
+    
+        t = self._normalize_target_transform()
+        if t == "none":
+            return df_pl
+    
+        if self.TargetColumnName is None:
+            raise RuntimeError(
+                "TargetColumnName is None; cannot inverse target transform predictions."
+            )
+    
+        pred_col = f"Predict_{self.TargetColumnName}"
+        if pred_col not in df_pl.columns:
+            # Nothing to do; silently return df_pl or raise if you prefer
+            return df_pl
+    
+        return df_pl.with_columns(
+            self._inverse_target_transform_expr(pred_col).alias(pred_col)
+        )
 
     # Convert classification / multiclass predictions back to original labels
     def decode_predictions(
@@ -2513,7 +2775,7 @@ class RetroFit:
     
         return agg_df
 
-    # Classification
+    # Classification Calibration Table
     def build_binary_calibration_table(
         self,
         DataName: str | None = None,
@@ -2968,6 +3230,304 @@ class RetroFit:
     
         return {"brier": brier, "mace": mace}
 
+    # Classification ROC Table
+    def _build_binary_roc_table(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+    ) -> tuple[pl.DataFrame, float]:
+        """
+        PRIVATE:
+          Build ROC curve table and compute AUC for binary classification.
+    
+        Returns
+        -------
+        roc_df : pl.DataFrame with columns:
+            - fpr        (float)
+            - tpr        (float)
+            - threshold  (float or NaN)
+            - fpr_label  (str, rounded for plotting)
+        auc_val : float
+        """
+        if self.TargetType.lower() != "classification":
+            raise ValueError(
+                "_build_binary_roc_table is only valid when TargetType='classification'."
+            )
+    
+        # 1) Resolve data
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df.")
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first."
+                )
+    
+        # 2) Resolve target
+        if target is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError(
+                    "self.TargetColumnName is None; supply target= for external df."
+                )
+            target = self.TargetColumnName
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found in data.")
+        if prob_col not in df_pl.columns:
+            raise ValueError(f"Probability column '{prob_col}' not found in data.")
+    
+        # 3) Extract arrays
+        y_true = (
+            df_pl
+            .select(pl.col(target).cast(pl.Int64))
+            .to_numpy()
+            .ravel()
+        )
+        y_score = (
+            df_pl
+            .select(pl.col(prob_col).cast(pl.Float64))
+            .to_numpy()
+            .ravel()
+        )
+    
+        y_score = np.clip(y_score, 1e-15, 1 - 1e-15)
+    
+        if y_true.size == 0:
+            raise ValueError("No rows available to compute ROC curve.")
+    
+        # 4) ROC curve + AUC
+        fpr, tpr, thresholds = roc_curve(y_true, y_score)
+        auc_val = float(auc(fpr, tpr))
+    
+        # 5) Build Polars DataFrame with numeric columns
+        roc_df = pl.DataFrame(
+            {
+                "fpr": fpr,
+                "tpr": tpr,
+                "threshold": thresholds,
+            }
+        ).sort("fpr")
+        
+        # 6) Add pretty string labels for x-axis using native Polars
+        roc_df = roc_df.with_columns(
+            pl.col("fpr")
+            .round(4)            # numeric rounding
+            .cast(pl.Utf8)       # turn into string for categorical x-axis
+            .alias("fpr_label")
+        )
+    
+        return roc_df, auc_val
+
+    # Classification ROC Table
+    def _build_binary_pr_table(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+    ) -> tuple[pl.DataFrame, float]:
+        """
+        PRIVATE:
+          Build Precision-Recall curve table & compute PR AUC (AUPRC).
+        """
+        if self.TargetType.lower() != "classification":
+            raise ValueError(
+                "_build_binary_pr_table is only valid when TargetType='classification'."
+            )
+    
+        # Resolve data
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df.")
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score() first."
+                )
+    
+        # Resolve target
+        if target is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError("self.TargetColumnName is None; supply target= for external df.")
+            target = self.TargetColumnName
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found.")
+        if prob_col not in df_pl.columns:
+            raise ValueError(f"Probability column '{prob_col}' not found.")
+    
+        y_true = df_pl.select(pl.col(target).cast(pl.Int64)).to_numpy().ravel()
+        y_score = df_pl.select(pl.col(prob_col).cast(pl.Float64)).to_numpy().ravel()
+    
+        y_score = np.clip(y_score, 1e-15, 1 - 1e-15)
+    
+        # PR curve
+        precision, recall, thresholds = precision_recall_curve(y_true, y_score)
+        pr_auc = float(auc(recall, precision))
+    
+        pr_df = pl.DataFrame(
+            {
+                "precision": precision,
+                "recall": recall,
+                "threshold": list(thresholds) + [None],  # PR curve trick; len+1
+            }
+        ).sort("recall")
+    
+        # Add string labels for x-axis
+        pr_df = pr_df.with_columns(
+            pl.col("recall")
+            .round(4)
+            .cast(pl.Utf8)
+            .alias("recall_label")
+        )
+    
+        return pr_df, pr_auc
+
+    # Confusion Matrix
+    def _build_confusion_matrix(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+        threshold: float = 0.5,
+    ):
+        """
+        PRIVATE:
+          Build a confusion matrix for classification / multiclass.
+    
+        For TargetType='classification' (binary):
+          - uses prob_col (default 'p1') and threshold to derive predictions.
+    
+        For TargetType='multiclass':
+          - expects 'class_0', 'class_1', ... probability columns created by score()
+            and uses argmax to derive predictions.
+    
+        Works with either:
+          - internal scored data: self.ScoredData[DataName], or
+          - external df passed via df=..., with explicit target (and prob_col for binary).
+    
+        Returns
+        -------
+        pl.DataFrame in long format with columns:
+          - actual         (int)
+          - predicted      (int)
+          - count          (int)
+          - actual_name    (str, if LabelMappingInverse available, else str(actual))
+          - predicted_name (str, if LabelMappingInverse available, else str(predicted))
+        """
+        if self.TargetType not in ("classification", "multiclass"):
+            raise ValueError(
+                "_build_confusion_matrix is only implemented for TargetType "
+                "in {'classification','multiclass'}."
+            )
+    
+        # --- Resolve data ---
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df.")
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first, "
+                    "or pass an external df."
+                )
+    
+        # --- Resolve target column ---
+        if target is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError(
+                    "self.TargetColumnName is None; supply target= for external df."
+                )
+            target = self.TargetColumnName
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found in data.")
+    
+        # --- Resolve predictions depending on TargetType ---
+        # y_true is always integer-coded labels (you already encode labels in create_model_data)
+        y_true = (
+            df_pl
+            .select(pl.col(target).cast(pl.Int64))
+            .to_numpy()
+            .ravel()
+        )
+    
+        if y_true.size == 0:
+            raise ValueError("No rows available to build confusion matrix.")
+    
+        if self.TargetType == "classification":
+            # Binary: threshold on prob_col (usually 'p1')
+            if prob_col not in df_pl.columns:
+                raise ValueError(f"Probability column '{prob_col}' not found in data.")
+    
+            y_score = (
+                df_pl
+                .select(pl.col(prob_col).cast(pl.Float64))
+                .to_numpy()
+                .ravel()
+            )
+            y_pred = (y_score >= threshold).astype(int)
+    
+        else:  # multiclass
+            prob_cols = [c for c in df_pl.columns if c.startswith("class_")]
+            if not prob_cols:
+                raise ValueError(
+                    "No 'class_k' probability columns found for multiclass confusion matrix. "
+                    "Did you run score() with a multiclass model?"
+                )
+    
+            # Keep same order as in evaluate()
+            def _class_idx(col_name: str) -> int:
+                try:
+                    return int(col_name.split("_", 1)[1])
+                except Exception:
+                    return 0
+    
+            prob_cols = sorted(prob_cols, key=_class_idx)
+    
+            probs = df_pl[prob_cols].to_numpy()  # shape (N, K)
+            y_pred = probs.argmax(axis=1)
+    
+        # --- Build long-format confusion table ---
+        cm_df = pl.DataFrame(
+            {
+                "actual": y_true,
+                "predicted": y_pred,
+            }
+        ).group_by(["actual", "predicted"], maintain_order=True).agg(
+            pl.len().alias("count")
+        )
+    
+        # --- Attach human-readable labels if available ---
+        mapping_inv = getattr(self, "LabelMappingInverse", None)
+    
+        if isinstance(mapping_inv, dict) and mapping_inv:
+            cm_df = cm_df.with_columns(
+                pl.col("actual").apply(
+                    lambda x: str(mapping_inv.get(int(x), x))
+                ).alias("actual_name"),
+                pl.col("predicted").apply(
+                    lambda x: str(mapping_inv.get(int(x), x))
+                ).alias("predicted_name"),
+            )
+        else:
+            cm_df = cm_df.with_columns(
+                pl.col("actual").cast(pl.Utf8).alias("actual_name"),
+                pl.col("predicted").cast(pl.Utf8).alias("predicted_name"),
+            )
+    
+        return cm_df
+
     # Regression Calibration Plot
     def plot_regression_calibration(
         self,
@@ -3297,5 +3857,269 @@ class RetroFit:
     
         return {
             "table": metrics,
+            "plot": chart,
+        }
+
+    # ROC Curve
+    def plot_classification_roc(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+        plot_name: str | None = None,
+        Theme: str = "dark",
+        GradientColors: list[str] | None = None,
+    ):
+        """
+        Plot ROC curve for binary classification using QuickEcharts.
+    
+        Can work off:
+          - internal scored data (DataName), or
+          - external df with target + prob_col.
+    
+        Returns
+        -------
+        dict with:
+          - "table": pl.DataFrame with columns ["fpr", "tpr", "threshold"]
+          - "auc": float, AUC of ROC curve
+          - "plot": QuickEcharts Line chart object
+        """
+        if self.TargetType.lower() != "classification":
+            raise ValueError(
+                "plot_classification_roc is only valid when TargetType='classification'."
+            )
+
+        # Assign values if None
+        if GradientColors is None:
+            GradientColors = ["#e12191", "#0011FF"]
+
+        # Build ROC table + AUC
+        roc_df, auc_val = self._build_binary_roc_table(
+            DataName=DataName if df is None else None,
+            df=df,
+            target=target,
+            prob_col=prob_col,
+        )
+    
+        # Title pieces
+        data_label = DataName or "data"
+        title = f"ROC Curve ({data_label})"
+        subtitle = f"AUC = {auc_val:.4f}"
+    
+        # QuickEcharts Area plot: TPR vs FPR
+        chart = Charts.Area(
+            dt=roc_df,
+            PreAgg=True,
+            YVar=["tpr"],
+            XVar="fpr_label",
+            GradientColors=GradientColors,
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Title=title,
+            SubTitle=subtitle,
+            YAxisTitle="True Positive Rate (TPR)",
+            XAxisTitle="False Positive Rate (FPR)",
+        )
+    
+        return {
+            "table": roc_df,
+            "auc": auc_val,
+            "plot": chart,
+        }
+
+    # PR Curve
+    def plot_classification_pr(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+        plot_name: str | None = None,
+        Theme: str = "dark",
+        GradientColors: list[str] | None = None,
+    ):
+        """
+        Plot Precision-Recall curve using QuickEcharts.
+        """
+        if GradientColors is None:
+            GradientColors = ["#e12191", "#0011FF"]
+    
+        pr_df, pr_auc = self._build_binary_pr_table(
+            DataName=DataName if df is None else None,
+            df=df,
+            target=target,
+            prob_col=prob_col,
+        )
+    
+        title = f"Precision-Recall Curve ({DataName or 'data'})"
+        subtitle = f"AUPRC = {pr_auc:.4f}"
+    
+        chart = Charts.Area(
+            dt=pr_df,
+            PreAgg=True,
+            YVar=["precision"],
+            XVar="recall_label",      # <<--- string label version
+            GradientColors=GradientColors,
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Title=title,
+            SubTitle=subtitle,
+            YAxisTitle="Precision",
+            XAxisTitle="Recall",
+        )
+    
+        return {
+            "table": pr_df,
+            "auc": pr_auc,
+            "plot": chart,
+        }
+
+
+    # Heatmap for Confusion Matrix
+    def plot_confusion_matrix(
+        self,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        prob_col: str = "p1",
+        threshold: float = 0.5,
+        normalize: str = "none",  # "none", "true", "pred", "all"
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Plot confusion matrix as a heatmap using QuickEcharts.
+    
+        Supports:
+          - TargetType='classification' (binary, using prob_col + threshold)
+          - TargetType='multiclass'     (using argmax over 'class_k' columns)
+    
+        Parameters
+        ----------
+        DataName : str | None
+            Internal scored dataset key ('train','validation','test').
+            Ignored if df is provided.
+        df : pl.DataFrame | pd.DataFrame | None
+            External scored data with target + score columns.
+        target : str | None
+            Target column name; defaults to self.TargetColumnName.
+        prob_col : str
+            Probability column for the positive class (binary case only).
+        threshold : float
+            Probability threshold for positive class in binary case.
+        normalize : {"none","true","pred","all"}
+            - "none": use raw counts
+            - "true": normalize per actual class (row)
+            - "pred": normalize per predicted class (column)
+            - "all" : normalize by total count
+        plot_name : str | None
+            Optional HTML file name for QuickEcharts rendering.
+        Theme : str
+            QuickEcharts theme.
+    
+        Returns
+        -------
+        dict with:
+          - "table": pl.DataFrame with [actual, predicted, count, value, actual_name, predicted_name]
+          - "plot" : QuickEcharts Heatmap object
+        """
+        if self.TargetType not in ("classification", "multiclass"):
+            raise ValueError(
+                "plot_confusion_matrix is only implemented for TargetType "
+                "in {'classification','multiclass'}."
+            )
+    
+        # 1) Build confusion matrix table
+        cm_df = self._build_confusion_matrix(
+            DataName=DataName if df is None else None,
+            df=df,
+            target=target,
+            prob_col=prob_col,
+            threshold=threshold,
+        )
+    
+        # 2) Normalize if requested
+        if normalize not in ("none", "true", "pred", "all"):
+            raise ValueError("normalize must be one of: 'none', 'true', 'pred', 'all'.")
+    
+        cm_out = cm_df
+    
+        if normalize == "none":
+            cm_out = cm_out.with_columns(
+                pl.col("count").cast(pl.Float64).alias("value")
+            )
+    
+        elif normalize == "true":
+            # normalize per actual
+            cm_out = (
+                cm_out
+                .with_columns(
+                    pl.sum("count").over("actual").alias("_row_total")
+                )
+                .with_columns(
+                    (pl.col("count") / pl.col("_row_total")).alias("value")
+                )
+                .drop("_row_total")
+            )
+    
+        elif normalize == "pred":
+            # normalize per predicted
+            cm_out = (
+                cm_out
+                .with_columns(
+                    pl.sum("count").over("predicted").alias("_col_total")
+                )
+                .with_columns(
+                    (pl.col("count") / pl.col("_col_total")).alias("value")
+                )
+                .drop("_col_total")
+            )
+    
+        else:  # "all"
+            total = cm_out["count"].sum()
+            total = float(total) if total is not None else 0.0
+            if total <= 0:
+                total = 1.0
+            cm_out = cm_out.with_columns(
+                (pl.col("count") / total).alias("value")
+            )
+    
+        # 3) Titles
+        data_label = DataName or "data"
+        if self.TargetType == "classification":
+            tt_label = "Binary Classification"
+        else:
+            tt_label = "Multiclass Classification"
+    
+        norm_label = {
+            "none": "Counts",
+            "true": "Row-normalized (per actual)",
+            "pred": "Column-normalized (per predicted)",
+            "all": "Global-normalized",
+        }[normalize]
+    
+        title = f"Confusion Matrix ({tt_label}, {data_label})"
+        subtitle = norm_label
+    
+        # 4) Heatmap plot (actual on Y, predicted on X)
+        # QuickEcharts heatmap is assumed to use long-form dt with:
+        #   - XVar (predicted_name), YVar (actual_name), ValueVar="value"
+        chart = Charts.Heatmap(
+            dt=cm_out,
+            PreAgg=True,
+            XVar="predicted_name",
+            YVar="actual_name",
+            ValueVar="value",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Title=title,
+            SubTitle=subtitle,
+            XAxisTitle="Predicted",
+            YAxisTitle="Actual",
+        )
+    
+        return {
+            "table": cm_out,
             "plot": chart,
         }
