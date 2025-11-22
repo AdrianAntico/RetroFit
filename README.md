@@ -19,7 +19,7 @@ Documentation + Code Examples
 This package is currently in its beginning stages. Starting off will be supervised learning functions for regression, classification, and multiclass types. I incorporate usage of my companion packages:
 
 - PolarsFE: feature engineering using polars
-- QuickEcharts: visualization using pyecharts
+- QuickEcharts: visualization using Echarts.js
 
 ## **Installation**
 ```python
@@ -60,17 +60,21 @@ https://github.com/AdrianAntico/AutoQuant
 <p>
 
 ```python
-# Setup Environment
+# Setup environment
 import os
 import polars as pl
 from PolarsFE import datasets
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
+from retrofit import utils
 
 
 # Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -129,12 +133,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -154,6 +152,14 @@ model.plot_regression_calibration(
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
 )
+
+# Actual vs Predicted Scatterplot
+model.plot_regression_scatter(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
 ```
 
 </p>
@@ -164,21 +170,20 @@ model.plot_regression_calibration(
 <p>
 
 ```python
+# Setup environment
 import os
 import polars as pl
 from PolarsFE import datasets
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
+from retrofit import utils
+
 
 # Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
-
-# Turn Label into a binary target variable
-df = df.with_columns(
-    pl.when(pl.col("XREGS1") > 200).then(1)
-      .otherwise(0)
-      .alias("Label")
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
 )
 
 # Get TrainData, ValidationData, and TestData
@@ -197,7 +202,7 @@ model.create_model_data(
   TrainData=DataSets[0],
   ValidationData=DataSets[1],
   TestData=DataSets[2],
-  TargetColumnName="Label",
+  TargetColumnName="Label_binary",
   NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
   CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'],
   TextColumnNames=None,
@@ -238,17 +243,19 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Store plot in working directory
+model.plot_classification_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
@@ -326,12 +333,6 @@ global_eval = model.evaluate(
 segment_eval = model.evaluate(
     DataName="test",
     ByVariables="MarketingSegments"
-)
-
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments", "CalendarDateColumn"]
 )
 
 # Get variable importance
@@ -1172,7 +1173,7 @@ imp = model.compute_feature_importance()
 <p>
 
 
-<details><summary>Regression Calibration Plot</summary>
+<details><summary>Calibration Plot</summary>
 <p>
 
 <br> 
@@ -1181,6 +1182,24 @@ imp = model.compute_feature_importance()
 
 </p>
 </details>
+
+
+
+<details><summary>Regression Scatter Plot</summary>
+<p>
+
+<br> 
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+
+</p>
+</details>
+
+
+
+
+
+
 
 
 

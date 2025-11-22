@@ -56,7 +56,7 @@ Documentation + Code Examples
 This package is currently in its beginning stages. Starting off will be supervised learning functions for regression, classification, and multiclass types. I incorporate usage of my companion packages:
 
 - PolarsFE: feature engineering using polars
-- QuickEcharts: visualization using pyecharts
+- QuickEcharts: visualization using Echarts.js
 
 ## **Installation**
 ```python
@@ -177,6 +177,20 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
@@ -498,6 +512,23 @@ segment_eval = model.evaluate(
 segment_date_eval = model.evaluate(
     DataName="test",
     ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
+)
+
+# Get variable importance
+imp = model.compute_feature_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
 )
 ```
 
@@ -887,6 +918,20 @@ segment_date_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Model Calibration Tables
+cal = model.build_regression_calibration_table(
+    DataName="test",
+    binning="quantile"
+)
+
+# Store plot in working directory
+model.plot_regression_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
 ```
 
 </p>
@@ -1164,12 +1209,12 @@ imp = model.compute_feature_importance()
 <p>
 
 
-<details><summary>Preds vs Actual</summary>
+<details><summary>Regression Calibration Plot</summary>
 <p>
 
-```python
+<br> 
 
-```
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
 </p>
 </details>
