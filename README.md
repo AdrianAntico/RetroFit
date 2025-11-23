@@ -21,18 +21,18 @@ pip install retrofit==0.1.7
 # 📦 RetroFit  
 ### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 
-**RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models** using state-of-the-art tree-based algorithms (CatBoost, XGBoost, LightGBM).
+**RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
 
 Built from the ground up with **Polars**, **GPU acceleration**, and a **scalable evaluation engine**, RetroFit provides a unified interface for:
 
-- 🧪 Model data creation & preprocessing (Polars-first)  
-- 🚀 Fast training with automatic CPU/GPU switching  
-- 📊 Unified scoring engine with inverse-transformation support  
-- 📈 Full evaluation suite for regression, binary, and multiclass  
-- 🎯 Calibration plots & tables  
-- 📉 ROC, PR, and PR-ROC curves (QuickEcharts visuals)  
-- 🔧 Automatic label encoding for classification/multiclass  
-- 🔄 Target variable transformations (log, shifted-log, Box-Cox)
+- 🧪 Model data creation & preprocessing (Polars-first)
+- 🚀 Fast training with automatic CPU/GPU switching
+- 📊 Unified scoring engine with inverse-transformation support
+- 📈 Full evaluation suite for regression, binary, and multiclass
+- 🎯 Calibration plots & tables
+- 📉 ROC, PR, and PR-ROC curves (QuickEcharts visuals) 
+- 🔧 Automatic label encoding for classification/multiclass
+- 🔄 Target variable transformations
 
 RetroFit is designed for data scientists who want **speed**, **modern tooling**, and **high-quality diagnostics** without boilerplate.
 
@@ -40,13 +40,13 @@ RetroFit is designed for data scientists who want **speed**, **modern tooling**,
 
 ## 🔥 Key Features
 
-### ⚙️ 1. Polars-Native Modeling Pipeline  
-RetroFit uses Polars internally for:  
-- Numeric & categorical handling  
-- Efficient grouping and slicing  
-- Scored-data postprocessing  
-- Calibration table generation  
-- Data preparation for CatBoost/XGBoost/LightGBM  
+### ⚙️ 1. Polars-Native Modeling Pipeline
+RetroFit uses Polars internally for:
+- Numeric & categorical handling
+- Efficient grouping and slicing
+- Scored-data postprocessing
+- Evaluation data wrangling
+- Data preparation for CatBoost/XGBoost/LightGBM
 
 Everything is vectorized whenever possible.
 
@@ -56,12 +56,13 @@ Everything is vectorized whenever possible.
 
 RetroFit supports:
 
-- `"none"`  
-- `"log"` (auto detects ≤0 and applies min-shift)  
-- `"boxcox"` (with optional lambda)  
-- Custom transforms
+- `"none"`
+- `"log"` (auto detects ≤0 and applies min-shift)
+- `"sqrt"`
+- `"standardize"`
 
 Transformation is applied automatically in `create_model_data()` and reversed in `score()`.
+User could also apply themselves before running `create_model_data()` and after running `score()`.
 
 ---
 
@@ -75,10 +76,10 @@ model = RetroFit(Algorithm="catboost", TargetType="regression", GPU=True)
 
 RetroFit automatically:
 
-- Switches tree construction method  
-- Adjusts booster settings  
-- Removes CPU-only parameters  
-- Ensures full CatBoost/XGBoost/LightGBM compatibility  
+- Switches tree construction method
+- Adjusts booster settings
+- Removes CPU-only parameters
+- Ensures full CatBoost/XGBoost/LightGBM compatibility
 
 ---
 
@@ -96,46 +97,45 @@ model.score(NewData=df)
 
 Outputs a Polars DataFrame with:
 
-- Predictions (`Predict_target`)  
-- Probabilities (`p1`, `class_k`)  
-- Inverse-transformed regression predictions  
+- Predictions (`Predict_target`)
+- Probabilities (`p1`, `class_k`)
+- Inverse-transformed regression predictions
 
 ---
 
 ### 🧮 5. Full Evaluation Suite
 
 #### **Regression Metrics**
-- R²  
-- Explained variance  
-- MAE / MedianAE  
-- MAPE  
-- MSE / RMSE  
+- R²
+- MAE / MedianAE
+- MAPE
+- MSE / RMSE
 - MSLE (auto-disabled if invalid)
 
 #### **Binary Classification**
-- Accuracy, Recall, Precision  
-- TPR, FPR, TNR, FNR  
-- F1, F0.5, F2  
-- MCC  
-- Threat score  
-- Utility (custom cost matrix)  
-- Full 101-point threshold curve  
+- Accuracy, Recall, Precision
+- TPR, FPR, TNR, FNR
+- F1, F0.5, F2
+- MCC
+- Threat score
+- Utility (custom cost matrix)
+- Full 101-point threshold curve
 
 #### **Multiclass Classification**
-- Overall: Accuracy, macro/micro/weighted F1  
-- One-vs-all threshold evaluation  
-- Uses label decoder to restore original class names  
+- Overall: Accuracy, macro/micro/weighted F1
+- One-vs-all threshold evaluation
+- Uses label decoder to restore original class names
 
 ---
 
-## 🎛️ 6. Calibration Tables & Plots
+## 🎛️ 6. Calibration Tables & Plot
 
-Regression + Classification calibration:  
-- Equal-width or quantile binning  
-- MACE, RMSE, MAE, R²  
-- Per-group calibration  
-- QuickEcharts visualization  
-- Metadata: timestamp, model name, grouping vars  
+Regression + Classification calibration:
+- Equal-width or quantile binning
+- MACE, RMSE, MAE, R²
+- Per-group calibration
+- QuickEcharts visualization
+- Metadata: timestamp, model name, grouping vars
 
 ---
 
@@ -143,29 +143,28 @@ Regression + Classification calibration:
 
 RetroFit generates:
 
-- Standard ROC  
-- Standard PR  
-- PR-ROC (1 – Recall vs Precision)  
-- AUC and Average Precision  
-- QuickEcharts Area plots with gradient shading  
+- ROC
+- Precision-Recall
+- AUC and Average Precision
+- QuickEcharts Area plots with gradient shading
 
 ---
 
 ## 🎨 8. QuickEcharts Visuals
 
-All plots are powered by QuickEcharts:  
-- Line / Area plots  
-- Gradient fills  
-- Themes (light/dark)  
-- Auto subtitles with metrics  
-- HTML export  
+All plots are powered by QuickEcharts:
+- Line / Area plots
+- Gradient fills
+- Auto subtitles with metrics
+- HTML export
+- Themes: 'chalk', 'dark', 'essos', 'halloween', 'infographic', 'light', 'macarons', 'purple-passion', 'roma', 'romantic', 'shine', 'vintage', 'walden', 'westeros', 'white', 'wonderland'
 
 ---
 
-# 🚀 Next Features Coming Soon  
-## Partial Dependence Plots (PDP)
+## 🚀 Next Features Coming Soon  
+### Partial Dependence Plots (PDP)
 
-RetroFit's next major addition will bring full AutoQuant-style interpretability:
+RetroFit's next major addition will bring interpretability:
 
 ### ✔ Numeric PDP
 - Grid over each numeric feature  
@@ -178,15 +177,6 @@ RetroFit's next major addition will bring full AutoQuant-style interpretability:
 - Per-category partial dependence  
 - Bar or point-line chart  
 - Sorted or alphabetical category ordering  
-
-### ✔ Batch PDP Builder
-Planned API:
-
-```python
-model.plot_pdp_numeric(...)
-model.plot_pdp_categorical(...)
-model.plot_pdp_all(...)
-```
 
 
 <br>
