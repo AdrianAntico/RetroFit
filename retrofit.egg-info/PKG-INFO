@@ -41,22 +41,8 @@ Dynamic: summary
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/RetroFitLogo.png' align='center' width='1000' />
 
-Table of Contents
-- [**Quick Note**](#quick-note)
-- [**Installation**](#installation)
-- [**Machine Learning Note**](#machine-learning-note)
-
-Documentation + Code Examples
-- [**Machine Learning**](#machine-learning)
-
-
-## **Quick Note**
-This package is currently in its beginning stages. Starting off will be supervised learning functions for regression, classification, and multiclass types. I incorporate usage of my companion packages:
-
-- PolarsFE: feature engineering using polars
-- QuickEcharts: visualization using Echarts.js
 
 ## **Installation**
 ```python
@@ -65,33 +51,186 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
 pip install retrofit==0.1.7
-
-# Check out R package AutoQuant
-https://github.com/AdrianAntico/AutoQuant
 ```
 
+<br>
 
-## **Machine Learning Note**
+# 📦 RetroFit  
+### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 
-> Machine Learning Training: the goal here is enable the data scientist or machine learning engineer to effortlessly build any number of models with full optionality to tweak all available underlying parameters offered by the various algorithms. The underlying data can come from pandas or polars (polars preferred) which means you'll be able to model with bigger data than if you were utilizing pandas. All models come with the ability to generate comprehensive evaluation metrics, evaluation plots, importances, and feature insights. Scoring should be seamless, from regenerating features for scoring to the actual scoring. The RetroFit class makes this super easy, fast, with minimal memory utilization.
+**RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
+
+Built from the ground up with **Polars**, **GPU acceleration**, and a **scalable evaluation engine**, RetroFit provides a unified interface for:
+
+- 🧪 Model data creation & preprocessing (Polars-first)
+- 🚀 Fast training with automatic CPU/GPU switching
+- 📊 Unified scoring engine with inverse-transformation support
+- 📈 Full evaluation suite for regression, binary, and multiclass
+- 🎯 Calibration plots & tables
+- 📉 ROC, PR, and PR-ROC curves (QuickEcharts visuals) 
+- 🔧 Automatic label encoding for classification/multiclass
+- 🔄 Target variable transformations
+
+RetroFit is designed for data scientists who want **speed**, **modern tooling**, and **high-quality diagnostics** without boilerplate.
+
+---
+
+## 🔥 Key Features
+
+### ⚙️ 1. Polars-Native Modeling Pipeline
+RetroFit uses Polars internally for:
+- Numeric & categorical handling
+- Efficient grouping and slicing
+- Scored-data postprocessing
+- Evaluation data wrangling
+- Data preparation for CatBoost/XGBoost/LightGBM
+
+Everything is vectorized whenever possible.
+
+---
+
+### 🎯 2. Target Transformations (Regression)
+
+RetroFit supports:
+
+- `"none"`
+- `"log"` (auto detects ≤0 and applies min-shift)
+- `"sqrt"`
+- `"standardize"`
+
+Transformation is applied automatically in `create_model_data()` and reversed in `score()`.
+User could also apply themselves before running `create_model_data()` and after running `score()`.
+
+---
+
+### ⚡ 3. GPU-Ready Training
+
+Enable GPU training with:
+
+```python
+model = RetroFit(Algorithm="catboost", TargetType="regression", GPU=True)
+```
+
+RetroFit automatically:
+
+- Switches tree construction method
+- Adjusts booster settings
+- Removes CPU-only parameters
+- Ensures full CatBoost/XGBoost/LightGBM compatibility
+
+---
+
+### 📊 4. Unified Scoring Engine
+
+```python
+model.score(DataName="test")
+```
+
+Or score external data:
+
+```python
+model.score(NewData=df)
+```
+
+Outputs a Polars DataFrame with:
+
+- Predictions (`Predict_target`)
+- Probabilities (`p1`, `class_k`)
+- Inverse-transformed regression predictions
+
+---
+
+### 🧮 5. Full Evaluation Suite
+
+#### **Regression Metrics**
+- R²
+- MAE / MedianAE
+- MAPE
+- MSE / RMSE
+- MSLE (auto-disabled if invalid)
+
+#### **Binary Classification**
+- Accuracy, Recall, Precision
+- TPR, FPR, TNR, FNR
+- F1, F0.5, F2
+- MCC
+- Threat score
+- Utility (custom cost matrix)
+- Full 101-point threshold curve
+
+#### **Multiclass Classification**
+- Overall: Accuracy, macro/micro/weighted F1
+- One-vs-all threshold evaluation
+- Uses label decoder to restore original class names
+
+---
+
+## 🎛️ 6. Calibration Tables & Plot
+
+Regression + Classification calibration:
+- Equal-width or quantile binning
+- MACE, RMSE, MAE, R²
+- Per-group calibration
+- QuickEcharts visualization
+- Metadata: timestamp, model name, grouping vars
+
+---
+
+## 📈 7. ROC / PR / PR-ROC Curves
+
+RetroFit generates:
+
+- ROC
+- Precision-Recall
+- AUC and Average Precision
+- QuickEcharts Area plots with gradient shading
+
+---
+
+## 🎨 8. QuickEcharts Visuals
+
+All plots are powered by QuickEcharts:
+- Line / Area plots
+- Gradient fills
+- Auto subtitles with metrics
+- HTML export
+- Themes: 'chalk', 'dark', 'essos', 'halloween', 'infographic', 'light', 'macarons', 'purple-passion', 'roma', 'romantic', 'shine', 'vintage', 'walden', 'westeros', 'white', 'wonderland'
+
+---
+
+## 🚀 Next Features Coming Soon
+### Partial Dependence Plots (PDP)
+
+RetroFit's next major addition will bring interpretability:
+
+### ✔ Numeric PDP
+- Grid over each numeric feature
+- Model predictions over perturbed dataset
+- Main effect curve
+- Optional ICE overlays
+- QuickEcharts line/area chart
+
+### ✔ Categorical PDP
+- Per-category partial dependence
+- Bar or point-line chart
+- Sorted or alphabetical category ordering
 
 
+<br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Documentation.PNG' align='center' width='1000' />
-
-
-## Supervised Learning
-<details><summary>Code Examples</summary>
-<p>
+# Code Examples
 
 
+## 1. Supervised Learning Examples
 
-<p>
+Below are runnable examples for all supported algorithms.  
+Each section includes regression, binary classification, and multiclass examples.
 
-### CatBoost
+---
 
-<details><summary>Code Examples</summary>
-<p>
+<details>
+
+<summary><strong>CatBoost Examples</strong></summary>
 
 <details><summary>Regression Training</summary>
 <p>
@@ -240,8 +379,8 @@ model.create_model_data(
   ValidationData=DataSets[1],
   TestData=DataSets[2],
   TargetColumnName="Label_binary",
-  NumericColumnNames=['XREGS1', 'XREGS2', 'XREGS3'],
-  CategoricalColumnNames=['MarketingSegments', 'MarketingSegments2', 'MarketingSegments3'],
+  NumericColumnNames=['XREGS1','XREGS2','XREGS3'],
+  CategoricalColumnNames=['MarketingSegments','MarketingSegments2','MarketingSegments3'],
   TextColumnNames=None,
   WeightColumnName=None,
   Threads=-1
@@ -292,6 +431,18 @@ model.plot_classification_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
 )
 ```
 
@@ -387,10 +538,8 @@ interact = model.compute_catboost_interaction_importance()
 </details>
 
 
-### XGBoost
-
-<details><summary>Code Examples</summary>
-<p>
+<details>
+<summary><strong>XGBoost Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -667,6 +816,26 @@ segment_date_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Store plot in working directory
+model.plot_classification_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
+)
 ```
 
 </p>
@@ -790,10 +959,8 @@ imp = model.compute_feature_importance()
 </details>
 
 
-### LightGBM
-
-<details><summary>Code Examples</summary>
-<p>
+<details>
+<summary><strong>LightGBM Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -1070,6 +1237,25 @@ segment_date_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
+# Store plot in working directory
+model.plot_classification_calibration(
+    DataName="test",
+    n_bins=20,
+    binning="quantile",
+    plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# ROC Plot
+model.plot_classification_roc(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_roc_plot",
+)
+
+# PR Plot
+model.plot_classification_pr(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_pr_plot"
+)
 ```
 
 </p>
@@ -1202,44 +1388,36 @@ imp = model.compute_feature_importance()
 </p>
 </details>
 
+---
+
+## 2. Model Evaluation Visuals
+
+Below is a gallery of example evaluation plots produced by RetroFit.
+
+<details>
+<summary><strong>Click to expand gallery</strong></summary>
 
 <br>
 
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
 
-## **Model Evaluation Visuals**
-<p>
+<br>
+<br>
 
-<details><summary>Examples</summary>
-<p>
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
 
-
-
-<details><summary>Calibration Plot</summary>
-<p>
-
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
-</p>
-</details>
-
-
-
-<details><summary>Regression Scatter Plot</summary>
-<p>
-
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
 </p>
 </details>
-
-
-
-
-
 
 
 

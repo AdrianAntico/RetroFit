@@ -299,6 +299,20 @@ model.plot_regression_scatter(
     plot_name=f"{os.getcwd()}/my_scatter_plot",
     Theme="dark"
 )
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
+)
 ```
 
 </p>
@@ -406,6 +420,20 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -621,12 +649,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -642,6 +664,20 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -771,12 +807,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -798,6 +828,20 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -1041,12 +1085,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -1062,6 +1100,20 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -1191,12 +1243,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -1218,6 +1264,20 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -1378,6 +1438,17 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Numeric_PDP.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Categorical_PDP.PNG' align='center' width='1000' />
+
 
 </p>
 </details>

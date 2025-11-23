@@ -8,7 +8,7 @@ import os
 # The directory containing this file
 HERE = os.path.dirname(os.path.abspath("__file__"))
 
-with open(os.path.join(HERE, "README.md")) as fid:
+with open(os.path.join(HERE, "README.md"), encoding="utf-8") as fid:
     README = fid.read()
 with open(os.path.join(HERE, "requirements.txt")) as f:
     required = f.read().splitlines()
