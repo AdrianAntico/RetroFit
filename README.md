@@ -184,7 +184,7 @@ RetroFit's next major addition will bring interpretability:
 # Code Examples
 
 
-### 1. Supervised Learning Examples
+## 1. Supervised Learning Examples
 
 Below are runnable examples for all supported algorithms.  
 Each section includes regression, binary classification, and multiclass examples.
@@ -192,7 +192,8 @@ Each section includes regression, binary classification, and multiclass examples
 ---
 
 <details>
-<summary><strong>CatBoost Examples</strong></summary>
+
+<summary><strong>###CatBoost Examples</strong></summary>
 
 <details><summary>Regression Training</summary>
 <p>
@@ -501,7 +502,7 @@ interact = model.compute_catboost_interaction_importance()
 
 
 <details>
-<summary><strong>XGBoost Examples</strong></summary>
+<summary><strong>###XGBoost Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -922,7 +923,7 @@ imp = model.compute_feature_importance()
 
 
 <details>
-<summary><strong>LightGBM Examples</strong></summary>
+<summary><strong>###LightGBM Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -1352,7 +1353,7 @@ imp = model.compute_feature_importance()
 
 ---
 
-### 2. Model Evaluation Visuals
+## 2. Model Evaluation Visuals
 
 Below is a gallery of example evaluation plots produced by RetroFit.
 
@@ -1361,28 +1362,28 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 
 <br>
 
-#### ROC Curve
+### ROC Curve
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-#### Precision–Recall Curve 
+### Precision–Recall Curve 
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-#### Calibration Curve  
+### Calibration Curve  
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-#### Regression Scatterplot
+### Regression Scatterplot
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
