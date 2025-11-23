@@ -16,6 +16,8 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 pip install retrofit==0.1.7
 ```
 
+<br>
+
 # 📦 RetroFit  
 ### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 
