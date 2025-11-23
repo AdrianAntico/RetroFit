@@ -161,22 +161,26 @@ All plots are powered by QuickEcharts:
 
 ---
 
-## 🚀 Next Features Coming Soon
-### Partial Dependence Plots (PDP)
+## 9. 🔍 Partial Dependence Plots (PDP)
+### RetroFit now includes full PDP support for both numeric and categorical features.
 
 RetroFit's next major addition will bring interpretability:
 
-### ✔ Numeric PDP
-- Grid over each numeric feature
-- Model predictions over perturbed dataset
-- Main effect curve
-- Optional ICE overlays
-- QuickEcharts line/area chart
+### ✅ Numeric PDP
+- Automated binning (quantile or equal-width)
+- Mean actual vs mean predicted across bins
+- String-safe axis handling for QuickEcharts
+- Clean Line-chart visualization
+- Supports internal scored data or external df input
+- Returns both the PDP table and plot object
 
-### ✔ Categorical PDP
-- Per-category partial dependence
-- Bar or point-line chart
-- Sorted or alphabetical category ordering
+### ✅ Categorical PDP
+- Per-category partial dependence table
+- Mean actual vs mean predicted for each category
+- Optional sorting (feature order, actual mean, predicted mean)
+- Line-based visualization using QuickEcharts
+- Works with internal or external data
+- Returns both table and plot object
 
 
 <br>
