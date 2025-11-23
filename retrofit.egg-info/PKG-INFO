@@ -1,39 +1,39 @@
 Metadata-Version: 2.4
 Name: retrofit
-Version: 0.1.7
-Summary: AutoML, Forecasting, NLP, Image Classification, Feature Engineering, Model Evaluation, Model Interpretation, Fast Processing.
+Version: 0.2.0
+Summary: High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 Home-page: https://github.com/AdrianAntico/retrofit
-Author: ['Adrian Antico', 'Sean Benner']
+Author: Adrian Antico, Sean Benner
 Author-email: adrianantico@gmail.com
 License: MIT
+Classifier: Development Status :: 4 - Beta
 Classifier: License :: OSI Approved :: MIT License
 Classifier: Programming Language :: Python
 Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Programming Language :: Python :: 3.13
+Classifier: Programming Language :: Python :: 3.14
+Classifier: Operating System :: OS Independent
+Classifier: Intended Audience :: Developers
+Classifier: Intended Audience :: Science/Research
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Requires-Python: >=3.10
 Description-Content-Type: text/markdown
 License-File: LICENSE
 Requires-Dist: polars
 Requires-Dist: pandas
 Requires-Dist: numpy
 Requires-Dist: scipy
-Requires-Dist: statsmodels
 Requires-Dist: catboost
 Requires-Dist: xgboost
 Requires-Dist: lightgbm
-Requires-Dist: torch
 Requires-Dist: QuickEcharts
 Requires-Dist: PolarsFE
 Requires-Dist: pyarrow
 Requires-Dist: scikit-learn
-Dynamic: author
-Dynamic: author-email
-Dynamic: classifier
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: home-page
-Dynamic: license
 Dynamic: license-file
-Dynamic: requires-dist
-Dynamic: summary
 
 ![Version: 0.1.7](https://img.shields.io/static/v1?label=Version&message=0.1.7&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
@@ -57,6 +57,25 @@ pip install retrofit==0.1.7
 
 # 📦 RetroFit  
 ### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
+
+## Table of Contents
+- [Installation](#installation)
+- [RetroFit](#-retrofit)
+  - [Key Features](#-key-features)
+  - [Polars-Native Modeling Pipeline](#%EF%B8%8F-1-polars-native-modeling-pipeline)
+  - [Target Transformations (Regression)](#%EF%B8%8F-2-target-transformations-regression)
+  - [GPU-Ready Training](#%E2%9A%A1-3-gpu-ready-training)
+  - [Unified Scoring Engine](#-4-unified-scoring-engine)
+  - [Full Evaluation Suite](#-5-full-evaluation-suite)
+  - [Calibration Tables & Plot](#%EF%B8%8F-6-calibration-tables--plot)
+  - [ROC / PR / PR-ROC Curves](#-7-roc--pr--pr-roc-curves)
+  - [QuickEcharts Visuals](#-8-quickecharts-visuals)
+  - [Partial Dependence Plots (PDP)](#9--partial-dependence-plots-pdp)
+- [Code Examples](#code-examples)
+  - [CatBoost Examples](#catboost-examples)
+  - [XGBoost Examples](#xgboost-examples)
+  - [LightGBM Examples](#lightgbm-examples)
+- [Model Evaluation Visuals](#2-model-evaluation-visuals)
 
 **RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
 
@@ -198,22 +217,24 @@ All plots are powered by QuickEcharts:
 
 ---
 
-## 🚀 Next Features Coming Soon
-### Partial Dependence Plots (PDP)
+## 9. 🔍 Partial Dependence Plots (PDP)
+### RetroFit includes full PDP support for both numeric and categorical features to help explain model behavior.
 
-RetroFit's next major addition will bring interpretability:
+### ✅ Numeric PDP
+- Automated binning (quantile or equal-width)
+- Mean actual vs mean predicted across bins
+- String-safe axis handling for QuickEcharts
+- Clean Line-chart visualization
+- Supports internal scored data or external df input
+- Returns both the PDP table and plot object
 
-### ✔ Numeric PDP
-- Grid over each numeric feature
-- Model predictions over perturbed dataset
-- Main effect curve
-- Optional ICE overlays
-- QuickEcharts line/area chart
-
-### ✔ Categorical PDP
-- Per-category partial dependence
-- Bar or point-line chart
-- Sorted or alphabetical category ordering
+### ✅ Categorical PDP
+- Per-category partial dependence table
+- Mean actual vs mean predicted for each category
+- Optional sorting (feature order, actual mean, predicted mean)
+- Line-based visualization using QuickEcharts
+- Works with internal or external data
+- Returns both table and plot object
 
 
 <br>
@@ -228,9 +249,8 @@ Each section includes regression, binary classification, and multiclass examples
 
 ---
 
-<details>
 
-<summary><strong>CatBoost Examples</strong></summary>
+### CatBoost Examples
 
 <details><summary>Regression Training</summary>
 <p>
@@ -335,6 +355,20 @@ model.plot_regression_scatter(
     SampleSize=15000,
     plot_name=f"{os.getcwd()}/my_scatter_plot",
     Theme="dark"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -444,6 +478,20 @@ model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
 )
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
+)
 ```
 
 </p>
@@ -461,8 +509,12 @@ from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -534,13 +586,9 @@ interact = model.compute_catboost_interaction_importance()
 </details>
 
 
-</p>
-</details>
 
 
-<details>
-<summary><strong>XGBoost Examples</strong></summary>
-
+### XGBoost Examples
 
 <details><summary>Regression Training</summary>
 <p>
@@ -554,9 +602,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -658,12 +709,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -679,6 +724,20 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -697,9 +756,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Turn Label into a binary target variable
 df = df.with_columns(
@@ -808,12 +870,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -836,6 +892,20 @@ model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
 )
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
+)
 ```
 
 </p>
@@ -853,9 +923,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -955,13 +1028,9 @@ imp = model.compute_feature_importance()
 </p>
 </details>
 
-</p>
-</details>
 
 
-<details>
-<summary><strong>LightGBM Examples</strong></summary>
-
+### LightGBM Examples
 
 <details><summary>Regression Training</summary>
 <p>
@@ -974,9 +1043,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -1078,12 +1150,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -1099,6 +1165,20 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
 )
 ```
 
@@ -1117,9 +1197,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Turn Label into a binary target variable
 df = df.with_columns(
@@ -1228,12 +1311,6 @@ segment_eval = model.evaluate(
     ByVariables="MarketingSegments_TargetEncode"
 )
 
-# Per (Segment, Month)
-segment_date_eval = model.evaluate(
-    DataName="test",
-    ByVariables=["MarketingSegments_TargetEncode", "CalendarDateColumn"]
-)
-
 # Get variable importance
 imp = model.compute_feature_importance()
 
@@ -1256,6 +1333,20 @@ model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
 )
+
+# Numeric Partial Dependence plot
+model.plot_pdp_numeric(
+    feature='XREGS1',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/numeric_pdp",
+)
+
+# Categorical Partial Dependence plot
+model.plot_pdp_categorical(
+    feature='MarketingSegments',
+    DataName="test",
+    plot_name=f"{os.getcwd()}/categorical_pdp",
+)
 ```
 
 </p>
@@ -1273,9 +1364,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -1375,18 +1469,7 @@ imp = model.compute_feature_importance()
 </p>
 </details>
 
-</p>
-</details>
 
-
-
-
-</p>
-</details>
-
-
-</p>
-</details>
 
 ---
 
@@ -1416,14 +1499,17 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Numeric_PDP.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Categorical_PDP.PNG' align='center' width='1000' />
+
+
 </p>
 </details>
 
-
-
-</p>
-</details>
-
-
-</p>
-</details>

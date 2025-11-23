@@ -3,6 +3,7 @@ MANIFEST.in
 README.md
 pyproject.toml
 requirements.txt
+setup.cfg
 setup.py
 retrofit/MachineLearning.py
 retrofit/__init__.py
@@ -12,10 +13,3 @@ retrofit.egg-info/SOURCES.txt
 retrofit.egg-info/dependency_links.txt
 retrofit.egg-info/requires.txt
 retrofit.egg-info/top_level.txt
-retrofit/datasets/BenchmarkData.csv
-retrofit/datasets/ClassificationData.csv
-retrofit/datasets/EVAL.csv
-retrofit/datasets/MultiClassData.csv
-retrofit/datasets/RegressionData.csv
-retrofit/datasets/TEST.csv
-retrofit/datasets/TRAIN.csv

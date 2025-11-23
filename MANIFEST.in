@@ -1,1 +1,8 @@
-include README.md LICENSE requirements.txt
+include README.md
+include LICENSE
+include requirements.txt
+
+recursive-include retrofit/images *.png *.jpg *.jpeg *.svg
+recursive-include retrofit *.json
+recursive-include retrofit *.yaml *.yml
+recursive-include retrofit *.txt

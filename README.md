@@ -472,8 +472,12 @@ from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
 # Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -561,9 +565,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -712,9 +719,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Turn Label into a binary target variable
 df = df.with_columns(
@@ -876,9 +886,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -993,9 +1006,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(
@@ -1144,9 +1160,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Turn Label into a binary target variable
 df = df.with_columns(
@@ -1308,9 +1327,12 @@ from PolarsFE import datasets, character
 from QuickEcharts import Charts
 from retrofit import MachineLearning as ml
 
-# Load some data
-FilePath = f'{os.getcwd()}/retrofit/datasets/BenchmarkData.csv'
-df = pl.read_csv(FilePath)
+# Generate demo data instead of reading packaged CSVs
+df = utils.make_retrofit_demo_data(
+    n_rows=50_000,
+    n_segments=5,
+    seed=42,
+)
 
 # Get TrainData, ValidationData, and TestData
 DataSets = datasets.partition_random(

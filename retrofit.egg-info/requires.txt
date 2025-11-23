@@ -2,11 +2,9 @@ polars
 pandas
 numpy
 scipy
-statsmodels
 catboost
 xgboost
 lightgbm
-torch
 QuickEcharts
 PolarsFE
 pyarrow

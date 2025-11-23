@@ -30,20 +30,12 @@ from sklearn.metrics import (
     mean_absolute_percentage_error,
     median_absolute_error,
     r2_score,
-    multilabel_confusion_matrix,
-    top_k_accuracy_score,
     confusion_matrix,
-    hamming_loss,
     f1_score,
-    fbeta_score,
-    precision_recall_fscore_support,
-    precision_score,
-    recall_score,
-    roc_auc_score,
     roc_curve,
     auc,
-    precision_recall_curve
-) 
+    precision_recall_curve,
+)
 
 
 class RetroFit:
