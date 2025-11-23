@@ -153,7 +153,7 @@ RetroFit generates:
 
 ## 🎨 8. QuickEcharts Visuals
 
-All plots are powered by your QuickEcharts engine:  
+All plots are powered by QuickEcharts:  
 - Line / Area plots  
 - Gradient fills  
 - Themes (light/dark)  
