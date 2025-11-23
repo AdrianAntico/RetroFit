@@ -161,22 +161,22 @@ All plots are powered by QuickEcharts:
 
 ---
 
-## 🚀 Next Features Coming Soon  
+## 🚀 Next Features Coming Soon
 ### Partial Dependence Plots (PDP)
 
 RetroFit's next major addition will bring interpretability:
 
 ### ✔ Numeric PDP
-- Grid over each numeric feature  
-- Model predictions over perturbed dataset  
-- Main effect curve  
-- Optional ICE overlays  
-- QuickEcharts line/area chart  
+- Grid over each numeric feature
+- Model predictions over perturbed dataset
+- Main effect curve
+- Optional ICE overlays
+- QuickEcharts line/area chart
 
 ### ✔ Categorical PDP
-- Per-category partial dependence  
-- Bar or point-line chart  
-- Sorted or alphabetical category ordering  
+- Per-category partial dependence
+- Bar or point-line chart
+- Sorted or alphabetical category ordering
 
 
 <br>
