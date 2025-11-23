@@ -1370,19 +1370,23 @@ imp = model.compute_feature_importance()
 <details>
 <summary><strong>Click to expand gallery</strong></summary>
 
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
 
-<br> 
+<br>
+<br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
 
