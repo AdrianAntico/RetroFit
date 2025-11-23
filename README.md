@@ -193,7 +193,7 @@ Each section includes regression, binary classification, and multiclass examples
 
 <details>
 
-###CatBoost Examples
+<summary><strong>CatBoost Examples</strong></summary>
 
 <details><summary>Regression Training</summary>
 <p>
@@ -502,8 +502,7 @@ interact = model.compute_catboost_interaction_importance()
 
 
 <details>
-
-###XGBoost Examples
+<summary><strong>XGBoost Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -924,8 +923,7 @@ imp = model.compute_feature_importance()
 
 
 <details>
-
-###LightGBM Examples
+<summary><strong>LightGBM Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
