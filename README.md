@@ -13,7 +13,7 @@
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.1.7
+pip install retrofit==0.2.0
 ```
 
 <br>
