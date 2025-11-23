@@ -195,7 +195,7 @@ model.plot_pdp_all(...)
 # Code Examples
 
 
-## 1. Supervised Learning Examples
+### 1. Supervised Learning Examples
 
 Below are runnable examples for all supported algorithms.  
 Each section includes regression, binary classification, and multiclass examples.
