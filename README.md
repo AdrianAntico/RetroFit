@@ -1366,34 +1366,40 @@ imp = model.compute_feature_importance()
 
 ### 2. Model Evaluation Visuals
 
+Below is a gallery of example evaluation plots produced by RetroFit.
 
 <details>
 <summary><strong>Click to expand gallery</strong></summary>
 
 <br>
-<br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
-
-<br>
-<br>
-
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
-
-<br>
-<br>
+#### ROC Curve
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
+#### Precision–Recall Curve 
+
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+#### Calibration Curve  
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+#### Regression Scatterplot
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
 </p>
 </details>
-
-
 
 
 
