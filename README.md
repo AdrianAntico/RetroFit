@@ -4,7 +4,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PackageLogo.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/RetroFitLogo.png' align='center' width='1000' />
 
 
 ## **Installation**
