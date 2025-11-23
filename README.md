@@ -195,18 +195,15 @@ model.plot_pdp_all(...)
 # Code Examples
 
 
-### **Supervised Learning**
-<details><summary>Code</summary>
-<p>
+## 1. Supervised Learning Examples
 
+Below are runnable examples for all supported algorithms.  
+Each section includes regression, binary classification, and multiclass examples.
 
+---
 
-<p>
-
-### CatBoost
-
-<details><summary>Code Examples</summary>
-<p>
+<details>
+<summary><strong>CatBoost Examples</strong></summary>
 
 <details><summary>Regression Training</summary>
 <p>
@@ -514,10 +511,8 @@ interact = model.compute_catboost_interaction_importance()
 </details>
 
 
-### XGBoost
-
-<details><summary>Code Examples</summary>
-<p>
+<details>
+<summary><strong>XGBoost Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
@@ -937,10 +932,8 @@ imp = model.compute_feature_importance()
 </details>
 
 
-### LightGBM
-
-<details><summary>Code Examples</summary>
-<p>
+<details>
+<summary><strong>LightGBM Examples</strong></summary>
 
 
 <details><summary>Regression Training</summary>
