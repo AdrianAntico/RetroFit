@@ -14,9 +14,6 @@ pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
 pip install retrofit==0.1.7
-
-# Check out R package AutoQuant
-https://github.com/AdrianAntico/AutoQuant
 ```
 
 # 📦 RetroFit  
