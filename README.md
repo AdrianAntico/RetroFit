@@ -1371,10 +1371,11 @@ imp = model.compute_feature_importance()
 
 
 
-### **Model Evaluation Visuals**
+### **Evaluation Plot Gallery**
 <p>
 
-<details><summary>Images</summary>
+<details>
+<summary><strong>Click to expand gallery</strong></summary>
 <p>
 
 
