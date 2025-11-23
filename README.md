@@ -1364,53 +1364,23 @@ imp = model.compute_feature_importance()
 
 
 
-### **Evaluation Plot Gallery**
-<p>
+### 2. Model Evaluation Visuals
+
 
 <details>
 <summary><strong>Click to expand gallery</strong></summary>
-<p>
-
-
-
-<details><summary>Calibration Plot</summary>
-<p>
 
 <br> 
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
-</p>
-</details>
-
-
-
-<details><summary>Regression Scatter Plot</summary>
-<p>
-
 <br> 
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
-</p>
-</details>
-
-
-
-<details><summary>ROC Plot</summary>
-<p>
-
 <br> 
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
-
-</p>
-</details>
-
-
-
-<details><summary>Precision-Recall Plot</summary>
-<p>
 
 <br> 
 
