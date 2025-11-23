@@ -21,6 +21,25 @@ pip install retrofit==0.1.7
 # 📦 RetroFit  
 ### High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 
+## Table of Contents
+- [Installation](#installation)
+- [RetroFit](#-retrofit)
+  - [Key Features](#-key-features)
+  - [Polars-Native Modeling Pipeline](#%EF%B8%8F-1-polars-native-modeling-pipeline)
+  - [Target Transformations (Regression)](#%EF%B8%8F-2-target-transformations-regression)
+  - [GPU-Ready Training](#%E2%9A%A1-3-gpu-ready-training)
+  - [Unified Scoring Engine](#-4-unified-scoring-engine)
+  - [Full Evaluation Suite](#-5-full-evaluation-suite)
+  - [Calibration Tables & Plot](#%EF%B8%8F-6-calibration-tables--plot)
+  - [ROC / PR / PR-ROC Curves](#-7-roc--pr--pr-roc-curves)
+  - [QuickEcharts Visuals](#-8-quickecharts-visuals)
+  - [Partial Dependence Plots (PDP)](#9--partial-dependence-plots-pdp)
+- [Code Examples](#code-examples)
+  - [CatBoost Examples](#catboost-examples)
+  - [XGBoost Examples](#xgboost-examples)
+  - [LightGBM Examples](#lightgbm-examples)
+- [Model Evaluation Visuals](#2-model-evaluation-visuals)
+
 **RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
 
 Built from the ground up with **Polars**, **GPU acceleration**, and a **scalable evaluation engine**, RetroFit provides a unified interface for:
@@ -162,9 +181,7 @@ All plots are powered by QuickEcharts:
 ---
 
 ## 9. 🔍 Partial Dependence Plots (PDP)
-### RetroFit now includes full PDP support for both numeric and categorical features.
-
-RetroFit's next major addition will bring interpretability:
+### RetroFit includes full PDP support for both numeric and categorical features to help explain model behavior.
 
 ### ✅ Numeric PDP
 - Automated binning (quantile or equal-width)
