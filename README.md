@@ -1361,8 +1361,7 @@ imp = model.compute_feature_importance()
 </p>
 </details>
 
-
-
+---
 
 ### 2. Model Evaluation Visuals
 
