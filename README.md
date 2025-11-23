@@ -1445,6 +1445,3 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 </p>
 </details>
 
-
-</p>
-</details>
