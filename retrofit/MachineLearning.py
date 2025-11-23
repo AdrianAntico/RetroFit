@@ -4123,3 +4123,350 @@ class RetroFit:
             "table": cm_out,
             "plot": chart,
         }
+
+    #################################################
+    # Function: Partial Dependence Plots
+    #################################################
+
+    # Numeric Independent Variable Table
+    def _build_pdp_numeric_table(
+        self,
+        feature: str,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        n_bins: int = 20,
+        binning: str = "quantile",  # "equal_width" or "quantile"
+    ) -> pl.DataFrame:
+        """
+        Build a numeric partial dependence table for a single feature.
+    
+        Works for:
+          - regression: target numeric, prediction column Predict_<target>
+          - binary classification: target 0/1, probability column 'p1' (or custom)
+    
+        Returns a table with:
+          feature_value (string for plotting), actual_mean, pred_mean, count
+        """
+    
+        if binning not in ("equal_width", "quantile"):
+            raise ValueError("binning must be 'equal_width' or 'quantile'.")
+    
+        # -------------------------
+        # Resolve scored data
+        # -------------------------
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df to _build_pdp_numeric_table().")
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None — run score() first."
+                )
+    
+        if feature not in df_pl.columns:
+            raise ValueError(f"Feature '{feature}' not found in data.")
+    
+        # -------------------------
+        # Resolve target & prediction
+        # -------------------------
+        if target is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError("self.TargetColumnName is None; supply target= for external df.")
+            target = self.TargetColumnName
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found in data.")
+    
+        tt = self.TargetType.lower()
+    
+        if tt == "regression":
+            if pred_col is None:
+                pred_col = f"Predict_{target}"
+        elif tt == "classification":
+            # binary classification PDP uses p1 by default
+            if pred_col is None:
+                pred_col = "p1"
+        else:
+            raise NotImplementedError(
+                "_build_pdp_numeric_table currently supports regression and binary classification only."
+            )
+    
+        if pred_col not in df_pl.columns:
+            raise ValueError(f"Prediction/probability column '{pred_col}' not found in data.")
+    
+        # -------------------------
+        # Ensure feature is numeric
+        # -------------------------
+        dtype = df_pl.schema[feature]
+        if not dtype.is_numeric():
+            raise TypeError(
+                f"PDP numeric: feature '{feature}' must be numeric, "
+                f"but has dtype {dtype}"
+            )
+    
+        # -------------------------
+        # Assign bins on feature
+        # -------------------------
+        if binning == "equal_width":
+            stats = df_pl.select(
+                pl.col(feature).min().alias("min_val"),
+                pl.col(feature).max().alias("max_val"),
+            ).to_dicts()[0]
+    
+            min_val = float(stats["min_val"])
+            max_val = float(stats["max_val"])
+            if max_val == min_val:
+                max_val = min_val + 1e-9
+    
+            width = max_val - min_val
+    
+            df_binned = df_pl.with_columns(
+                (
+                    ((pl.col(feature) - min_val) / width * n_bins)
+                    .floor()
+                    .cast(pl.Int64)
+                    .clip(0, n_bins - 1)
+                ).alias("__pdp_bin__")
+            )
+        else:  # "quantile"
+            n_rows = df_pl.height
+            if n_rows == 0:
+                return pl.DataFrame([])
+    
+            df_binned = (
+                df_pl
+                .with_columns(
+                    pl.col(feature)
+                    .rank(method="average")
+                    .alias("__rank__")
+                )
+                .with_columns(
+                    (
+                        ((pl.col("__rank__") - 1) / float(n_rows) * n_bins)
+                        .floor()
+                        .cast(pl.Int64)
+                        .clip(0, n_bins - 1)
+                    ).alias("__pdp_bin__")
+                )
+                .drop("__rank__")
+            )
+    
+        # -------------------------
+        # Aggregate per bin
+        # -------------------------
+        pdp_tbl = (
+            df_binned
+            .group_by("__pdp_bin__")
+            .agg(
+                pl.col(feature).mean().alias("feature_value"),
+                pl.col(target).mean().alias("actual_mean"),
+                pl.col(pred_col).mean().alias("pred_mean"),
+                pl.len().alias("count"),
+            )
+            .sort("feature_value")
+            .with_columns(
+                # X-axis must be string for QuickEcharts; round for readability
+                pl.col("feature_value")
+                .round(2)
+                .cast(pl.Utf8)
+            )
+            .select("feature_value", "actual_mean", "pred_mean", "count")
+        )
+    
+        return pdp_tbl
+
+    # Categorical Independent Variable Table
+    def _build_pdp_categorical_table(
+        self,
+        feature: str,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        sort_by: str = "feature",  # "feature", "actual_mean", or "pred_mean"
+    ) -> pl.DataFrame:
+        """
+        Build a categorical partial dependence table for a single feature.
+    
+        For each category of `feature`, computes:
+          - actual_mean
+          - pred_mean (regression prediction or classification probability)
+          - count
+    
+        Returns a table with columns: [feature, actual_mean, pred_mean, count].
+        """
+    
+        # -------------------------
+        # Resolve data
+        # -------------------------
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df to _build_pdp_categorical_table().")
+            df_pl = self.ScoredData.get(DataName)
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None — run score() first."
+                )
+    
+        if feature not in df_pl.columns:
+            raise ValueError(f"Feature '{feature}' not found in data.")
+    
+        # -------------------------
+        # Resolve target & prediction
+        # -------------------------
+        if target is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError("self.TargetColumnName is None; supply target= for external df.")
+            target = self.TargetColumnName
+    
+        if target not in df_pl.columns:
+            raise ValueError(f"Target column '{target}' not found in data.")
+    
+        tt = self.TargetType.lower()
+    
+        if tt == "regression":
+            if pred_col is None:
+                pred_col = f"Predict_{target}"
+        elif tt == "classification":
+            if pred_col is None:
+                pred_col = "p1"
+        else:
+            raise NotImplementedError(
+                "_build_pdp_categorical_table currently supports regression and binary classification only."
+            )
+    
+        if pred_col not in df_pl.columns:
+            raise ValueError(f"Prediction/probability column '{pred_col}' not found in data.")
+    
+        # -------------------------
+        # Aggregate per category
+        # -------------------------
+        pdp_tbl = (
+            df_pl
+            .group_by(feature)
+            .agg(
+                pl.col(target).mean().alias("actual_mean"),
+                pl.col(pred_col).mean().alias("pred_mean"),
+                pl.len().alias("count"),
+            )
+        )
+    
+        # Sorting
+        if sort_by == "actual_mean":
+            pdp_tbl = pdp_tbl.sort("actual_mean")
+        elif sort_by == "pred_mean":
+            pdp_tbl = pdp_tbl.sort("pred_mean")
+        else:  # "feature" or anything else
+            pdp_tbl = pdp_tbl.sort(feature)
+    
+        return pdp_tbl
+
+    # Numeric IV Partial Dependence Plot
+    def plot_pdp_numeric(
+        self,
+        feature: str,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        n_bins: int = 20,
+        binning: str = "quantile",
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Numeric partial dependence plot for a single feature.
+    
+        Uses binned feature values on x-axis and:
+          - actual_mean
+          - pred_mean
+        on y-axis (two-line overlay).
+        """
+        # Get table
+        pdp_tbl = self._build_pdp_numeric_table(
+            feature=feature,
+            DataName=DataName if df is None else None,
+            df=df,
+            target=target,
+            pred_col=pred_col,
+            n_bins=n_bins,
+            binning=binning,
+        )
+
+        data_label = DataName or "data"
+        title = f"PDP (Numeric) · {feature} · {data_label}"
+
+        # Build plot
+        chart = Charts.Line(
+            dt=pdp_tbl,
+            PreAgg=True,
+            YVar=["actual_mean", "pred_mean"],
+            XVar="feature_value",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Title=title,
+            SubTitle=f"Bins = {n_bins}, binning = {binning}",
+            YAxisTitle="Actual & Predicted",
+            XAxisTitle=feature,
+        )
+    
+        return {
+            "table": pdp_tbl,
+            "plot": chart,
+        }
+
+    # Categorical IV Partial Dependence Plot
+    def plot_pdp_categorical(
+        self,
+        feature: str,
+        DataName: str | None = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        sort_by: str = "feature",
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Categorical partial dependence plot for a single feature.
+    
+        X-axis: category levels of `feature`
+        Y-axis: actual_mean and pred_mean
+        """
+        # Get table
+        pdp_tbl = self._build_pdp_categorical_table(
+            feature=feature,
+            DataName=DataName if df is None else None,
+            df=df,
+            target=target,
+            pred_col=pred_col,
+            sort_by=sort_by,
+        )
+    
+        data_label = DataName or "data"
+        title = f"PDP (Categorical) · {feature} · {data_label}"
+
+        # Build plot
+        chart = Charts.Line(
+            dt=pdp_tbl,
+            PreAgg=True,
+            YVar=["actual_mean", "pred_mean"],
+            XVar=feature,
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Title=title,
+            SubTitle=f"Sorted by {sort_by}",
+            YAxisTitle="Actual & Predicted",
+            XAxisTitle=feature,
+        )
+    
+        return {
+            "table": pdp_tbl,
+            "plot": chart,
+        }
