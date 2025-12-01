@@ -39,6 +39,7 @@ pip install retrofit==0.2.0
   - [XGBoost Examples](#xgboost-examples)
   - [LightGBM Examples](#lightgbm-examples)
 - [Model Evaluation Visuals](#2-model-evaluation-visuals)
+- [Model Insights Reports](#3-model-insights-reports)
 
 **RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
 
