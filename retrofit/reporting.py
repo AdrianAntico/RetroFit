@@ -62,6 +62,7 @@ class ModelInsightsBundle:
 
     # Feature insights
     feature_importance_table: TableSpec
+    interaction_importance_table: Optional[TableSpec]
     pdp_numeric_plots: List[PlotSpec]
     pdp_categorical_plots: List[PlotSpec]
 

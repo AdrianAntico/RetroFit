@@ -2366,6 +2366,7 @@ class RetroFit:
         normalize: bool = True,
         sort: bool = True,
         importance_type: str = "gain",
+        top_n: int = 10,
     ) -> pl.DataFrame:
         """
         Compute feature importance for the current algorithm (catboost/xgboost/lightgbm).
@@ -2528,6 +2529,10 @@ class RetroFit:
             df_imp = df_imp.with_columns(
                 pl.arange(1, df_imp.height + 1).alias("rank")
             )
+
+        # Keep only top_n features
+        if top_n is not None and top_n > 0 and top_n < df_imp.height:
+            df_imp = df_imp.head(top_n)
 
         # 5) Store in ImportanceList for downstream plots / reports
         key_name = ModelName or "MainModel"
@@ -4882,6 +4887,8 @@ class RetroFit:
         split: str | None = None,
         run_id: str | None = None,
         top_n_pdp: int = 5,
+        top_n_fi: int = 10,
+        top_n_ii: int = 10,
         theme: str = "neon",
     ) -> ModelInsightsBundle:
         """
@@ -5051,10 +5058,29 @@ class RetroFit:
             ModelName=None,
             normalize=True,
             sort=True,
+            top_n=top_n_fi,
         )
         
         df_imp = u._round_df(df_imp)
         feature_importance_table = df_to_table(df_imp)
+        
+        # -------------------------
+        # 6b) Interaction importance (CatBoost only)
+        # -------------------------
+        if self.Algorithm == "catboost":
+            try:
+                df_int = self.compute_catboost_interaction_importance(
+                    ModelName=None,
+                    normalize=True,
+                    top_n=top_n_ii,
+                )
+                df_int = u._round_df(df_int)
+                interaction_importance_table = df_to_table(df_int)
+            except Exception as e:
+                # Fail soft: don't kill the whole report if interaction importance breaks
+                interaction_importance_table = None
+        else:
+            interaction_importance_table = None
 
         # -------------------------
         # 7) PDP plots (numeric + categorical)
@@ -5140,6 +5166,7 @@ class RetroFit:
             residual_dist_plot=residual_dist_plot_html,
             prediction_dist_plot=prediction_dist_plot_html,
             feature_importance_table=feature_importance_table,
+            interaction_importance_table=interaction_importance_table,
             pdp_numeric_plots=pdp_numeric_plots,
             pdp_categorical_plots=pdp_categorical_plots,
             extra={"split": resolved},
@@ -5154,6 +5181,8 @@ class RetroFit:
         data_name: str | None = None,
         split: str = "Test",
         top_n_pdp: int = 5,
+        top_n_fi: int = 10,
+        top_n_ii: int = 10,
         theme: str = "neon",
     ) -> str:
         """
@@ -5178,6 +5207,8 @@ class RetroFit:
             data_name=data_name,
             split=split,
             top_n_pdp=top_n_pdp,
+            top_n_fi=top_n_fi,
+            top_n_ii=top_n_ii,
             theme=theme
         )
         html = _render_model_insights_html(

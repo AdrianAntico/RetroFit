@@ -148,7 +148,7 @@
 
     /* ------------------------
        Theme: LIGHT
-       ------------------------ */
+    ------------------------ */
     body.theme-light {
       background: #f7f7f9;
       color: #222;
@@ -181,7 +181,7 @@
 
     /* ------------------------
        Theme: NEON
-       ------------------------ */
+    ------------------------ */
     body.theme-neon {
       background: radial-gradient(circle at top, #111827 0%, #020617 40%, #000000 100%);
       color: #e5e7eb;
@@ -287,6 +287,95 @@
       opacity: 0.6;
       font-size: 0.8rem;
     }
+
+    .table-pager {
+      margin-top: 8px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+
+    .table-pager button {
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: transparent;
+      cursor: pointer;
+    }
+
+    .table-pager button:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+
+    .table-pager .pager-info {
+      opacity: 0.7;
+    }
+
+    .table-pager .pager-size-wrapper {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .table-pager select {
+      font-size: 0.85rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background: transparent;
+      color: inherit;
+    }
+
+    /* Light / neon tweaks */
+    body.theme-light .table-pager button,
+    body.theme-light .table-pager select {
+      border-color: #999;
+    }
+
+    body.theme-neon .table-pager button,
+    body.theme-neon .table-pager select {
+      border-color: #38bdf8;
+    }
+
+    /* Force dropdown menu colors (Chrome/Firefox/Edge) */
+    .table-pager select {
+      background-color: #1e293b;   /* slate-800 */
+      color: #e5e7eb;              /* text-gray-200 */
+      border: 1px solid #64748b;   /* gray-500 */
+    }
+
+    body.theme-light .table-pager select {
+      background-color: #ffffff;
+      color: #111;
+      border-color: #999;
+    }
+
+    body.theme-neon .table-pager select {
+      background-color: #0f172a;   /* neon slate-blue */
+      color: #38bdf8;              /* neon cyan text */
+      border-color: #38bdf8;
+      box-shadow: 0 0 6px rgba(56,189,248,0.6);
+    }
+
+    /* Make the actual dropdown options match the theme */
+    .table-pager select option {
+      background-color: #1e293b;
+      color: #e5e7eb;
+    }
+
+    body.theme-light .table-pager select option {
+      background-color: #ffffff;
+      color: #111;
+    }
+
+    body.theme-neon .table-pager select option {
+      background-color: #0f172a;
+      color: #38bdf8;
+    }
+
   </style>
 </head>
 <body class="theme-{{ theme | default('dark') }}">
@@ -377,7 +466,7 @@
 
 <div class="section">
   <h2>Feature Importance</h2>
-  <table>
+  <table class="paginated" data-page-size="50">
     <thead>
       <tr>
         {% for c in bundle.feature_importance_table.columns %}
@@ -396,6 +485,30 @@
     </tbody>
   </table>
 </div>
+
+{% if bundle.interaction_importance_table and bundle.interaction_importance_table.columns %}
+<div class="section">
+  <h2>Interaction Importance (CatBoost)</h2>
+  <table class="paginated" data-page-size="50">
+    <thead>
+      <tr>
+        {% for c in bundle.interaction_importance_table.columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bundle.interaction_importance_table.rows %}
+      <tr>
+        {% for c in bundle.interaction_importance_table.columns %}
+        <td>{{ row[c] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
 
 <div class="section">
   <h2>Calibration Table</h2>
@@ -494,6 +607,149 @@
   RetroFit Report
   {% if bundle.generated_at %} • Generated {{ bundle.generated_at }}{% endif %}
 </footer>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    function paginateTable(table) {
+      const tbody = table.querySelector("tbody");
+      if (!tbody) return;
+
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      if (rows.length === 0) return;
+
+      // Default page size from attribute or fallback
+      const sizeAttr = table.getAttribute("data-page-size");
+      let defaultPageSize = parseInt(sizeAttr, 10);
+      if (isNaN(defaultPageSize) || defaultPageSize <= 0) {
+        defaultPageSize = 25;
+      }
+
+      let currentPage = 1;
+      let pageSize = defaultPageSize;   // null means "All"
+
+      const totalRows = rows.length;
+
+      // Pager container
+      const pager = document.createElement("div");
+      pager.className = "table-pager";
+
+      // Page size selector
+      const sizeLabel = document.createElement("span");
+      sizeLabel.textContent = "Rows per page:";
+
+      const sizeSelect = document.createElement("select");
+      const sizeOptions = [
+        { label: "10", value: "10" },
+        { label: "25", value: "25" },
+        { label: "50", value: "50" },
+        { label: "100", value: "100" },
+        { label: "All", value: "all" },
+      ];
+
+      sizeOptions.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt.value;
+        o.textContent = opt.label;
+
+        // Initial selection based on default page size
+        if (opt.value !== "all" && parseInt(opt.value, 10) === defaultPageSize) {
+          o.selected = true;
+        }
+        sizeSelect.appendChild(o);
+      });
+
+      sizeSelect.addEventListener("change", function () {
+        const val = this.value;
+        if (val === "all") {
+          pageSize = null;      // special mode: show all rows
+        } else {
+          const parsed = parseInt(val, 10);
+          pageSize = isNaN(parsed) || parsed <= 0 ? null : parsed;
+        }
+        // Reset to first page on change
+        renderPage(1);
+      });
+
+      // Prev / Next / Info
+      const prevBtn = document.createElement("button");
+      prevBtn.textContent = "Prev";
+
+      const nextBtn = document.createElement("button");
+      nextBtn.textContent = "Next";
+
+      const pageInfo = document.createElement("span");
+      pageInfo.className = "pager-info";
+
+      prevBtn.addEventListener("click", function () {
+        if (pageSize === null) return;  // no paging in "All" mode
+        const newPage = Math.max(1, currentPage - 1);
+        if (newPage !== currentPage) {
+          renderPage(newPage);
+        }
+      });
+
+      nextBtn.addEventListener("click", function () {
+        if (pageSize === null) return;
+        const totalPages = Math.ceil(totalRows / pageSize);
+        const newPage = Math.min(totalPages, currentPage + 1);
+        if (newPage !== currentPage) {
+          renderPage(newPage);
+        }
+      });
+
+      function renderPage(page) {
+        currentPage = page;
+
+        if (pageSize === null) {
+          // "All" mode: show all rows, disable paging buttons
+          rows.forEach(row => {
+            row.style.display = "";
+          });
+          prevBtn.disabled = true;
+          nextBtn.disabled = true;
+          pageInfo.textContent = `All ${totalRows} rows`;
+          return;
+        }
+
+        const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
+        const start = (page - 1) * pageSize;
+        const end = start + pageSize;
+
+        rows.forEach((row, idx) => {
+          row.style.display = (idx >= start && idx < end) ? "" : "none";
+        });
+
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+
+        pageInfo.textContent = `Page ${currentPage} of ${totalPages} (total ${totalRows} rows)`;
+      }
+
+      // Assemble pager
+      const sizeWrapper = document.createElement("span");
+      sizeWrapper.className = "pager-size-wrapper";
+      sizeWrapper.appendChild(sizeLabel);
+      sizeWrapper.appendChild(sizeSelect);
+
+      pager.appendChild(sizeWrapper);
+      pager.appendChild(prevBtn);
+      pager.appendChild(pageInfo);
+      pager.appendChild(nextBtn);
+
+      // Insert pager after the table
+      table.insertAdjacentElement("afterend", pager);
+
+      // Initial render
+      renderPage(1);
+    }
+
+    // Apply pagination to all marked tables
+    const paginatedTables = document.querySelectorAll("table.paginated");
+    paginatedTables.forEach((tbl) => {
+      paginateTable(tbl);
+    });
+  });
+</script>
 
 </body>
 </html>
