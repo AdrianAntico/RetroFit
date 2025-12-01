@@ -1479,7 +1479,7 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 
 ---
 
-## 2. Model Insights Reports
+## 3. Model Insights Reports
 
 Below is a gallery of example insights report outputs produced by RetroFit.
 
