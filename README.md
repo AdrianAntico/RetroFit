@@ -148,7 +148,7 @@ Outputs a Polars DataFrame with:
 
 ---
 
-## 🎛️ 6. Calibration Tables & Plot
+### 🎛️ 6. Calibration Tables & Plot
 
 Regression + Classification calibration:
 - Equal-width or quantile binning
@@ -159,7 +159,7 @@ Regression + Classification calibration:
 
 ---
 
-## 📈 7. ROC / PR / PR-ROC Curves
+### 📈 7. ROC / PR / PR-ROC Curves
 
 RetroFit generates:
 
@@ -170,7 +170,7 @@ RetroFit generates:
 
 ---
 
-## 🎨 8. QuickEcharts Visuals
+### 🎨 8. QuickEcharts Visuals
 
 All plots are powered by QuickEcharts:
 - Line / Area plots
@@ -181,7 +181,7 @@ All plots are powered by QuickEcharts:
 
 ---
 
-## 9. 🔍 Partial Dependence Plots (PDP)
+### 9. 🔍 Partial Dependence Plots (PDP)
 ### RetroFit includes full PDP support for both numeric and categorical features to help explain model behavior.
 
 ### ✅ Numeric PDP
