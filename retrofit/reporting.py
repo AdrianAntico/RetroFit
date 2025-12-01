@@ -58,6 +58,7 @@ class ModelInsightsBundle:
     residuals_plot: Optional[PlotSpec]
     actual_vs_pred_plot: Optional[PlotSpec]
     residual_dist_plot: Optional[PlotSpec]
+    prediction_dist_plot: Optional[PlotSpec]
 
     # Feature insights
     feature_importance_table: TableSpec

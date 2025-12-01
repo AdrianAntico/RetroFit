@@ -329,6 +329,13 @@ model.plot_regression_residual_distribution(
     Theme="dark",
 )
 
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
+)
+
 # Numeric Partial Dependence plot
 model.plot_pdp_numeric(
     feature='XREGS1',
@@ -712,6 +719,13 @@ model.plot_regression_residual_distribution(
     n_bins=40,
     plot_name=f"{os.getcwd()}/my_density_plot",
     Theme="dark",
+)
+
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
 )
 
 # Numeric Partial Dependence plot
@@ -1170,6 +1184,13 @@ model.plot_regression_residual_distribution(
     Theme="dark",
 )
 
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
+)
+
 # Numeric Partial Dependence plot
 model.plot_pdp_numeric(
     feature='XREGS1',
@@ -1506,6 +1527,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residual_Distribution_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Predicted_Distribution_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>

@@ -33,6 +33,7 @@ Requires-Dist: QuickEcharts
 Requires-Dist: PolarsFE
 Requires-Dist: pyarrow
 Requires-Dist: scikit-learn
+Requires-Dist: jinja2
 Dynamic: license-file
 
 ![Version: 0.2.0](https://img.shields.io/static/v1?label=Version&message=0.2.0&color=blue&?style=plastic)
@@ -76,6 +77,7 @@ pip install retrofit==0.2.0
   - [XGBoost Examples](#xgboost-examples)
   - [LightGBM Examples](#lightgbm-examples)
 - [Model Evaluation Visuals](#2-model-evaluation-visuals)
+- [Model Insights Reports](#3-model-insights-reports)
 
 **RetroFit** is a fast, production-oriented machine learning framework designed for **training, scoring, and evaluating models**.
 
@@ -355,6 +357,14 @@ model.plot_regression_scatter(
     SampleSize=15000,
     plot_name=f"{os.getcwd()}/my_scatter_plot",
     Theme="dark"
+)
+
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
 )
 
 # Numeric Partial Dependence plot
@@ -724,6 +734,22 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Actual vs Predicted Scatterplot
+model.plot_regression_scatter(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
+
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
 )
 
 # Numeric Partial Dependence plot
@@ -1158,13 +1184,28 @@ cal = model.build_regression_calibration_table(
     DataName="test",
     binning="quantile"
 )
-
 # Store plot in working directory
 model.plot_regression_calibration(
     DataName="test",
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Actual vs Predicted Scatterplot
+model.plot_regression_scatter(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
+
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
 )
 
 # Numeric Partial Dependence plot
@@ -1482,34 +1523,61 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/ROC_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/PR_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Numeric_PDP.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residual_Distribution_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Categorical_PDP.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Numeric_PDP.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Categorical_PDP.PNG' align='center' width='1000' />
 
 
 </p>
 </details>
 
+
+---
+
+## 3. Model Insights Reports
+
+Below is a gallery of example insights report outputs produced by RetroFit.
+
+<details>
+<summary><strong>Click to expand gallery</strong></summary>
+
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Neon.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Light.PNG' align='center' width='1000' />
+
+
+</p>
+</details>

@@ -22,5 +22,8 @@ retrofit/images/PR_Plot.PNG
 retrofit/images/PackageLogo.PNG
 retrofit/images/ROC_Plot.PNG
 retrofit/images/Regression_Calibration_Plot.PNG
+retrofit/images/Regression_Light.PNG
+retrofit/images/Regression_Neon.PNG
 retrofit/images/Regression_Scatter_Plot.PNG
+retrofit/images/Residual_Distribution_Plot.PNG
 retrofit/images/RetroFitLogo.png

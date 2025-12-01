@@ -9,3 +9,4 @@ QuickEcharts
 PolarsFE
 pyarrow
 scikit-learn
+jinja2

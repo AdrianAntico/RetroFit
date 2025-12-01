@@ -4204,6 +4204,174 @@ class RetroFit:
             "plot": chart,
         }
 
+    # Actual vs Predicted Distribution Overlay
+    def plot_prediction_distribution(
+        self,
+        DataName: str = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        n_bins: int = 40,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Overlay density of actual vs predicted target values.
+        Returns:
+            {
+                "table": df_bins (Polars DataFrame with centers + densities),
+                "plot" : QuickEcharts Line object
+            }
+        """
+        if self.TargetType.lower() != "regression":
+            raise ValueError(
+                "plot_regression_prediction_distribution_overlay is only valid when TargetType='regression'."
+            )
+
+        # 1) Resolve data
+        if df is not None:
+            df_pl = self._ensure_polars(df) if hasattr(self, "_ensure_polars") else df
+            source_label = "external"
+        else:
+            df_pl = self.ScoredData.get(DataName)
+            source_label = DataName
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first, "
+                    "or pass an external df."
+                )
+
+        # 2) Resolve columns
+        if target is None:
+            target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError(
+                "Target column is None. Provide target=... or ensure self.TargetColumnName is set."
+            )
+
+        if pred_col is None:
+            pred_col = f"Predict_{target}"
+
+        cols = set(df_pl.columns)
+        missing = [c for c in (target, pred_col) if c not in cols]
+        if missing:
+            raise ValueError(
+                f"Missing required columns {missing}. Available columns: {sorted(cols)}"
+            )
+
+        # 3) Pull actual + predicted
+        df_vals = df_pl.select(
+            [
+                pl.col(target).alias("actual"),
+                pl.col(pred_col).alias("predicted"),
+            ]
+        )
+
+        if df_vals.height == 0:
+            raise ValueError("No rows found when computing prediction distribution overlay.")
+
+        # Range across BOTH actual and predicted
+        stats = df_vals.select(
+            pl.col("actual").min().alias("y_min"),
+            pl.col("actual").max().alias("y_max"),
+            pl.col("predicted").min().alias("p_min"),
+            pl.col("predicted").max().alias("p_max"),
+        )
+        y_min, y_max, p_min, p_max = stats.row(0)
+        vmin = float(min(y_min, p_min))
+        vmax = float(max(y_max, p_max))
+
+        if vmax == vmin:
+            vmax = vmin + 1e-9
+
+        bin_width = (vmax - vmin) / float(n_bins)
+
+        # 4) Bin actual
+        df_actual = (
+            df_vals
+            .with_columns(
+                (
+                    ((pl.col("actual") - vmin) / bin_width)
+                    .floor()
+                    .cast(pl.Int32)
+                    .clip(0, n_bins - 1)  # no keyword args
+                ).alias("bin_idx")
+            )
+            .group_by("bin_idx")
+            .agg(
+                pl.len().alias("n_actual"),
+            )
+        )
+
+        # 5) Bin predicted
+        df_pred = (
+            df_vals
+            .with_columns(
+                (
+                    ((pl.col("predicted") - vmin) / bin_width)
+                    .floor()
+                    .cast(pl.Int32)
+                    .clip(0, n_bins - 1)
+                ).alias("bin_idx")
+            )
+            .group_by("bin_idx")
+            .agg(
+                pl.len().alias("n_pred"),
+            )
+        )
+
+        # 6) Join & compute centers + densities
+        df_bins = (
+            df_actual
+            .join(df_pred, on="bin_idx", how="outer")
+            .fill_null(0)
+            .with_columns(
+                (
+                    (pl.col("bin_idx").cast(pl.Float64) + 0.5) * bin_width + vmin
+                ).alias("value_center")
+            )
+            .with_columns(
+                (pl.col("n_actual") / pl.col("n_actual").sum() / bin_width)
+                .alias("Actual"),
+                (pl.col("n_pred") / pl.col("n_pred").sum() / bin_width)
+                .alias("Predicted"),
+            )
+            .sort("value_center")
+            .with_columns(
+                # nice string x-axis, rounded
+                pl.col("value_center").round(2).cast(pl.Utf8).alias("value_center_str")
+            )
+        )
+
+        # 7) QuickEcharts Line overlay
+        title = f"Prediction Distribution Overlay ({source_label})"
+        subtitle = f"n = {df_vals.height:,d}, bins = {n_bins}"
+        GradientColors = ["#e12191", "#0011FF"]
+
+        chart = Charts.Area(
+            dt=df_bins,
+            PreAgg=True,
+            XVar="value_center_str",
+            YVar=["Actual", "Predicted"],
+            RenderHTML=plot_name,
+            Theme=Theme,
+            GradientColors=GradientColors,
+            Legend="right",
+            LegendPosTop='16%',
+            LegendPosRight='1%',
+            Width="100%",
+            Height="360px",
+            Title=title,
+            SubTitle=subtitle,
+            XAxisTitle=target,
+            YAxisTitle="Density",
+        )
+
+        return {
+            "table": df_bins,
+            "plot": chart,
+        }
+
     # ROC Curve
     def plot_classification_roc(
         self,
@@ -4839,6 +5007,15 @@ class RetroFit:
         )
         residual_dist_plot_html = resid_dist_["plot"].render_embed()
 
+        # Pred & Act Distribution
+        pred_dist_ = self.plot_prediction_distribution(
+            DataName=resolved,
+            n_bins=40,
+            plot_name=None,
+            Theme=Theme,
+        )
+        prediction_dist_plot_html = pred_dist_["plot"].render_embed()
+
         # -------------------------
         # 6) Feature importance (compute on the fly)
         # -------------------------
@@ -4933,6 +5110,7 @@ class RetroFit:
             residuals_plot=residuals_plot_html,
             actual_vs_pred_plot=actual_vs_pred_plot_html,
             residual_dist_plot=residual_dist_plot_html,
+            prediction_dist_plot=prediction_dist_plot_html,
             feature_importance_table=feature_importance_table,
             pdp_numeric_plots=pdp_numeric_plots,
             pdp_categorical_plots=pdp_categorical_plots,
