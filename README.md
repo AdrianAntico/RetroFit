@@ -321,6 +321,14 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
+    Theme="dark"
+)
+
 # Residual Distribution
 model.plot_regression_residual_distribution(
     DataName="test",
@@ -710,6 +718,14 @@ model.plot_regression_scatter(
     DataName="test",
     SampleSize=15000,
     plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
+
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
     Theme="dark"
 )
 
@@ -1176,6 +1192,14 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
+    Theme="dark"
+)
+
 # Residual Distribution
 model.plot_regression_residual_distribution(
     DataName="test",
@@ -1522,6 +1546,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residuals_vs_Predicted_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
