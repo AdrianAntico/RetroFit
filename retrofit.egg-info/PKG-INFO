@@ -186,7 +186,7 @@ Outputs a Polars DataFrame with:
 
 ---
 
-## 🎛️ 6. Calibration Tables & Plot
+### 🎛️ 6. Calibration Tables & Plot
 
 Regression + Classification calibration:
 - Equal-width or quantile binning
@@ -197,7 +197,7 @@ Regression + Classification calibration:
 
 ---
 
-## 📈 7. ROC / PR / PR-ROC Curves
+### 📈 7. ROC / PR / PR-ROC Curves
 
 RetroFit generates:
 
@@ -208,7 +208,7 @@ RetroFit generates:
 
 ---
 
-## 🎨 8. QuickEcharts Visuals
+### 🎨 8. QuickEcharts Visuals
 
 All plots are powered by QuickEcharts:
 - Line / Area plots
@@ -219,7 +219,7 @@ All plots are powered by QuickEcharts:
 
 ---
 
-## 9. 🔍 Partial Dependence Plots (PDP)
+### 9. 🔍 Partial Dependence Plots (PDP)
 ### RetroFit includes full PDP support for both numeric and categorical features to help explain model behavior.
 
 ### ✅ Numeric PDP
@@ -359,12 +359,27 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
+    Theme="dark"
+)
+
 # Residual Distribution
 model.plot_regression_residual_distribution(
     DataName="test",
     n_bins=40,
     plot_name=f"{os.getcwd()}/my_density_plot",
     Theme="dark",
+)
+
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
 )
 
 # Numeric Partial Dependence plot
@@ -744,12 +759,27 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
+    Theme="dark"
+)
+
 # Residual Distribution
 model.plot_regression_residual_distribution(
     DataName="test",
     n_bins=40,
     plot_name=f"{os.getcwd()}/my_density_plot",
     Theme="dark",
+)
+
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
 )
 
 # Numeric Partial Dependence plot
@@ -1200,12 +1230,27 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residuals vs Predicted Values
+model.plot_regression_residuals_vs_predicted(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_residuals_plot",
+    Theme="dark"
+)
+
 # Residual Distribution
 model.plot_regression_residual_distribution(
     DataName="test",
     n_bins=40,
     plot_name=f"{os.getcwd()}/my_density_plot",
     Theme="dark",
+)
+
+# Actual vs Predicted Distribution Overlay
+resid_dist_ = model.plot_prediction_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_overlay_plot",
 )
 
 # Numeric Partial Dependence plot
@@ -1543,7 +1588,17 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 <br>
 
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residuals_vs_Predicted_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residual_Distribution_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Predicted_Distribution_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>

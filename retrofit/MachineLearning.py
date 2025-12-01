@@ -2683,14 +2683,22 @@ class RetroFit:
     ) -> pl.DataFrame:
         """
         Build calibration data for regression.
-    
+
         You can use either:
           - DataName="test" (uses self.ScoredData["test"] and self.TargetColumnName)
           - df=..., target="y", pred_col="y_hat" for arbitrary scored data
-    
-        Each row corresponds to a (group, bin) with summary stats.
+
+        Returns a compact table with:
+          - bin_center_frac (string, for plotting)
+          - pred_mean
+          - actual_mean
+          - n_obs
+          - error_abs
+          - error_pct
+          - error_ratio
+        Optionally grouped by ByVariables.
         """
-    
+
         # ---- Normalize ByVariables ----
         if ByVariables is None:
             by_cols: list[str] = []
@@ -2700,20 +2708,20 @@ class RetroFit:
             by_cols = list(ByVariables)
         else:
             raise TypeError("ByVariables must be None, a string, or a list/tuple of strings.")
-    
+
         # ---- Resolve scored data (Polars) ----
         if df is not None:
             df_pl = self._normalize_input_df(df)
         else:
             if DataName is None:
                 raise ValueError("Must supply DataName or df to build_regression_calibration_table().")
-    
+
             df_pl = self.ScoredData.get(DataName)
             if df_pl is None:
                 raise ValueError(
                     f"self.ScoredData['{DataName}'] is None — run score() first."
                 )
-    
+
         # ---- Resolve target & prediction columns ----
         if target is None:
             if self.TargetColumnName is None:
@@ -2721,21 +2729,24 @@ class RetroFit:
                     "self.TargetColumnName is None. Supply `target=` when using an external df."
                 )
             target = self.TargetColumnName
-    
+
         if pred_col is None:
             pred_col = f"Predict_{target}"
-    
+
         if target not in df_pl.columns:
             raise ValueError(f"Target column '{target}' not found in scored data.")
         if pred_col not in df_pl.columns:
             raise ValueError(f"Prediction column '{pred_col}' not found in scored data.")
-    
+
         if self.TargetType != "regression":
             raise ValueError("build_regression_calibration_table() is only valid for regression.")
-    
+
         if binning not in ("equal_width", "quantile"):
             raise ValueError("binning must be 'equal_width' or 'quantile'.")
-    
+
+        if df_pl.height == 0:
+            return pl.DataFrame([])
+
         # ---- Assign bins ----
         if binning == "equal_width":
             # Global min/max over predictions
@@ -2743,14 +2754,14 @@ class RetroFit:
                 pl.col(pred_col).min().alias("min_pred"),
                 pl.col(pred_col).max().alias("max_pred"),
             ).to_dicts()[0]
-    
+
             min_pred = float(stats["min_pred"])
             max_pred = float(stats["max_pred"])
             if max_pred == min_pred:
                 max_pred = min_pred + 1e-9
-    
+
             width = max_pred - min_pred
-    
+
             df_pl = df_pl.with_columns(
                 (
                     ((pl.col(pred_col) - min_pred) / width * n_bins)
@@ -2759,87 +2770,104 @@ class RetroFit:
                     .clip(0, n_bins - 1)
                 ).alias("bin_id")
             )
-    
+
         else:  # "quantile"
             n_rows = df_pl.height
-            if n_rows == 0:
-                return pl.DataFrame([])
-    
-            df_pl = df_pl.with_columns(
-                pl.col(pred_col)
-                .rank(method="average")
-                .alias("__rank__")
-            ).with_columns(
-                (
-                    ((pl.col("__rank__") - 1) / float(n_rows) * n_bins)
-                    .floor()
-                    .cast(pl.Int64)
-                    .clip(0, n_bins - 1)
-                ).alias("bin_id")
-            ).drop("__rank__")
-    
-        # ---- Group & aggregate ----
+
+            df_pl = (
+                df_pl
+                .with_columns(
+                    pl.col(pred_col)
+                    .rank(method="average")
+                    .alias("__rank__")
+                )
+                .with_columns(
+                    (
+                        ((pl.col("__rank__") - 1) / float(n_rows) * n_bins)
+                        .floor()
+                        .cast(pl.Int64)
+                        .clip(0, n_bins - 1)
+                    ).alias("bin_id")
+                )
+                .drop("__rank__")
+            )
+
+        # ---- Group & aggregate (core metrics) ----
         group_cols = by_cols + ["bin_id"]
-    
+
         agg_df = (
             df_pl
             .group_by(group_cols, maintain_order=True)
-            .agg([
-                pl.count().alias("n_obs"),
+            .agg(
+                pl.len().alias("n_obs"),
                 pl.col(pred_col).mean().alias("pred_mean"),
                 pl.col(target).mean().alias("actual_mean"),
-                pl.col(pred_col).min().alias("pred_min_bin"),
-                pl.col(pred_col).max().alias("pred_max_bin"),
-            ])
+            )
         )
-    
-        # Bin fractions for plotting
-        agg_df = agg_df.with_columns([
-            (pl.col("bin_id").cast(pl.Float64) / n_bins).alias("bin_frac_lower"),
-            ((pl.col("bin_id") + 1).cast(pl.Float64) / n_bins).alias("bin_frac_upper"),
-            ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center_frac"),
-        ])
-    
-        # Numeric bin bounds in prediction space
-        agg_df = agg_df.with_columns([
-            pl.col("pred_min_bin").alias("bin_lower"),
-            pl.col("pred_max_bin").alias("bin_upper"),
-        ])
-    
-        # ---- Metadata columns ----
-        create_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        model_name = "RetroFitModel"
-        grouping_label = ",".join(by_cols) if by_cols else "GLOBAL"
-    
-        agg_df = agg_df.with_columns([
-            pl.lit(model_name).alias("ModelName"),
-            pl.lit(create_time).alias("CreateTime"),
-            pl.lit(grouping_label).alias("GroupingVars"),
-            pl.lit(f"calibration_regression_{binning}").alias("EvalLevel"),
-        ])
-    
-        front_cols = ["ModelName", "CreateTime", "GroupingVars", "EvalLevel"]
-        other_cols = [c for c in agg_df.columns if c not in front_cols]
-        agg_df = agg_df.select(front_cols + other_cols)
-    
-        # 1) Sort by bin_id while numeric
-        agg_df = agg_df.sort("bin_id")
-    
-        # 2) Cast bin boundary fields to string for nicer categorical x-axis
-        bin_label_cols = [
-            "bin_frac_lower",
-            "bin_frac_upper",
-            "bin_center_frac",
-            "bin_lower",
-            "bin_upper",
-        ]
-        agg_df = agg_df.with_columns([pl.col(c).cast(pl.Utf8) for c in bin_label_cols])
-    
-        # Optional store
+
+        # ---- Compute bin center (fraction of prediction range) ----
+        agg_df = agg_df.with_columns(
+            ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins)
+            .alias("bin_center_frac_num")
+        )
+
+        # ---- Error metrics per bin ----
+        agg_df = agg_df.with_columns(
+            [
+                # absolute difference
+                (pl.col("actual_mean") - pl.col("pred_mean"))
+                .abs()
+                .alias("error_abs"),
+
+                # percent error (handle actual_mean == 0)
+                pl.when(pl.col("actual_mean") != 0)
+                .then(
+                    (pl.col("actual_mean") - pl.col("pred_mean")) / pl.col("actual_mean")
+                )
+                .otherwise(None)
+                .alias("error_pct"),
+
+                # ratio predicted / actual
+                pl.when(pl.col("actual_mean") != 0)
+                .then(pl.col("pred_mean") / pl.col("actual_mean"))
+                .otherwise(None)
+                .alias("error_ratio"),
+            ]
+        )
+
+        # ---- Sort by bin_id while numeric ----
+        agg_df = agg_df.sort(group_cols)
+
+        # ---- Cast bin_center_frac to string for plotting ----
+        agg_df = agg_df.with_columns(
+            pl.col("bin_center_frac_num")
+            .round(4)
+            .cast(pl.Utf8)
+            .alias("bin_center_frac")
+        )
+
+        # ---- Select final columns ----
+        # We keep any ByVariables up front, then the calibration columns you care about.
+        final_cols = (
+            by_cols
+            + [
+                "bin_center_frac",
+                "n_obs",
+                "pred_mean",
+                "actual_mean",
+                "error_abs",
+                "error_pct",
+                "error_ratio",
+            ]
+        )
+
+        agg_df = agg_df.select(final_cols)
+
+        # ---- Optional store ----
         if store:
             key = f"{self.Algorithm}_regression_calibration_{binning}_{DataName or 'data'}"
             self._store_calibration_table(key, agg_df)
-    
+
         return agg_df
 
     # Classification Calibration Table
@@ -4972,7 +5000,7 @@ class RetroFit:
         cal_df = cal_['table']
         cols_to_keep = [
             c for c in cal_df.columns
-            if c in ["bin_center_frac", "pred_mean", "actual_mean", "n_obs"]
+            if c in ["bin_center_frac","n_obs","pred_mean","actual_mean","error_abs","error_pct","error_ratio"]
         ]
         cal_df_compact = cal_df.select(cols_to_keep)
         cal_df_compact = u._round_df(cal_df_compact)
