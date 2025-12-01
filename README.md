@@ -321,6 +321,14 @@ model.plot_regression_scatter(
     Theme="dark"
 )
 
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
+)
+
 # Numeric Partial Dependence plot
 model.plot_pdp_numeric(
     feature='XREGS1',
@@ -688,6 +696,22 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Actual vs Predicted Scatterplot
+model.plot_regression_scatter(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
+
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
 )
 
 # Numeric Partial Dependence plot
@@ -1122,13 +1146,28 @@ cal = model.build_regression_calibration_table(
     DataName="test",
     binning="quantile"
 )
-
 # Store plot in working directory
 model.plot_regression_calibration(
     DataName="test",
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Actual vs Predicted Scatterplot
+model.plot_regression_scatter(
+    DataName="test",
+    SampleSize=15000,
+    plot_name=f"{os.getcwd()}/my_scatter_plot",
+    Theme="dark"
+)
+
+# Residual Distribution
+model.plot_regression_residual_distribution(
+    DataName="test",
+    n_bins=40,
+    plot_name=f"{os.getcwd()}/my_density_plot",
+    Theme="dark",
 )
 
 # Numeric Partial Dependence plot
@@ -1462,6 +1501,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Residual_Distribution_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
