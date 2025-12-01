@@ -5,7 +5,9 @@
 # Last modified : 2025-11-15
 
 import pickle
+import math
 from pathlib import Path
+from importlib.resources import files
 from datetime import datetime
 import numpy as np
 from numpy import sort
@@ -37,6 +39,48 @@ from sklearn.metrics import (
     precision_recall_curve,
 )
 
+from jinja2 import Environment, PackageLoader, select_autoescape
+from .reporting import (
+    ModelInsightsBundle,
+    MetricsSection,
+    PlotSpec,
+    TableSpec,
+    df_to_table,
+)
+
+
+# Model Insights: Jinja2 environment + renderer
+_MODEL_INSIGHTS_ENV = Environment(
+    loader=PackageLoader("retrofit", "templates"),
+    autoescape=select_autoescape(["html", "xml"]),
+)
+
+def _render_model_insights_html(
+    bundle: ModelInsightsBundle,
+    template_name: str,
+    theme: str = "dark",
+    logo_path: str | None = None,
+) -> str:
+    """
+    Render the given ModelInsightsBundle with the specified Jinja2 template.
+    """
+    # If no logo provided by caller, load the package logo
+    if logo_path is None:
+        try:
+            logo_file = files("retrofit").joinpath("images", "RetroFitLogo.PNG")
+            # files(...) gives us something file-like; convert to real path
+            logo_path = Path(str(logo_file)).resolve().as_uri()
+        except Exception:
+            # If this ever fails, don't hand Jinja "None"
+            logo_path = ""
+    
+    template = _MODEL_INSIGHTS_ENV.get_template(template_name)
+    return template.render(
+        bundle=bundle,
+        theme=theme,
+        logo_path=logo_path,
+    )
+
 
 class RetroFit:
     """
@@ -50,27 +94,50 @@ class RetroFit:
       Model Interpretation
 
     Functions:
-      train
-      score
-      save
-      load
-      evaluate
+      create_model_data
+
+      create_model_parameters
       print_algo_args
+      update_model_parameters
+
+      train
+
+      score
+
+      save_retrofit
+      load_retrofit
+
+      evaluate
+
+      compute_feature_importance
+      compute_catboost_interaction_importance
+
+      build_regression_calibration_table
+      plot_regression_calibration
+      plot_regression_scatter
+      plot_pdp_numeric
+
+      build_classification_calibration_table
+      plot_classification_calibration
+      plot_classification_roc
+      plot_classification_pr
+      plot_confusion_matrix
+      plot_pdp_categorical
 
     Attributes:
       self.TargetType = "regression"
       self.Algorithm = "catboost"
-      self.TargetColumnName = ModelData["ArgsList"]["TargetColumnName"]
-      self.NumericColumnNames = ModelData["ArgsList"]["NumericColumnNames"]
-      self.CategoricalColumnNames = ModelData["ArgsList"]["CategoricalColumnNames"]
-      self.TextColumnNames = ModelData["ArgsList"]["TextColumnNames"]
-      self.WeightColumnName = ModelData["ArgsList"]["WeightColumnName"]
-      self.ModelArgs = ModelArgs
-      self.ModelArgsNames = [*self.ModelArgs]
-      self.Runs = len(self.ModelArgs)
-      self.DataSets = DataSets
+      self.GPU = "CPU"
+      self.TargetColumnName
+      self.NumericColumnNames
+      self.CategoricalColumnNames
+      self.TextColumnNames
+      self.WeightColumnName
+      self.ModelArgs
+      self.ModelArgsNames
+      self.DataFrames = dict()
       self.ModelData = ModelData
-      self.self.ModelDataNames = [*self.DataSets]
+      self.ModelDataNames
       self.ModelList = dict()
       self.ModelListNames = []
       self.FitList = dict()
@@ -81,6 +148,14 @@ class RetroFit:
       self.InterpretationListNames = []
       self.CompareModelsList = dict()
       self.CompareModelsListNames = []
+      self.ImportanceList = {}
+      self.ImportanceListNames = []
+      self.InteractionImportanceList = {}
+      self.InteractionImportanceListNames = []
+      self.CalibrationList = {}
+      self.CalibrationListNames = []
+      self.LabelMapping = None
+      self.LabelMappingInverse = None
     """
 
     # Class attributes
@@ -1461,7 +1536,7 @@ class RetroFit:
     
         Returns a new Polars DataFrame (Polars is immutable).
         """
-        if self.TargetType.lower() != "regression":
+        if self.TargetType != "regression":
             return df_pl
     
         t = self._normalize_target_transform()
@@ -1842,7 +1917,7 @@ class RetroFit:
         # -------------------------------
         # 2) Regression
         # -------------------------------
-        if self.TargetType.lower() == "regression":
+        if self.TargetType == "regression":
             pred_col = f"Predict_{target}"
             if pred_col not in df_pl.columns:
                 raise ValueError(
@@ -1900,7 +1975,7 @@ class RetroFit:
         # -------------------------------
         # 3) Binary Classification
         # -------------------------------
-        if self.TargetType.lower() == "classification":
+        if self.TargetType == "classification":
             if "p1" not in df_pl.columns:
                 raise ValueError("Missing 'p1' probability column for binary classification.")
 
@@ -2068,7 +2143,7 @@ class RetroFit:
         # -------------------------------
         # 4) Multiclass Classification
         # -------------------------------
-        if self.TargetType.lower() == "multiclass":
+        if self.TargetType == "multiclass":
             # Expect columns 'class_0', 'class_1', ..., 'class_{K-1}' from score()
             prob_cols = [c for c in df_pl.columns if c.startswith("class_")]
             if not prob_cols:
@@ -2655,7 +2730,7 @@ class RetroFit:
         if pred_col not in df_pl.columns:
             raise ValueError(f"Prediction column '{pred_col}' not found in scored data.")
     
-        if self.TargetType.lower() != "regression":
+        if self.TargetType != "regression":
             raise ValueError("build_regression_calibration_table() is only valid for regression.")
     
         if binning not in ("equal_width", "quantile"):
@@ -2823,7 +2898,7 @@ class RetroFit:
         if prob_col not in df_pl.columns:
             raise ValueError(f"Probability column '{prob_col}' not found in scored data.")
     
-        if self.TargetType.lower() != "classification":
+        if self.TargetType != "classification":
             raise ValueError("build_binary_calibration_table() is only valid for binary classification.")
     
         if binning not in ("equal_width", "quantile"):
@@ -3243,7 +3318,7 @@ class RetroFit:
             - fpr_label  (str, rounded for plotting)
         auc_val : float
         """
-        if self.TargetType.lower() != "classification":
+        if self.TargetType != "classification":
             raise ValueError(
                 "_build_binary_roc_table is only valid when TargetType='classification'."
             )
@@ -3327,7 +3402,7 @@ class RetroFit:
         PRIVATE:
           Build Precision-Recall curve table & compute PR AUC (AUPRC).
         """
-        if self.TargetType.lower() != "classification":
+        if self.TargetType != "classification":
             raise ValueError(
                 "_build_binary_pr_table is only valid when TargetType='classification'."
             )
@@ -3623,6 +3698,8 @@ class RetroFit:
             XVar="bin_center_frac",
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=f"Regression Calibration ({data_label or 'data'}, {binning})",
             SubTitle=subtitle,
             YAxisTitle="Predicted & Actual",
@@ -3662,7 +3739,7 @@ class RetroFit:
           - "metrics": dict with keys {"brier", "mace"}
           - "plot"   : QuickEcharts Line object
         """
-        if self.TargetType.lower() != "classification":
+        if self.TargetType != "classification":
             raise ValueError(
                 "plot_classification_calibration is only valid when TargetType='classification'."
             )
@@ -3721,6 +3798,8 @@ class RetroFit:
             XVar="bin_center_frac",
             Title=f"Classification Calibration ({data_key})",
             SubTitle=subtitle,
+            Width="100%",
+            Height="360px",
             YAxisTitle="Observed Positive Rate & Mean Predicted Probability",
             XAxisTitle=(
                 "Quantile Bins of Predicted Probabilities"
@@ -3777,7 +3856,7 @@ class RetroFit:
           - "table": Polars DataFrame with RMSE, MAE, R2, MSE, VarY, n_obs
           - "plot" : QuickEcharts Scatter object
         """
-        if self.TargetType.lower() != "regression":
+        if self.TargetType != "regression":
             raise ValueError(
                 "plot_regression_scatter is only valid when TargetType='regression'."
             )
@@ -3841,6 +3920,8 @@ class RetroFit:
             XVar=pred_col,
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=f"Actual vs Predicted ({source_label})",
             SubTitle=subtitle,
             YAxisTitle="Actual",
@@ -3849,6 +3930,277 @@ class RetroFit:
     
         return {
             "table": metrics,
+            "plot": chart,
+        }
+
+    # Regression residuals vs predicted
+    def plot_regression_residuals_vs_predicted(
+        self,
+        DataName: str = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        SampleSize: int = 15000,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Residuals vs Predicted scatter plot for regression models.
+
+        Parameters
+        ----------
+        DataName : str, default "test"
+            Key for self.ScoredData[...] when df is not provided.
+        df : pl.DataFrame | pd.DataFrame | None
+            Optional external scored data.
+        target : str | None
+            Actual column name. Defaults to self.TargetColumnName.
+        pred_col : str | None
+            Prediction column name. Defaults to f"Predict_{target}".
+        SampleSize : int, default 15000
+            Subsample size for the scatterplot.
+        plot_name : str | None
+            Optional HTML output name for QuickEcharts.
+        Theme : str, default "dark"
+            QuickEcharts theme.
+
+        Returns
+        -------
+        dict with:
+          - "table": Polars DataFrame containing residual stats
+          - "plot" : QuickEcharts Scatter object
+        """
+        if self.TargetType != "regression":
+            raise ValueError(
+                "plot_regression_residuals_vs_predicted is only valid when TargetType='regression'."
+            )
+
+        # --------------------------------------------------------------
+        # 1) Resolve data source (external df vs internal scored data)
+        # --------------------------------------------------------------
+        if df is not None:
+            df_pl = self._ensure_polars(df) if hasattr(self, "_ensure_polars") else df
+            source_label = "external"
+        else:
+            df_pl = self.ScoredData.get(DataName)
+            source_label = DataName
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first "
+                    "or pass an external df."
+                )
+
+        # --------------------------------------------------------------
+        # 2) Resolve target & prediction column names
+        # --------------------------------------------------------------
+        if target is None:
+            target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError(
+                "Target column is None. Provide target=... or ensure create_model_data() was used."
+            )
+
+        if pred_col is None:
+            pred_col = f"Predict_{target}"
+
+        cols = set(df_pl.columns)
+        missing = [c for c in (target, pred_col) if c not in cols]
+        if missing:
+            raise ValueError(
+                f"Missing required columns {missing}. Available columns: {sorted(cols)}"
+            )
+
+        # --------------------------------------------------------------
+        # 3) Compute residuals
+        # --------------------------------------------------------------
+        df_resid = (
+            df_pl
+            .select([
+                pl.col(target).alias("actual"),
+                pl.col(pred_col).alias("predicted"),
+            ])
+            .with_columns(
+                (pl.col("actual") - pl.col("predicted")).alias("residual")
+            )
+        )
+
+        # core metrics for subtitle
+        metrics = self._compute_regression_core_metrics(df_pl, target, pred_col)
+        rmse = float(metrics["RMSE"][0])
+        mae  = float(metrics["MAE"][0])
+        r2   = float(metrics["R2"][0])
+
+        subtitle = f"RMSE = {rmse:,.4f} · MAE = {mae:,.4f} · R² = {r2:,.4f}"
+
+        # --------------------------------------------------------------
+        # 4) QuickEcharts scatter: Predicted vs Residual
+        # --------------------------------------------------------------
+        chart = Charts.Scatter(
+            dt=df_resid,
+            SampleSize=SampleSize,
+            XVar="predicted",
+            YVar="residual",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Width="100%",
+            Height="360px",
+            Title=f"Residuals vs Predicted ({source_label})",
+            SubTitle=subtitle,
+            XAxisTitle="Predicted",
+            YAxisTitle="Residual",
+        )
+
+        # --------------------------------------------------------------
+        # 5) Return diagnostics + plot
+        # --------------------------------------------------------------
+        return {
+            "table": df_resid,  # raw residuals table for additional plots
+            "plot": chart,
+        }
+
+    # Residuals Density
+    def plot_regression_residual_distribution(
+        self,
+        DataName: str = "test",
+        df=None,
+        target: str | None = None,
+        pred_col: str | None = None,
+        n_bins: int = 40,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        if self.TargetType != "regression":
+            raise ValueError(
+                "plot_regression_residual_distribution is only valid when TargetType='regression'."
+            )
+
+        # 1) Resolve data
+        if df is not None:
+            df_pl = self._ensure_polars(df) if hasattr(self, "_ensure_polars") else df
+            source_label = "external"
+        else:
+            df_pl = self.ScoredData.get(DataName)
+            source_label = DataName
+            if df_pl is None:
+                raise ValueError(
+                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first, "
+                    "or pass an external df."
+                )
+
+        # 2) Resolve columns
+        if target is None:
+            target = self.TargetColumnName
+        if target is None:
+            raise RuntimeError(
+                "Target column is None. Provide target=... or ensure self.TargetColumnName is set."
+            )
+
+        if pred_col is None:
+            pred_col = f"Predict_{target}"
+
+        cols = set(df_pl.columns)
+        missing = [c for c in (target, pred_col) if c not in cols]
+        if missing:
+            raise ValueError(
+                f"Missing required columns {missing}. Available columns: {sorted(cols)}"
+            )
+
+        # 3) Compute residuals
+        df_resid = (
+            df_pl
+            .select([
+                pl.col(target).alias("actual"),
+                pl.col(pred_col).alias("predicted"),
+            ])
+            .with_columns(
+                (pl.col("actual") - pl.col("predicted")).alias("resid")
+            )
+        )
+
+        stats = df_resid.select(
+            pl.col("resid").min().alias("resid_min"),
+            pl.col("resid").max().alias("resid_max"),
+        )
+        
+        res_min, res_max = stats.row(0)
+        res_range = res_max - res_min
+
+        if res_range <= 0:
+            # all residuals are (almost) identical; make a degenerate "spike"
+            df_bins = pl.DataFrame(
+                {
+                    "residual_center": [round(res_min, 4)],
+                    "n": [df_resid.height],
+                    "density": [1.0],  # arbitrary, but keeps the plot sane
+                }
+            )
+        else:
+            number_bins = n_bins
+        
+            # Your logic: small range → small step; big range → ceil(range / bins)
+            if res_range < number_bins:
+                acc = round(res_range / number_bins, 2)
+                if acc <= 0:
+                    acc = 1.0
+            else:
+                acc = float(math.ceil(res_range / number_bins))
+        
+            total_n = df_resid.height
+        
+            df_bins = (
+                df_resid
+                .select("resid")
+                .with_columns(
+                    (
+                        (pl.col("resid") / acc)
+                        .round()
+                        * acc
+                    )
+                    .round(4)
+                    .alias("residual_center_num")   # numeric center
+                )
+                .group_by("residual_center_num")
+                .agg(pl.len().alias("n"))
+                .with_columns(
+                    (pl.col("n") / (total_n * acc)).alias("density")
+                )
+                .sort("residual_center_num")         # 👈 SORT WHILE STILL NUMERIC
+                .with_columns(
+                    pl.col("residual_center_num")
+                      .cast(pl.Utf8)
+                      .alias("residual_center")      # 👈 CAST AFTER SORT
+                )
+                .select([
+                    "residual_center",               # string axis
+                    "n",
+                    "density",
+                ])
+            )
+
+        # 5) QuickEcharts Area
+        GradientColors = ["#e12191", "#0011FF"]
+
+        title = f"Residual Distribution ({source_label})"
+        subtitle = f"n = {df_resid.height:,d}, bins = {n_bins}"
+
+        chart = Charts.Area(
+            dt=df_bins,
+            PreAgg=True,
+            YVar=["density"],
+            XVar="residual_center",
+            GradientColors=GradientColors,
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Width="100%",
+            Height="360px",
+            Title=title,
+            SubTitle=subtitle,
+            YAxisTitle="Density",
+            XAxisTitle="Residual",
+        )
+
+        return {
+            "table": df_bins,
             "plot": chart,
         }
 
@@ -3877,7 +4229,7 @@ class RetroFit:
           - "auc": float, AUC of ROC curve
           - "plot": QuickEcharts Line chart object
         """
-        if self.TargetType.lower() != "classification":
+        if self.TargetType != "classification":
             raise ValueError(
                 "plot_classification_roc is only valid when TargetType='classification'."
             )
@@ -3908,6 +4260,8 @@ class RetroFit:
             GradientColors=GradientColors,
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=title,
             SubTitle=subtitle,
             YAxisTitle="True Positive Rate (TPR)",
@@ -3955,6 +4309,8 @@ class RetroFit:
             GradientColors=GradientColors,
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=title,
             SubTitle=subtitle,
             YAxisTitle="Precision",
@@ -3964,155 +4320,6 @@ class RetroFit:
         return {
             "table": pr_df,
             "auc": pr_auc,
-            "plot": chart,
-        }
-
-
-    # Heatmap for Confusion Matrix
-    def plot_confusion_matrix(
-        self,
-        DataName: str | None = "test",
-        df=None,
-        target: str | None = None,
-        prob_col: str = "p1",
-        threshold: float = 0.5,
-        normalize: str = "none",  # "none", "true", "pred", "all"
-        plot_name: str | None = None,
-        Theme: str = "dark",
-    ):
-        """
-        Plot confusion matrix as a heatmap using QuickEcharts.
-    
-        Supports:
-          - TargetType='classification' (binary, using prob_col + threshold)
-          - TargetType='multiclass'     (using argmax over 'class_k' columns)
-    
-        Parameters
-        ----------
-        DataName : str | None
-            Internal scored dataset key ('train','validation','test').
-            Ignored if df is provided.
-        df : pl.DataFrame | pd.DataFrame | None
-            External scored data with target + score columns.
-        target : str | None
-            Target column name; defaults to self.TargetColumnName.
-        prob_col : str
-            Probability column for the positive class (binary case only).
-        threshold : float
-            Probability threshold for positive class in binary case.
-        normalize : {"none","true","pred","all"}
-            - "none": use raw counts
-            - "true": normalize per actual class (row)
-            - "pred": normalize per predicted class (column)
-            - "all" : normalize by total count
-        plot_name : str | None
-            Optional HTML file name for QuickEcharts rendering.
-        Theme : str
-            QuickEcharts theme.
-    
-        Returns
-        -------
-        dict with:
-          - "table": pl.DataFrame with [actual, predicted, count, value, actual_name, predicted_name]
-          - "plot" : QuickEcharts Heatmap object
-        """
-        if self.TargetType not in ("classification", "multiclass"):
-            raise ValueError(
-                "plot_confusion_matrix is only implemented for TargetType "
-                "in {'classification','multiclass'}."
-            )
-    
-        # 1) Build confusion matrix table
-        cm_df = self._build_confusion_matrix(
-            DataName=DataName if df is None else None,
-            df=df,
-            target=target,
-            prob_col=prob_col,
-            threshold=threshold,
-        )
-    
-        # 2) Normalize if requested
-        if normalize not in ("none", "true", "pred", "all"):
-            raise ValueError("normalize must be one of: 'none', 'true', 'pred', 'all'.")
-    
-        cm_out = cm_df
-    
-        if normalize == "none":
-            cm_out = cm_out.with_columns(
-                pl.col("count").cast(pl.Float64).alias("value")
-            )
-    
-        elif normalize == "true":
-            # normalize per actual
-            cm_out = (
-                cm_out
-                .with_columns(
-                    pl.sum("count").over("actual").alias("_row_total")
-                )
-                .with_columns(
-                    (pl.col("count") / pl.col("_row_total")).alias("value")
-                )
-                .drop("_row_total")
-            )
-    
-        elif normalize == "pred":
-            # normalize per predicted
-            cm_out = (
-                cm_out
-                .with_columns(
-                    pl.sum("count").over("predicted").alias("_col_total")
-                )
-                .with_columns(
-                    (pl.col("count") / pl.col("_col_total")).alias("value")
-                )
-                .drop("_col_total")
-            )
-    
-        else:  # "all"
-            total = cm_out["count"].sum()
-            total = float(total) if total is not None else 0.0
-            if total <= 0:
-                total = 1.0
-            cm_out = cm_out.with_columns(
-                (pl.col("count") / total).alias("value")
-            )
-    
-        # 3) Titles
-        data_label = DataName or "data"
-        if self.TargetType == "classification":
-            tt_label = "Binary Classification"
-        else:
-            tt_label = "Multiclass Classification"
-    
-        norm_label = {
-            "none": "Counts",
-            "true": "Row-normalized (per actual)",
-            "pred": "Column-normalized (per predicted)",
-            "all": "Global-normalized",
-        }[normalize]
-    
-        title = f"Confusion Matrix ({tt_label}, {data_label})"
-        subtitle = norm_label
-    
-        # 4) Heatmap plot (actual on Y, predicted on X)
-        # QuickEcharts heatmap is assumed to use long-form dt with:
-        #   - XVar (predicted_name), YVar (actual_name), ValueVar="value"
-        chart = Charts.Heatmap(
-            dt=cm_out,
-            PreAgg=True,
-            XVar="predicted_name",
-            YVar="actual_name",
-            ValueVar="value",
-            RenderHTML=plot_name,
-            Theme=Theme,
-            Title=title,
-            SubTitle=subtitle,
-            XAxisTitle="Predicted",
-            YAxisTitle="Actual",
-        )
-    
-        return {
-            "table": cm_out,
             "plot": chart,
         }
 
@@ -4173,7 +4380,7 @@ class RetroFit:
         if target not in df_pl.columns:
             raise ValueError(f"Target column '{target}' not found in data.")
     
-        tt = self.TargetType.lower()
+        tt = self.TargetType
     
         if tt == "regression":
             if pred_col is None:
@@ -4320,7 +4527,7 @@ class RetroFit:
         if target not in df_pl.columns:
             raise ValueError(f"Target column '{target}' not found in data.")
     
-        tt = self.TargetType.lower()
+        tt = self.TargetType
     
         if tt == "regression":
             if pred_col is None:
@@ -4402,6 +4609,8 @@ class RetroFit:
             XVar="feature_value",
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=title,
             SubTitle=f"Bins = {n_bins}, binning = {binning}",
             YAxisTitle="Actual & Predicted",
@@ -4452,6 +4661,8 @@ class RetroFit:
             XVar=feature,
             RenderHTML=plot_name,
             Theme=Theme,
+            Width="100%",
+            Height="360px",
             Title=title,
             SubTitle=f"Sorted by {sort_by}",
             YAxisTitle="Actual & Predicted",
@@ -4462,3 +4673,312 @@ class RetroFit:
             "table": pdp_tbl,
             "plot": chart,
         }
+
+
+    #################################################
+    # PUBLIC: regression Model Insights Report
+    #################################################
+
+    # Internal: build regression ModelInsightsBundle
+    def _build_regression_insights_bundle(
+        self,
+        data_name: str | None = None,
+        split: str | None = None,
+        run_id: str | None = None,
+        top_n_pdp: int = 5,
+        theme: str = "neon",
+    ) -> ModelInsightsBundle:
+        """
+        Internal helper for build_regression_model_insights_report().
+
+        For now this is:
+          - regression only
+          - tables only (metrics, calibration, feature importance, etc.)
+          - no embedded QuickEcharts plots yet
+        """
+        if self.TargetType != "regression":
+            raise ValueError(
+                "ModelInsightsReport (regression) is only valid when TargetType='regression'."
+            )
+
+        # Set theme
+        if theme == "dark":
+            Theme = "dark"
+        elif theme == "neon":
+            Theme = "dark"
+        else:
+            Theme = "macarons"
+
+        # -------------------------
+        # 1) Resolve which scored split to use
+        # -------------------------
+        # Priority order:
+        #   explicit data_name  -> explicit split  -> test -> validation -> train
+                # 1) Resolve which scored split to use
+        candidates: list[str] = []
+        if data_name:
+            candidates.append(str(data_name).lower())
+        if split:
+            candidates.append(str(split).lower())
+        candidates.extend(["test", "validation", "train"])
+
+        resolved: str | None = None
+        for key in candidates:
+            if key in getattr(self, "ScoredData", {}) and self.ScoredData[key] is not None:
+                resolved = key
+                break
+
+        if resolved is None:
+            raise RuntimeError(...)
+        
+        df_pl = self.ScoredData[resolved]
+
+        # -------------------------
+        # 2) Data summary (tiny one-row table)
+        # -------------------------
+        data_summary_df = pl.DataFrame(
+            {
+                "split": [resolved],
+                "n_rows": [df_pl.height],
+                "n_cols": [len(df_pl.columns)],
+                "target": [self.TargetColumnName or ""],
+            }
+        )
+        data_summary = df_to_table(data_summary_df)
+
+        # -------------------------
+        # 3) Feature summary (just name + type for now)
+        # -------------------------
+        feature_names: list[str] = []
+        feature_types: list[str] = []
+
+        for col in (self.NumericColumnNames or []):
+            feature_names.append(col)
+            feature_types.append("numeric")
+
+        for col in (self.CategoricalColumnNames or []):
+            feature_names.append(col)
+            feature_types.append("categorical")
+
+        for col in (self.TextColumnNames or []):
+            feature_names.append(col)
+            feature_types.append("text")
+
+        feature_summary_df = pl.DataFrame(
+            {
+                "feature": feature_names,
+                "type": feature_types,
+            }
+        )
+        feature_summary = df_to_table(feature_summary_df)
+
+        # -------------------------
+        # 4) Core regression metrics for this split
+        # -------------------------
+        target_col = self.TargetColumnName
+        if target_col is None:
+            raise RuntimeError(
+                "TargetColumnName is None; cannot build regression metrics for ModelInsightsReport."
+            )
+
+        pred_col = f"Predict_{target_col}"
+        metrics_df = self._compute_regression_core_metrics(df_pl, target_col, pred_col)
+        metrics_df = u._round_df(metrics_df)
+        metrics_section = MetricsSection(
+            table=df_to_table(metrics_df),
+            notes=None,
+        )
+
+        # --------------------------------------------
+        # 5) Calibration, density, scatter, residuals
+        # --------------------------------------------
+        cal_ = self.plot_regression_calibration(
+            DataName=resolved,
+            n_bins=20,
+            binning="quantile",
+            plot_name=None,
+            Theme=Theme
+        )
+        
+        # Keep only the columns you care about (adjust names to match your actual output)
+        cal_df = cal_['table']
+        cols_to_keep = [
+            c for c in cal_df.columns
+            if c in ["bin_center_frac", "pred_mean", "actual_mean", "n_obs"]
+        ]
+        cal_df_compact = cal_df.select(cols_to_keep)
+        cal_df_compact = u._round_df(cal_df_compact)
+        calibration_table = df_to_table(cal_df_compact)
+        calibration_plot = cal_['plot'].render_embed()
+        calibration_metrics = cal_['metrics']
+
+        # Regression residuals
+        resid_ = self.plot_regression_residuals_vs_predicted(
+            DataName=resolved,
+            SampleSize=15000,
+            plot_name=None,
+            Theme=Theme,
+        )
+        residuals_plot_html = resid_["plot"].render_embed()
+
+        # 5b) Regression Scatterplot
+        scatter_ = self.plot_regression_scatter(
+            DataName=resolved,
+            SampleSize=15000,
+            plot_name=None,
+            Theme=Theme,
+        )
+        actual_vs_pred_plot_html = scatter_["plot"].render_embed()
+
+        # 5c) Residual distribution
+        resid_dist_ = self.plot_regression_residual_distribution(
+            DataName=resolved,
+            n_bins=40,
+            plot_name=None,
+            Theme=Theme,
+        )
+        residual_dist_plot_html = resid_dist_["plot"].render_embed()
+
+        # -------------------------
+        # 6) Feature importance (compute on the fly)
+        # -------------------------
+        df_imp = self.compute_feature_importance(
+            ModelName=None,
+            normalize=True,
+            sort=True,
+        )
+        
+        df_imp = u._round_df(df_imp)
+        feature_importance_table = df_to_table(df_imp)
+
+        # -------------------------
+        # 7) PDP plots (numeric + categorical)
+        # -------------------------
+        pdp_numeric_plots = []
+        pdp_categorical_plots = []
+
+        # How many features do you want PDPs for?
+        top_n = top_n_pdp
+
+        # Choose numeric features that exist in the scored data
+        numeric_features = [
+            f for f in (self.NumericColumnNames or [])
+            if f in df_pl.columns
+        ][:top_n]
+
+        # Choose categorical features that exist in the scored data
+        categorical_features = [
+            f for f in (self.CategoricalColumnNames or [])
+            if f in df_pl.columns
+        ][:top_n]
+
+        # Numeric PDPs
+        for feature in numeric_features:
+            try:
+                res = self.plot_pdp_numeric(
+                    feature=feature,
+                    DataName=resolved,
+                    n_bins=20,
+                    binning="quantile",
+                    plot_name=None,
+                    Theme=Theme
+                )
+                pdp_numeric_plots.append(
+                    {
+                        "feature": feature,
+                        "html": res["plot"].render_embed(),
+                    }
+                )
+            except Exception:
+                # Don't let one feature kill the report
+                continue
+
+        # Categorical PDPs
+        for feature in categorical_features:
+            try:
+                res = self.plot_pdp_categorical(
+                    feature=feature,
+                    DataName=resolved,
+                    sort_by="feature",
+                    plot_name=None,
+                    Theme=Theme
+                )
+                pdp_categorical_plots.append(
+                    {
+                        "feature": feature,
+                        "html": res["plot"].render_embed(),
+                    }
+                )
+            except Exception:
+                continue
+
+        # -------------------------
+        # 8) Assemble bundle
+        # -------------------------
+        model_name = self.FitListNames[-1] if self.FitListNames else "RetroFitModel"
+        model_type = self.Algorithm
+
+        bundle = ModelInsightsBundle(
+            problem_type="regression",
+            model_name=model_name,
+            model_type=model_type,
+            target_col=target_col,
+            run_id=run_id,
+            args=self.ModelArgs or {},
+            data_summary=data_summary,
+            feature_summary=feature_summary,
+            metrics=metrics_section,
+            calibration_table=calibration_table,
+            calibration_plot=calibration_plot,
+            residuals_plot=residuals_plot_html,
+            actual_vs_pred_plot=actual_vs_pred_plot_html,
+            residual_dist_plot=residual_dist_plot_html,
+            feature_importance_table=feature_importance_table,
+            pdp_numeric_plots=pdp_numeric_plots,
+            pdp_categorical_plots=pdp_categorical_plots,
+            extra={"split": resolved},
+        )
+
+        return bundle
+
+    # Regression report
+    def build_regression_model_insights_report(
+        self,
+        output_path: str,
+        data_name: str | None = None,
+        split: str = "Test",
+        top_n_pdp: int = 5,
+        theme: str = "neon",
+    ) -> str:
+        """
+        Build a standalone HTML Model Insights Report for a regression RetroFit model.
+
+        Parameters
+        ----------
+        output_path : str
+            Path to write the HTML file.
+        data_name : str, optional
+            Name of the dataset stored in this RetroFit object to use
+            for metrics / PDPs. If None, will use a sensible default.
+        split : {"Train", "Validation", "Test"}
+            Which split's metrics to emphasize.
+
+        Returns
+        -------
+        str
+            Path to the generated HTML file.
+        """
+        bundle = self._build_regression_insights_bundle(
+            data_name=data_name,
+            split=split,
+            top_n_pdp=top_n_pdp,
+            theme=theme
+        )
+        html = _render_model_insights_html(
+            bundle,
+            template_name="model_insights_regression.html",
+            theme=theme
+        )
+        out = Path(output_path)
+        out.write_text(html, encoding="utf-8")
+        return str(out)

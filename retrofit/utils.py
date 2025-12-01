@@ -148,6 +148,22 @@ def make_retrofit_demo_data(
 
     return df
 
+def _round_df(df: pl.DataFrame, decimals: int = 4) -> pl.DataFrame:
+    """
+    Round numeric columns in a Polars DataFrame for cleaner report output.
+    """
+
+    rounded_cols = []
+    for col in df.columns:
+        dtype = df[col].dtype
+
+        if dtype in (pl.Float32, pl.Float64, pl.Int32, pl.Int64):
+            rounded_cols.append(pl.col(col).round(decimals).alias(col))
+        else:
+            rounded_cols.append(pl.col(col))
+
+    return df.select(rounded_cols)
+
 
 def do_call(FUN, args=None, kwargs=None):
     """

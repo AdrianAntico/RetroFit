@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Model Insights - {{ bundle.model_name }}</title>
+  <style>
+    /* Base layout */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 16px 24px;
+    }
+
+    h1, h3 {
+      margin-top: 0;
+    }
+
+    /* Gradient main title */
+    h1 {
+      background: linear-gradient(90deg, #ff00aa, #38bdf8);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    h2 {
+      margin-top: 2.2rem;
+      margin-bottom: 0.8rem;
+    }
+
+    table {
+      border-collapse: collapse;
+      margin-bottom: 1.5rem;
+      width: 100%;
+    }
+
+    th, td {
+      border: 1px solid;
+      padding: 4px 8px;
+      font-size: 0.85rem;
+      text-align: left;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      padding: 16px 20px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.03); /* Very subtle universal bg */
+      box-shadow:
+          0 4px 12px rgba(0,0,0,0.25),
+          0 1px 2px rgba(255,255,255,0.05) inset;
+      backdrop-filter: blur(4px);     /* Adds the glassy "floating" effect */
+      -webkit-backdrop-filter: blur(4px);
+      overflow: hidden;
+    }
+
+    .section:hover {
+      transform: translateY(-2px);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+      box-shadow:
+          0 6px 18px rgba(0,0,0,0.35),
+          0 1px 3px rgba(255,255,255,0.06) inset;
+    }
+
+    body.theme-dark .section {
+      background: rgba(30, 30, 30, 0.65);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    body.theme-light .section {
+      background: rgba(255,255,255,0.9);
+      border: 1px solid rgba(0,0,0,0.05);
+    }
+
+    body.theme-neon .section {
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(56,189,248,0.25);
+      box-shadow:
+          0 0 12px rgba(56,189,248,0.15),
+          0 4px 12px rgba(0,0,0,0.4);
+    }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-right: 6px;
+      font-size: 0.75rem;
+    }
+
+    .chart-wrapper {
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    /* Make all pyecharts charts responsive */
+    .chart-wrapper div[id^="chart_"] {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .table-scroll {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    /* Give wide tables a minimum width so scroll actually does something */
+    .table-scroll table {
+      min-width: 800px;
+    }
+
+    /* ------------------------
+       Theme: DARK (default)
+       ------------------------ */
+    body.theme-dark {
+      background: #111;
+      color: #f5f5f5;
+    }
+
+    body.theme-dark h2,
+    body.theme-dark h3 {
+      color: #ff00aa;
+    }
+
+    body.theme-dark th {
+      background: #1f1f1f;
+      border-color: #333;
+    }
+
+    body.theme-dark td {
+      border-color: #333;
+    }
+
+    body.theme-dark .tag {
+      background: #222;
+      color: #f5f5f5;
+      border: 1px solid #444;
+    }
+
+    body.theme-dark .section {
+      background: rgba(17, 24, 39, 0.85);
+      border: 1px solid #1f2933;
+    }
+
+    /* ------------------------
+       Theme: LIGHT
+       ------------------------ */
+    body.theme-light {
+      background: #f7f7f9;
+      color: #222;
+    }
+
+    body.theme-light h2,
+    body.theme-light h3 {
+      color: #0052cc;
+    }
+
+    body.theme-light th {
+      background: #e1e7f0;
+      border-color: #c5cede;
+    }
+
+    body.theme-light td {
+      border-color: #c5cede;
+    }
+
+    body.theme-light .tag {
+      background: #ffffff;
+      color: #222;
+      border: 1px solid #c5cede;
+    }
+
+    body.theme-light .section {
+      background: #ffffff;
+      border: 1px solid #d4d4d8;
+    }
+
+    /* ------------------------
+       Theme: NEON
+       ------------------------ */
+    body.theme-neon {
+      background: radial-gradient(circle at top, #111827 0%, #020617 40%, #000000 100%);
+      color: #e5e7eb;
+    }
+
+    /* keep gradient for h1, just add glow */
+    body.theme-neon h1 {
+      text-shadow: 0 0 8px rgba(255, 0, 170, 0.9);
+    }
+
+    body.theme-neon h2 {
+      color: #38bdf8;
+      text-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+    }
+
+    body.theme-neon th {
+      background: rgba(0, 255, 255, 0.08);
+      border-bottom: 2px solid rgba(0, 255, 255, 0.4);
+      color: #38bdf8;
+      text-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+    }
+
+    body.theme-neon td {
+      border-color: #374151;
+    }
+
+    body.theme-neon .tag {
+      background: rgba(15, 23, 42, 0.95);
+      color: #e5e7eb;
+      border: 1px solid #38bdf8;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+    }
+
+    body.theme-neon .section {
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 12px rgba(0, 200, 255, 0.1);
+    }
+
+    /* Report header */
+    .report-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid;
+    }
+
+    .report-logo {
+      width: 200px;
+      height: auto;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .report-title {
+      margin: 0;
+      font-size: 1.8rem;
+      font-weight: 700;
+    }
+
+    .report-subtitle {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    /* Theme-specific header overrides */
+    body.theme-dark .report-header {
+      border-color: #333;
+    }
+
+    body.theme-light .report-header {
+      border-color: #ccd2dd;
+    }
+
+    body.theme-neon .report-header {
+      border-color: #38bdf8;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+    }
+
+    .logo-glow {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      background: radial-gradient(circle, rgba(255,0,255,0.3), rgba(0,0,0,0));
+      border-radius: 16px;
+    }
+
+    body.theme-neon .chart-wrapper {
+      padding: 12px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.8);
+      box-shadow: 0 0 18px rgba(56,189,248,0.2);
+    }
+
+    .footer {
+      margin-top: 40px;
+      padding: 12px;
+      text-align: center;
+      opacity: 0.6;
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body class="theme-{{ theme | default('dark') }}">
+
+<header class="report-header">
+  <div class="logo-glow">
+    <img src="{{ logo_path }}" alt="RetroFit Logo" class="report-logo">
+    <h1 class="report-title">RetroFit Model Insights Report</h1>
+  </div>
+</header>
+
+<h1>Model Insights: {{ bundle.model_name }}</h1>
+
+<div class="section">
+  <div class="tag">Type: {{ bundle.problem_type }}</div>
+  <div class="tag">Algo: {{ bundle.model_type }}</div>
+  <div class="tag">Target: {{ bundle.target_col }}</div>
+  {% if bundle.run_id %}
+    <div class="tag">Run ID: {{ bundle.run_id }}</div>
+  {% endif %}
+</div>
+
+<div class="section">
+  <h2>Data Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        {% for c in bundle.data_summary.columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bundle.data_summary.rows %}
+      <tr>
+        {% for c in bundle.data_summary.columns %}
+        <td>{{ row[c] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Feature Summary</h2>
+  <table>
+    <thead>
+      <tr>
+        {% for c in bundle.feature_summary.columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bundle.feature_summary.rows %}
+      <tr>
+        {% for c in bundle.feature_summary.columns %}
+        <td>{{ row[c] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Core Metrics</h2>
+  <table>
+    <thead>
+      <tr>
+        {% for c in bundle.metrics.table.columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bundle.metrics.table.rows %}
+      <tr>
+        {% for c in bundle.metrics.table.columns %}
+        <td>{{ row[c] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Feature Importance</h2>
+  <table>
+    <thead>
+      <tr>
+        {% for c in bundle.feature_importance_table.columns %}
+        <th>{{ c }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in bundle.feature_importance_table.rows %}
+      <tr>
+        {% for c in bundle.feature_importance_table.columns %}
+        <td>{{ row[c] }}</td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="section">
+  <h2>Calibration Table</h2>
+  <div class="table-scroll">
+    <table>
+      <thead>
+        <tr>
+          {% for c in bundle.calibration_table.columns %}
+          <th>{{ c }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in bundle.calibration_table.rows %}
+        <tr>
+          {% for c in bundle.calibration_table.columns %}
+          <td>{{ row[c] }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% if bundle.calibration_plot %}
+<div class="section">
+  <h2>Calibration Plot</h2>
+  <div class="chart-wrapper">
+    {{ bundle.calibration_plot | safe }}
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.actual_vs_pred_plot %}
+<div class="section">
+  <h2>Actual vs Predicted</h2>
+  <div class="chart-wrapper">
+    {{ bundle.actual_vs_pred_plot | safe }}
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.residuals_plot %}
+<div class="section">
+  <h2>Residuals vs Predicted</h2>
+  <div class="chart-wrapper">
+    {{ bundle.residuals_plot | safe }}
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.residual_dist_plot %}
+<div class="section">
+  <h2>Residual Distribution</h2>
+  <div class="chart-wrapper">
+    {{ bundle.residual_dist_plot | safe }}
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.pdp_numeric_plots %}
+<div class="section">
+  <h2>Partial Dependence – Numeric Features</h2>
+  {% for pdp in bundle.pdp_numeric_plots %}
+    <h3>{{ pdp.feature }}</h3>
+    <div class="chart-wrapper">
+      {{ pdp.html | safe }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if bundle.pdp_categorical_plots %}
+<div class="section">
+  <h2>Partial Dependence – Categorical Features</h2>
+  {% for pdp in bundle.pdp_categorical_plots %}
+    <h3>{{ pdp.feature }}</h3>
+    <div class="chart-wrapper">
+      {{ pdp.html | safe }}
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<footer class="footer">
+  RetroFit Report
+  {% if bundle.generated_at %} • Generated {{ bundle.generated_at }}{% endif %}
+</footer>
+
+</body>
+</html>

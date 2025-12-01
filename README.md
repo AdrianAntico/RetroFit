@@ -4,7 +4,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
 [![GitHub Stars](https://img.shields.io/github/stars/AdrianAntico/RetroFit.svg?style=social)](https://github.com/AdrianAntico/retrofit)
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/RetroFitLogo.png' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/RetroFitLogo.png' align='center' width='1000' />
 
 
 ## **Installation**
@@ -1445,34 +1445,56 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/ROC_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/ROC_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/PR_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/PR_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Calibration_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Scatter_Plot.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Numeric_PDP.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Numeric_PDP.PNG' align='center' width='1000' />
 
 <br>
 <br>
 
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/images/Categorical_PDP.PNG' align='center' width='1000' />
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Categorical_PDP.PNG' align='center' width='1000' />
 
 
 </p>
 </details>
 
+
+---
+
+## 2. Model Insights Reports
+
+Below is a gallery of example report outputs by RetroFit.
+
+<details>
+<summary><strong>Click to expand gallery</strong></summary>
+
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Neon.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Light.PNG' align='center' width='1000' />
+
+
+</p>
+</details>
