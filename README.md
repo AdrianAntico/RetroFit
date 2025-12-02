@@ -1590,11 +1590,6 @@ Below is a gallery of example insights report outputs produced by RetroFit.
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Neon.PNG' align='center' width='1000' />
 
-<br>
-<br>
-
-<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Regression_Light.PNG' align='center' width='1000' />
-
 
 </p>
 </details>
