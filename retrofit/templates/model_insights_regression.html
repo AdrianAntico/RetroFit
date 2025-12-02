@@ -94,6 +94,7 @@
     .chart-wrapper {
       width: 100%;
       box-sizing: border-box;
+      margin-bottom: 24px;
     }
 
     /* Make all pyecharts charts responsive */
@@ -190,7 +191,9 @@
 
     /* keep gradient for h1, just add glow */
     body.theme-neon h1 {
-      text-shadow: 0 0 8px rgba(255, 0, 170, 0.9);
+      text-shadow:
+          0 0 8px rgba(255, 0, 170, 0.75),
+          0 0 2px rgba(255, 0, 170, 1);
     }
 
     body.theme-neon h2 {
@@ -231,7 +234,7 @@
       display: flex;
       align-items: center;
       gap: 16px;
-      margin-bottom: 24px;
+      margin-bottom: 40px;
       padding-bottom: 16px;
       border-bottom: 2px solid;
     }
@@ -280,17 +283,26 @@
 
     body.theme-neon .chart-wrapper {
       padding: 12px;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.8);
-      box-shadow: 0 0 18px rgba(56,189,248,0.2);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      box-shadow: 0 0 8px rgba(15, 23, 42, 0.9);
+      transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
     }
 
-    .footer {
-      margin-top: 40px;
-      padding: 12px;
-      text-align: center;
-      opacity: 0.6;
-      font-size: 0.8rem;
+    /* Hover effect for plot containers */
+    body.theme-neon .chart-wrapper:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 0 16px rgba(56, 189, 248, 0.5),
+        0 0 26px rgba(244, 114, 182, 0.4);
+      border-color: rgba(56, 189, 248, 0.9);
+    }
+
+    body.theme-neon .chart-wrapper {
+      background: radial-gradient(circle at top left, rgba(56,189,248,0.18), transparent 55%),
+                  radial-gradient(circle at bottom right, rgba(244,114,182,0.16), transparent 55%),
+                  rgba(15, 23, 42, 0.9);
     }
 
     .table-pager {
@@ -419,13 +431,23 @@
                0 0 12px rgba(244, 114, 182, 0.4);
     }
 
-    .title-divider {
+    .title-divider-1 {
       height: 3px;
       width: 100%;
       background: linear-gradient(90deg, #ff00aa, #38bdf8, #ff00aa);
       background-size: 300% 100%;
       animation: sweep 6s linear infinite;
       border-radius: 3px;
+    }
+
+    .title-divider-2 {
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #ff00aa, #38bdf8, #ff00aa);
+      background-size: 300% 100%;
+      animation: sweep 6s linear infinite;
+      border-radius: 3px;
+      margin-bottom: 30px;
     }
 
     @keyframes sweep {
@@ -501,37 +523,137 @@
       background: #7dd3fc;
     }
 
-    #mini-nav {
-      position: fixed;
-      top: 100px;
-      right: 20px;
-      background: rgba(0,0,0,0.4);
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid rgba(56,189,248,0.4);
-      backdrop-filter: blur(6px);
-    }
-
-    #mini-nav a {
-      display: block;
-      margin: 6px 0;
-      color: #38bdf8;
-      text-decoration: none;
-      font-size: 14px;
-    }
-
     body.theme-neon table tbody tr:hover {
       background: rgba(56, 189, 248, 0.08);
       transition: 0.25s ease;
     }
 
+    .footer {
+      margin-top: 32px;
+      padding: 10px 16px;
+      text-align: center;
+      font-size: 0.8rem;
+      opacity: 0.7;
+      border-top: 1px solid rgba(56,189,248,0.3);
+      text-shadow: 0 0 4px rgba(56,189,248,0.6);
+    }
+
+    .footer .back-to-top {
+      color: #38bdf8;
+      text-decoration: none;
+      margin-left: 6px;
+    }
+
+    .footer .back-to-top:hover {
+      color: #f472b6;
+      text-shadow: 0 0 6px #f472b6;
+    }
+
+    .neon-divider {
+      height: 2px;
+      margin-top: 6px;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, #ff00aa, #38bdf8);
+      box-shadow: 0 0 6px rgba(255,0,170,0.6), 0 0 6px rgba(56,189,248,0.6);
+    }
+
+    h1.model-title {
+        margin-bottom: 18px;
+    }
+
+    h1.model-title::after {
+      content: "";
+      display: block;
+      height: 100%;
+      width: 100%;
+      background: repeating-linear-gradient(
+          to bottom,
+          transparent 0px,
+          transparent 3px,
+          rgba(255,255,255,0.03) 3px,
+          rgba(255,255,255,0.03) 6px
+      );
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+
+    /* Dark mode */
+    body.theme-dark .pdp-var-label {
+        color: #38bdf8;
+    }
+
+    /* Light mode */
+    body.theme-light .pdp-var-label {
+        color: #0052cc;
+    }
+
+    /* Neon mode */
+    body.theme-neon .pdp-var-label {
+        color: #38bdf8;
+        text-shadow: 0 0 6px rgba(56,189,248,0.85);
+    }
+
+    body.theme-neon .pdp-var-label::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 140px;
+        margin-top: 2px;
+        background: linear-gradient(90deg, #38bdf8, #ff00aa);
+        box-shadow: 0 0 6px rgba(56,189,248,0.5);
+    }
+
+    .pdp-var-label {
+        margin: 6px 0 10px 2px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+    }
+
+    .jump-links {
+      margin: 6px 0 18px 2px;
+      font-size: 0.9rem;
+    }
+
+    .jump-links a {
+      margin-right: 14px;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    /* Dark theme jump links */
+    body.theme-dark .jump-links a {
+      color: #38bdf8;
+    }
+
+    /* Light theme jump links */
+    body.theme-light .jump-links a {
+      color: #0052cc;
+    }
+
+    /* Neon theme jump links */
+    body.theme-neon .jump-links a {
+      color: #38bdf8;
+      text-shadow: 0 0 4px rgba(56,189,248,0.7);
+    }
+
+    .jump-links a:hover {
+      color: #f472b6;
+      text-shadow: 0 0 6px rgba(244,114,182,0.9);
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
 
   </style>
 </head>
-<body class="theme-{{ theme | default('dark') }}">
+<body class="theme-{{ theme | default('neon') }}">
 
-<header class="report-header">
-  <div class="title-divider"></div>
+<header class="report-header" id="top">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <div class="logo-glow">
     <img src="{{ logo_path }}" alt="RetroFit Logo" class="report-logo">
@@ -539,7 +661,9 @@
   </div>
 </header>
 
+<div class="title-divider-1"></div>
 <h1>Model Insights: {{ bundle.model_name }}</h1>
+<div class="title-divider-2"></div>
 
 <div class="section">
   <div class="tag">Type: {{ bundle.problem_type }}</div>
@@ -550,8 +674,24 @@
   {% endif %}
 </div>
 
+<div class="jump-links">
+  <a href="#data-summary">Data Summary</a>
+  <a href="#feature-summary">Feature Summary</a>
+  <a href="#core-metrics">Core Metrics</a>
+  <a href="#feature-importance">Feature Importance</a>
+  <a href="#interaction-importance">Interaction Importance (CatBoost)</a>
+  <a href="#calibration">Calibration Table</a>
+  <a href="#calibration-plot">Calibration Plot</a>
+  <a href="#actual-vs-predicted">Actual vs Predicted</a>
+  <a href="#residuals-vs-predicted">Residuals vs Predicted</a>
+  <a href="#residuals">Residual Distribution</a>
+  <a href="#prediction-distribution-overlay">Prediction Distribution Overlay</a>
+  <a href="#pdp-numeric">Partial Dependence: Numeric Features</a>
+  <a href="#pdp-categorical">Partial Dependence: Categorical Features</a>
+</div>
+
 <div class="section">
-  <h2>Data Summary</h2>
+  <h2 id="data-summary">Data Summary</h2>
   <table>
     <thead>
       <tr>
@@ -573,7 +713,7 @@
 </div>
 
 <div class="section">
-  <h2>Feature Summary</h2>
+  <h2 id="feature-summary">Feature Summary</h2>
   <table>
     <thead>
       <tr>
@@ -595,7 +735,7 @@
 </div>
 
 <div class="section">
-  <h2>Core Metrics</h2>
+  <h2 id="core-metrics">Core Metrics</h2>
   <table>
     <thead>
       <tr>
@@ -617,7 +757,7 @@
 </div>
 
 <div class="section">
-  <h2>Feature Importance</h2>
+  <h2 id="feature-importance">Feature Importance</h2>
   <table class="paginated" data-page-size="50">
     <thead>
       <tr>
@@ -640,7 +780,7 @@
 
 {% if bundle.interaction_importance_table and bundle.interaction_importance_table.columns %}
 <div class="section">
-  <h2>Interaction Importance (CatBoost)</h2>
+  <h2 id="interaction-importance">Interaction Importance (CatBoost)</h2>
   <table class="paginated" data-page-size="50">
     <thead>
       <tr>
@@ -663,7 +803,7 @@
 {% endif %}
 
 <div class="section">
-  <h2>Calibration Table</h2>
+  <h2 id="calibration">Calibration Table</h2>
   <div class="table-scroll">
     <table>
       <thead>
@@ -688,7 +828,7 @@
 
 {% if bundle.calibration_plot %}
 <div class="section">
-  <h2>Calibration Plot</h2>
+  <h2 id="calibration-plot">Calibration Plot</h2>
   <div class="chart-wrapper">
     {{ bundle.calibration_plot | safe }}
   </div>
@@ -697,7 +837,7 @@
 
 {% if bundle.actual_vs_pred_plot %}
 <div class="section">
-  <h2>Actual vs Predicted</h2>
+  <h2 id="actual-vs-predicted">Actual vs Predicted</h2>
   <div class="chart-wrapper">
     {{ bundle.actual_vs_pred_plot | safe }}
   </div>
@@ -706,7 +846,7 @@
 
 {% if bundle.residuals_plot %}
 <div class="section">
-  <h2>Residuals vs Predicted</h2>
+  <h2 id="residuals-vs-predicted">Residuals vs Predicted</h2>
   <div class="chart-wrapper">
     {{ bundle.residuals_plot | safe }}
   </div>
@@ -715,7 +855,7 @@
 
 {% if bundle.residual_dist_plot %}
 <div class="section">
-  <h2>Residual Distribution</h2>
+  <h2 id="residuals">Residual Distribution</h2>
   <div class="chart-wrapper">
     {{ bundle.residual_dist_plot | safe }}
   </div>
@@ -724,7 +864,7 @@
 
 {% if bundle.prediction_dist_plot %}
 <div class="section">
-  <h2>Prediction Distribution Overlay</h2>
+  <h2 id="prediction-distribution-overlay">Prediction Distribution Overlay</h2>
   <div class="chart-wrapper">
     {{ bundle.prediction_dist_plot | safe }}
   </div>
@@ -733,9 +873,9 @@
 
 {% if bundle.pdp_numeric_plots %}
 <div class="section">
-  <h2>Partial Dependence – Numeric Features</h2>
+  <h2 id="pdp-numeric">Partial Dependence: Numeric Features</h2>
   {% for pdp in bundle.pdp_numeric_plots %}
-    <h3>{{ pdp.feature }}</h3>
+    <div class="pdp-var-label">{{ pdp.feature }}</div>
     <div class="chart-wrapper">
       {{ pdp.html | safe }}
     </div>
@@ -745,9 +885,9 @@
 
 {% if bundle.pdp_categorical_plots %}
 <div class="section">
-  <h2>Partial Dependence – Categorical Features</h2>
+  <h2 id="pdp-categorical">Partial Dependence: Categorical Features</h2>
   {% for pdp in bundle.pdp_categorical_plots %}
-    <h3>{{ pdp.feature }}</h3>
+    <div class="pdp-var-label">{{ pdp.feature }}</div>
     <div class="chart-wrapper">
       {{ pdp.html | safe }}
     </div>
@@ -756,8 +896,9 @@
 {% endif %}
 
 <footer class="footer">
-  RetroFit Report
+  RetroFit Model Insights • {{ bundle.model_name }}
   {% if bundle.generated_at %} • Generated {{ bundle.generated_at }}{% endif %}
+  • <a href="#top" class="back-to-top">Back to top ↑</a>
 </footer>
 
 <script>
