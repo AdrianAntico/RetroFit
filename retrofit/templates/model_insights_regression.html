@@ -11,12 +11,13 @@
       padding: 16px 24px;
     }
 
-    h1, h3 {
+    h3 {
       margin-top: 0;
     }
 
     /* Gradient main title */
     h1 {
+      margin-top: 1.2rem;
       background: linear-gradient(90deg, #ff00aa, #38bdf8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
@@ -41,7 +42,7 @@
     }
 
     .section {
-      margin-bottom: 2rem;
+      margin-bottom: 1.4rem;
       padding: 12px 14px;
       border-radius: 8px;
       margin-bottom: 2rem;
@@ -195,17 +196,21 @@
     body.theme-neon h2 {
       color: #38bdf8;
       text-shadow: 0 0 6px rgba(56, 189, 248, 0.8);
+      position: relative;
+      padding-left: 10px;
     }
 
     body.theme-neon th {
       background: rgba(0, 255, 255, 0.08);
       border-bottom: 2px solid rgba(0, 255, 255, 0.4);
-      color: #38bdf8;
+      color: #e5e7eb;
       text-shadow: 0 0 6px rgba(56, 189, 248, 0.7);
+      font-weight: 600;
     }
 
     body.theme-neon td {
       border-color: #374151;
+      color: #cbd5f5;
     }
 
     body.theme-neon .tag {
@@ -360,6 +365,32 @@
       box-shadow: 0 0 6px rgba(56,189,248,0.6);
     }
 
+    body.theme-neon h2::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 70%;
+      background: linear-gradient(#38bdf8, #f472b6);
+      border-radius: 999px;
+    }
+
+    body.theme-neon h2::after {
+      content: "";
+      display: block;
+      margin-top: 6px;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, #38bdf8, #f472b6 40%, transparent 90%);
+      opacity: 0.35;
+    }
+
+    .filter-tags {
+      margin-top: -6px;   /* or -10px depending on feel */
+    }
+
     /* Make the actual dropdown options match the theme */
     .table-pager select option {
       background-color: #1e293b;
@@ -376,11 +407,132 @@
       color: #38bdf8;
     }
 
+    @keyframes neonPulse {
+      0%   { text-shadow: 0 0 6px rgba(56,189,248,0.6); }
+      50%  { text-shadow: 0 0 14px rgba(56,189,248,1); }
+      100% { text-shadow: 0 0 6px rgba(56,189,248,0.6); }
+    }
+
+    body.theme-neon h2 {
+      animation: neonPulse 3s ease-in-out infinite;
+      text-shadow: 0 0 6px rgba(56, 189, 248, 0.6),
+               0 0 12px rgba(244, 114, 182, 0.4);
+    }
+
+    .title-divider {
+      height: 3px;
+      width: 100%;
+      background: linear-gradient(90deg, #ff00aa, #38bdf8, #ff00aa);
+      background-size: 300% 100%;
+      animation: sweep 6s linear infinite;
+      border-radius: 3px;
+    }
+
+    @keyframes sweep {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 300% 0%; }
+    }
+
+    body.theme-neon .section {
+      border: 1px solid rgba(56,189,248,0.3);
+      position: relative;
+    }
+
+    body.theme-neon .section::before,
+    body.theme-neon .section::after {
+      content: "";
+      position: absolute;
+      height: 2px;
+      width: 40px;
+      background: linear-gradient(90deg, rgba(56,189,248,1), rgba(255,0,255,0));
+      top: -1px;
+    }
+
+    body.theme-neon .section::after {
+      right: 0;
+      left: auto;
+      transform: scaleX(-1);
+    }
+
+    body.theme-neon {
+      background-image:
+        linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
+        radial-gradient(circle at top, #111827 0%, #020617 40%, #000000 100%);
+      background-size: 50px 50px, 50px 50px, auto;
+    }
+
+    body.theme-neon table:hover {
+      box-shadow: 0 0 12px rgba(56,189,248,0.4);
+    }
+
+    body.theme-neon .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid #38bdf8;
+      padding: 4px 10px;
+      border-radius: 999px;
+      box-shadow: 0 0 8px rgba(56,189,248,0.8);
+    }
+
+    body.theme-neon {
+      opacity: 0;
+      animation: fadeIn 1.2s ease forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    body.theme-neon ::-webkit-scrollbar {
+      width: 10px;
+    }
+    body.theme-neon ::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+    body.theme-neon ::-webkit-scrollbar-thumb {
+      background: #38bdf8;
+      border-radius: 6px;
+      box-shadow: 0 0 10px rgba(56,189,248,0.8);
+    }
+    body.theme-neon ::-webkit-scrollbar-thumb:hover {
+      background: #7dd3fc;
+    }
+
+    #mini-nav {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid rgba(56,189,248,0.4);
+      backdrop-filter: blur(6px);
+    }
+
+    #mini-nav a {
+      display: block;
+      margin: 6px 0;
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 14px;
+    }
+
+    body.theme-neon table tbody tr:hover {
+      background: rgba(56, 189, 248, 0.08);
+      transition: 0.25s ease;
+    }
+
+
   </style>
 </head>
 <body class="theme-{{ theme | default('dark') }}">
 
 <header class="report-header">
+  <div class="title-divider"></div>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <div class="logo-glow">
     <img src="{{ logo_path }}" alt="RetroFit Logo" class="report-logo">
     <h1 class="report-title">RetroFit Model Insights Report</h1>
