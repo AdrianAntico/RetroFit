@@ -773,7 +773,7 @@
 
 <div class="section">
   <h2 id="feature-summary">Feature Summary</h2>
-  <table class="paginated" data-page-size="25">
+  <table class="paginated" data-page-size="10">
     <thead>
       <tr>
         {% for c in bundle.feature_summary.columns %}
@@ -817,7 +817,7 @@
 
 <div class="section">
   <h2 id="feature-importance">Feature Importance</h2>
-  <table class="paginated" data-page-size="25">
+  <table class="paginated" data-page-size="10">
     <thead>
       <tr>
         {% for c in bundle.feature_importance_table.columns %}
@@ -840,7 +840,7 @@
 {% if bundle.interaction_importance_table and bundle.interaction_importance_table.columns %}
 <div class="section">
   <h2 id="interaction-importance">Interaction Importance (CatBoost)</h2>
-  <table class="paginated" data-page-size="25">
+  <table class="paginated" data-page-size="10">
     <thead>
       <tr>
         {% for c in bundle.interaction_importance_table.columns %}
