@@ -235,8 +235,8 @@
       align-items: center;
       gap: 16px;
       margin-bottom: 40px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid;
+      padding-bottom: 5px;
+      border-bottom: 1px solid;
     }
 
     .report-logo {
@@ -648,10 +648,71 @@
       scroll-behavior: smooth;
     }
 
+
+
+    /* Collapsible container */
+    .collapsible {
+      margin-bottom: 1.75rem;
+    }
+
+    /* Clickable header bar */
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 10px;
+
+      background: rgba(15, 23, 42, 0.9);
+      border: 1px solid rgba(56,189,248,0.45);
+      box-shadow: 0 0 10px rgba(56,189,248,0.25);
+
+      transition: background 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    }
+
+    /* Use your h2 neon styling inside the header */
+    .collapsible-header h2 {
+      margin: 0;
+    }
+
+    /* Optional hover flare */
+    .collapsible-header:hover {
+      background: rgba(56,189,248,0.16);
+      box-shadow: 0 0 16px rgba(56,189,248,0.6),
+                  0 0 20px rgba(244,114,182,0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Chevon icon rotation */
+    .collapse-icon {
+      transition: transform 0.25s ease, color 0.25s ease;
+    }
+
+    /* Body area that hides/shows */
+    .collapsible-body {
+      overflow: hidden;
+      max-height: 2000px;  /* big enough for most sections */
+      transition: max-height 0.35s ease;
+      margin-top: 10px;
+    }
+
+    /* Closed state */
+    .collapsible.closed .collapsible-body {
+      max-height: 0;
+      margin-top: 0;
+    }
+
+    /* Rotate arrow when closed */
+    .collapsible.closed .collapse-icon {
+      transform: rotate(-90deg);
+      color: #64748b;
+    }
+
+
   </style>
 </head>
 <body class="theme-{{ theme | default('neon') }}">
-
 <header class="report-header" id="top">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <div class="logo-glow">
@@ -659,7 +720,6 @@
     <h1 class="report-title">RetroFit Model Insights Report</h1>
   </div>
 </header>
-
 <div class="title-divider-1"></div>
 <h1>Model Insights: {{ bundle.model_name }}</h1>
 <div class="title-divider-2"></div>
@@ -826,71 +886,120 @@
 </div>
 
 {% if bundle.calibration_plot %}
-<div class="section">
-  <h2 id="calibration-plot">Calibration Plot</h2>
-  <div class="chart-wrapper">
-    {{ bundle.calibration_plot | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="calibration-plot">Calibration Plot</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.calibration_plot | safe }}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if bundle.actual_vs_pred_plot %}
-<div class="section">
-  <h2 id="actual-vs-predicted">Actual vs Predicted</h2>
-  <div class="chart-wrapper">
-    {{ bundle.actual_vs_pred_plot | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="actual-vs-predicted">Actual vs Predicted</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.actual_vs_pred_plot | safe }}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if bundle.residuals_plot %}
-<div class="section">
-  <h2 id="residuals-vs-predicted">Residuals vs Predicted</h2>
-  <div class="chart-wrapper">
-    {{ bundle.residuals_plot | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="residuals-vs-predicted">Residuals vs Predicted</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.residuals_plot | safe }}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if bundle.residual_dist_plot %}
-<div class="section">
-  <h2 id="residuals">Residual Distribution</h2>
-  <div class="chart-wrapper">
-    {{ bundle.residual_dist_plot | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="residuals">Residual Distribution</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.residual_dist_plot | safe }}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if bundle.prediction_dist_plot %}
-<div class="section">
-  <h2 id="prediction-distribution-overlay">Prediction Distribution Overlay</h2>
-  <div class="chart-wrapper">
-    {{ bundle.prediction_dist_plot | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="prediction-distribution-overlay">Prediction Distribution Overlay</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.prediction_dist_plot | safe }}
+      </div>
+    </div>
   </div>
 </div>
 {% endif %}
 
 {% if bundle.pdp_numeric_plots %}
-<div class="section">
-  <h2 id="pdp-numeric">Partial Dependence: Numeric Features</h2>
-  {% for pdp in bundle.pdp_numeric_plots %}
-    <div class="pdp-var-label">{{ pdp.feature }}</div>
-    <div class="chart-wrapper">
-      {{ pdp.html | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="pdp-numeric">Partial Dependence: Numeric Features</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      {% for pdp in bundle.pdp_numeric_plots %}
+        <div class="pdp-var-label">{{ pdp.feature }}</div>
+        <div class="chart-wrapper">
+          {{ pdp.html | safe }}
+        </div>
+      {% endfor %}
     </div>
-  {% endfor %}
+  </div>
 </div>
 {% endif %}
 
 {% if bundle.pdp_categorical_plots %}
-<div class="section">
-  <h2 id="pdp-categorical">Partial Dependence: Categorical Features</h2>
-  {% for pdp in bundle.pdp_categorical_plots %}
-    <div class="pdp-var-label">{{ pdp.feature }}</div>
-    <div class="chart-wrapper">
-      {{ pdp.html | safe }}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="pdp-categorical">Partial Dependence: Categorical Features</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      {% for pdp in bundle.pdp_categorical_plots %}
+        <div class="pdp-var-label">{{ pdp.feature }}</div>
+        <div class="chart-wrapper">
+          {{ pdp.html | safe }}
+        </div>
+      {% endfor %}
     </div>
-  {% endfor %}
+  </div>
 </div>
 {% endif %}
 
@@ -902,6 +1011,14 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    const headers = document.querySelectorAll(".collapsible-header");
+    headers.forEach((header) => {
+      header.addEventListener("click", () => {
+        const parent = header.closest(".collapsible");
+        if (!parent) return;
+        parent.classList.toggle("closed");
+      });
+    });
     function paginateTable(table) {
       const tbody = table.querySelector("tbody");
       if (!tbody) return;
