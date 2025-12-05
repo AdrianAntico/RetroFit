@@ -5863,7 +5863,6 @@ class RetroFit:
                     df=None,
                     shap_attached=shap_attached,
                     ModelName=None,
-                    by_vars=None,
                     prefix="shap_",
                     top_n=top_n_fi,
                 )
@@ -5890,6 +5889,7 @@ class RetroFit:
                 top_features = shap_summary_df["Feature"].to_list()
                 max_dep = min(len(top_features), 6)
 
+                # ---- default behavior: one plot per feature ----
                 for feat in top_features[:max_dep]:
                     try:
                         dep_res = self.plot_shap_dependence(
@@ -5986,7 +5986,7 @@ class RetroFit:
             top_n_pdp=top_n_pdp,
             top_n_fi=top_n_fi,
             top_n_ii=top_n_ii,
-            theme=theme
+            theme=theme,
         )
         html = _render_model_insights_html(
             bundle,
