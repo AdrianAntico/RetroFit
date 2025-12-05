@@ -218,10 +218,6 @@ class RetroFit:
         self.EvaluationList = {}
         self.EvaluationListNames = []
     
-        # Model interpretations
-        self.InterpretationList = {}
-        self.InterpretationListNames = []
-    
         # Model comparisons
         self.CompareModelsList = {}
         self.CompareModelsListNames = []
@@ -2660,7 +2656,798 @@ class RetroFit:
         self.InteractionImportanceListNames.append(int_key)
 
         return df_int
+
+
+    #################################################
+    # Shap Values and Measures
+    #################################################
+
+    # Step 1 helper for shap values
+    def _prepare_shap_backend(
+        self,
+        split: str | None = None,
+        df=None,
+    ):
+        """
+        Resolve (df_pl, backend_obj, feature_names, src_label) for SHAP.
+
+        - If split in {'train','validation','test'} is given:
+            Uses self.DataFrames[split] and (when available) self.ModelData[...] as backend.
+        - If df is given:
+            Normalizes to Polars, then constructs a new algo-specific backend object.
+        - Exactly one of (split, df) must be non-None.
+        """
+        if (split is None and df is None) or (split is not None and df is not None):
+            raise ValueError(
+                "Exactly one of 'split' or 'df' must be provided to _prepare_shap_backend()."
+            )
+
+        algo = (self.Algorithm or "").lower()
+
+        # ---------- Case 1: internal split ----------
+        if split is not None:
+            if split not in ("train", "validation", "test"):
+                raise ValueError("split must be one of: 'train', 'validation', 'test'.")
+
+            df_pl = self.DataFrames.get(split)
+            if df_pl is None:
+                raise ValueError(
+                    f"No internal DataFrame found for split '{split}'. "
+                    "Did you call create_model_data()?"
+                )
+
+            # Try to reuse existing ModelData backend (Pool / DMatrix / Dataset / X)
+            backend = None
+            if self.ModelData is not None:
+                key_map = {
+                    "train": "train_data",
+                    "validation": "validation_data",
+                    "test": "test_data",
+                }
+                key = key_map.get(split)
+                if key is not None and key in self.ModelData:
+                    backend = self.ModelData[key]
+
+            src_label = split
+
+            # Fallback: if backend somehow missing, build from df_pl
+            if backend is None:
+                df_pd = self._to_pandas(df_pl)
+                if algo == "catboost":
+                    backend = Pool(
+                        data=df_pd[self.NumericColumnNames + (self.CategoricalColumnNames or []) + (self.TextColumnNames or [])],
+                        cat_features=self.CategoricalColumnNames or [],
+                        text_features=self.TextColumnNames or [],
+                    )
+                elif algo == "xgboost":
+                    backend = xgb.DMatrix(df_pd[self.NumericColumnNames])
+                elif algo == "lightgbm":
+                    backend = df_pd[self.NumericColumnNames]
+                else:
+                    raise ValueError(
+                        f"SHAP backend preparation is only implemented for "
+                        f"CatBoost, XGBoost, and LightGBM. Got Algorithm={self.Algorithm!r}."
+                    )
+
+        # ---------- Case 2: external df ----------
+        else:
+            df_pl = self._normalize_input_df(df)
+            df_pd = self._to_pandas(df_pl)
+            src_label = "external"
+
+            if algo == "catboost":
+                backend = Pool(
+                    data=df_pd[self.NumericColumnNames + (self.CategoricalColumnNames or []) + (self.TextColumnNames or [])],
+                    cat_features=self.CategoricalColumnNames or [],
+                    text_features=self.TextColumnNames or [],
+                )
+            elif algo == "xgboost":
+                backend = xgb.DMatrix(df_pd[self.NumericColumnNames])
+            elif algo == "lightgbm":
+                backend = df_pd[self.NumericColumnNames]
+            else:
+                raise ValueError(
+                    f"SHAP backend preparation is only implemented for "
+                    f"CatBoost, XGBoost, and LightGBM. Got Algorithm={self.Algorithm!r}."
+                )
+
+        # ---------- Common feature columns ----------
+        feature_cols: list[str] = []
+        if self.NumericColumnNames:
+            feature_cols.extend(self.NumericColumnNames)
+        if self.CategoricalColumnNames:
+            feature_cols.extend(self.CategoricalColumnNames)
+        if self.TextColumnNames:
+            feature_cols.extend(self.TextColumnNames)
+
+        if not feature_cols:
+            raise ValueError(
+                "No feature columns found for SHAP computation. "
+                "Ensure NumericColumnNames / CategoricalColumnNames / TextColumnNames are set."
+            )
+
+        return df_pl, backend, feature_cols, src_label
+
+    # Step 2: get shap values
+    def _compute_tree_shap_contribs(
+        self,
+        model,
+        backend,
+        feature_names: list[str],
+        prefix: str = "shap_",
+        include_base_term: bool = True,
+    ) -> pl.DataFrame:
+        """
+        Core TreeSHAP-like contribution computation for CatBoost / XGBoost / LightGBM.
+
+        Parameters
+        ----------
+        model
+            Trained model / booster.
+        backend
+            Algo-specific object (CatBoost Pool, XGBoost DMatrix, or feature matrix for LightGBM).
+        feature_names
+            List of feature column names in the same order as backend.
+        prefix
+            Prefix for SHAP columns.
+        include_base_term
+            Whether to include a '{prefix}base_value' column.
+        """
+        algo = self.Algorithm
+
+        # ------------- CatBoost -------------
+        if algo == "catboost":
+            shap_arr = model.get_feature_importance(
+                data=backend,
+                type="ShapValues",
+            )
+            shap_arr = np.asarray(shap_arr)
+
+            expected_cols = len(feature_names) + 1
+            if shap_arr.shape[1] != expected_cols:
+                raise RuntimeError(
+                    f"CatBoost ShapValues returned shape {shap_arr.shape}, "
+                    f"expected (n_rows, {expected_cols}). "
+                    "Multiclass SHAP is not implemented here yet."
+                )
+
+            contrib = shap_arr[:, :-1]
+            base_term = shap_arr[:, -1]
+
+        # ------------- XGBoost -------------
+        elif algo == "xgboost":
+            contrib_full = model.predict(backend, pred_contribs=True)
+            contrib_full = np.asarray(contrib_full)
+
+            expected_cols = len(feature_names) + 1
+            if contrib_full.shape[1] != expected_cols:
+                raise RuntimeError(
+                    f"XGBoost pred_contribs returned shape {contrib_full.shape}, "
+                    f"expected (n_rows, {expected_cols}). "
+                    "Multiclass SHAP is not implemented here yet."
+                )
+
+            contrib = contrib_full[:, :-1]
+            base_term = contrib_full[:, -1]
+
+        # ------------- LightGBM -------------
+        elif algo == "lightgbm":
+            contrib_full = model.predict(backend, pred_contrib=True)
+            contrib_full = np.asarray(contrib_full)
+
+            expected_cols = len(feature_names) + 1
+            if contrib_full.shape[1] != expected_cols:
+                raise RuntimeError(
+                    f"LightGBM pred_contrib=True returned shape {contrib_full.shape}, "
+                    f"expected (n_rows, {expected_cols}). "
+                    "Multiclass SHAP is not implemented here yet."
+                )
+
+            contrib = contrib_full[:, :-1]
+            base_term = contrib_full[:, -1]
+
+        else:
+            raise ValueError(
+                f"TreeSHAP-style contributions are only implemented for "
+                f"CatBoost, XGBoost, and LightGBM. Got Algorithm={self.Algorithm!r}."
+            )
+
+        data_dict = {
+            f"{prefix}{col}": contrib[:, j]
+            for j, col in enumerate(feature_names)
+        }
+        if include_base_term:
+            data_dict[f"{prefix}base_value"] = base_term
+
+        return pl.DataFrame(data_dict)
+
+    # Get Shap Values
+    def compute_shap_values(
+        self,
+        split: str | None = None,
+        df=None,
+        ModelName: str | None = None,
+        attach: bool = True,
+        prefix: str = "shap_",
+        include_base_term: bool = True,
+    ) -> pl.DataFrame:
+        """
+        Compute SHAP-style feature contributions.
+
+        Parameters
+        ----------
+        split
+            One of 'train', 'validation', 'test', or None.
+            If provided, SHAP is computed on the internal split using stored data.
+        df
+            External data (Polars / pandas). Used when split is None.
+        ModelName
+            Optional model name from ModelList / FitList. If None, uses self.Model.
+        attach
+            If True, return the original Polars data with SHAP columns appended.
+            If False, return only the SHAP contribution columns.
+        prefix
+            Prefix for SHAP columns (e.g., 'shap_').
+        include_base_term
+            If True, include '{prefix}base_value' column.
+
+        Returns
+        -------
+        pl.DataFrame
+            Either:
+              - [original columns + SHAP columns] if attach=True
+              - [SHAP columns only] if attach=False
+        """
+        # 1) Resolve model
+        if ModelName is not None:
+            model = self.FitList.get(ModelName)
+            if model is None:
+                raise KeyError(
+                    f"Model '{ModelName}' not found in ModelList or FitList."
+                )
+        else:
+            if self.Model is None:
+                raise RuntimeError("self.Model is None and no ModelName provided.")
+            model = self.Model
+
+        # 2) Prepare backend (internal split or external df)
+        df_pl, backend, feature_cols, src_label = self._prepare_shap_backend(
+            split=split,
+            df=df,
+        )
+
+        # 3) Compute contributions
+        shap_df = self._compute_tree_shap_contribs(
+            model=model,
+            backend=backend,
+            feature_names=feature_cols,
+            prefix=prefix,
+            include_base_term=include_base_term,
+        )
+
+        # 4) Attach vs SHAP-only
+        if attach:
+            out = pl.concat([df_pl, shap_df], how="horizontal")
+        else:
+            out = shap_df
+
+        return out
+
+    # Shap Summary
+    def build_shap_summary(
+        self,
+        split: str | None = None,
+        df=None,
+        shap_attached: pl.DataFrame | None = None,
+        ModelName: str | None = None,
+        by_vars: list[str] | None = None,
+        prefix: str = "shap_",
+        top_n: int | None = None,
+    ) -> pl.DataFrame:
+        """
+        Build a SHAP summary table with per-feature importance statistics.
+
+        This computes, for each feature (and optional grouping variables):
+          - count
+          - mean_shap
+          - mean_abs_shap
+          - std_shap
+          - share_of_total_abs_shap (relative importance within each group)
+
+        Parameters
+        ----------
+        split
+            One of 'train', 'validation', 'test', or None.
+            If provided, SHAP is computed on the internal split using stored data.
+        df
+            External data (Polars / pandas). Used when split is None.
+        ModelName
+            Optional name of a trained model in FitList. If None, uses self.Model.
+        by_vars
+            Optional list of column names to group by before summarising SHAP values
+            (e.g. ["Month"], ["Channel"], ["Month", "Channel"]).
+        prefix
+            Prefix for SHAP columns (e.g., "shap_").
+        top_n
+            If provided, keep only the top N features per group by mean_abs_shap.
+
+        Returns
+        -------
+        pl.DataFrame
+            Summary table with columns:
+              [by_vars...] + ["Feature", "count", "mean_shap",
+                              "mean_abs_shap", "std_shap",
+                              "share_of_total_abs_shap"]
+        """
+        # 0) Resolve source: shap_attached vs split/df
+        if shap_attached is None:
+            shap_attached = self.compute_shap_values(
+                split=split,
+                df=df,
+                ModelName=ModelName,
+                attach=True,
+                prefix=prefix,
+                include_base_term=True,
+            )
+
+        # 2) Identify SHAP columns (excluding base_value)
+        base_value_col = f"{prefix}base_value"
+        shap_cols: list[str] = [
+            c for c in shap_attached.columns
+            if c.startswith(prefix) and c != base_value_col
+        ]
+        if not shap_cols:
+            raise ValueError(
+                f"No SHAP columns found with prefix {prefix!r}. "
+                "Ensure compute_shap_values() was called correctly."
+            )
+
+        # Map shap column -> feature name (remove prefix)
+        feature_basenames: list[str] = [
+            c[len(prefix):] for c in shap_cols
+        ]
+
+        # 3) Validate by-vars
+        group_keys: list[str] = by_vars or []
+        for col in group_keys:
+            if col not in shap_attached.columns:
+                raise KeyError(
+                    f"Grouping column {col!r} not found in SHAP-attached data."
+                )
+
+        # 4) Wide aggregation: group_by(by_vars) and compute stats per shap_* column
+        agg_exprs: list[pl.Expr] = []
+
+        # count per group
+        agg_exprs.append(pl.len().alias("count"))
+
+        # stats for each shap column
+        for shap_col, base in zip(shap_cols, feature_basenames):
+            col_expr = pl.col(shap_col)
+            agg_exprs.extend([
+                col_expr.mean().alias(f"{base}__mean_shap"),
+                col_expr.abs().mean().alias(f"{base}__mean_abs_shap"),
+                col_expr.std().alias(f"{base}__std_shap"),
+            ])
+
+        if group_keys:
+            wide = shap_attached.group_by(group_keys).agg(agg_exprs)
+        else:
+            # No grouping -> single global group
+            wide = shap_attached.select(agg_exprs)
+
+        # 5) Compute share_of_total_abs_shap per row (per group)
+        mean_abs_cols = [f"{base}__mean_abs_shap" for base in feature_basenames]
+
+        wide = wide.with_columns(
+            pl.sum_horizontal([pl.col(c) for c in mean_abs_cols]).alias("__total_abs__")
+        )
+
+        share_exprs = [
+            (pl.col(c) / pl.col("__total_abs__")).alias(
+                c.replace("__mean_abs_shap", "__share_abs_shap")
+            )
+            for c in mean_abs_cols
+        ]
+
+        wide = wide.with_columns(share_exprs).drop("__total_abs__")
+
+        # 6) Melt wide table into tidy long format:
+        #    [by_vars...] | Feature | count | mean_shap | mean_abs_shap | std_shap | share_of_total_abs_shap
+
+        id_vars = group_keys + ["count"]
+
+        # mean_shap
+        mean_shap_cols = [f"{base}__mean_shap" for base in feature_basenames]
+        mean_long = (
+            wide.melt(
+                id_vars=id_vars,
+                value_vars=mean_shap_cols,
+                variable_name="Feature",
+                value_name="mean_shap",
+            )
+            .with_columns(
+                pl.col("Feature")
+                .str.replace(r"__mean_shap$", "")
+                .alias("Feature")
+            )
+        )
+
+        # mean_abs_shap
+        mean_abs_long = (
+            wide.melt(
+                id_vars=id_vars,
+                value_vars=mean_abs_cols,
+                variable_name="Feature",
+                value_name="mean_abs_shap",
+            )
+            .with_columns(
+                pl.col("Feature")
+                .str.replace(r"__mean_abs_shap$", "")
+                .alias("Feature")
+            )
+        )
+
+        # std_shap
+        std_cols = [f"{base}__std_shap" for base in feature_basenames]
+        std_long = (
+            wide.melt(
+                id_vars=id_vars,
+                value_vars=std_cols,
+                variable_name="Feature",
+                value_name="std_shap",
+            )
+            .with_columns(
+                pl.col("Feature")
+                .str.replace(r"__std_shap$", "")
+                .alias("Feature")
+            )
+        )
+
+        # share_of_total_abs_shap
+        share_cols = [f"{base}__share_abs_shap" for base in feature_basenames]
+        share_long = (
+            wide.melt(
+                id_vars=id_vars,
+                value_vars=share_cols,
+                variable_name="Feature",
+                value_name="share_of_total_abs_shap",
+            )
+            .with_columns(
+                pl.col("Feature")
+                .str.replace(r"__share_abs_shap$", "")
+                .alias("Feature")
+            )
+        )
+
+        # 7) Join all long tables on [group_keys + "count" + "Feature"]
+        join_keys = group_keys + ["count", "Feature"]
+
+        summary = (
+            mean_long
+            .join(mean_abs_long, on=join_keys, how="inner")
+            .join(std_long, on=join_keys, how="inner")
+            .join(share_long, on=join_keys, how="inner")
+        )
+
+        # sort results
+        if group_keys:
+            summary = summary.sort(
+                group_keys + ["mean_abs_shap"],
+                descending=[False] * len(group_keys) + [True],
+            )
+        else:
+            summary = summary.sort("mean_abs_shap", descending=True)
+
+        # optionally apply top_n
+        if top_n is not None:
+            if group_keys:
+                summary = (
+                    summary
+                    .group_by(group_keys, maintain_order=True)
+                    .head(top_n)
+                )
+            else:
+                summary = summary.head(top_n)
+
+        # Final tidy column order
+        final_cols = group_keys + [
+            "Feature",
+            "count",
+            "mean_shap",
+            "mean_abs_shap",
+            "std_shap",
+            "share_of_total_abs_shap",
+        ]
+        summary = summary.select(final_cols)
+
+        return summary
+
+    # Shap Box Plot
+    def plot_shap_summary(
+        self,
+        split: str | None = "train",
+        df=None,
+        shap_attached: pl.DataFrame | None = None,
+        ModelName: str | None = None,
+        prefix: str = "shap_",
+        top_n: int = 20,
+        max_samples: int = 10_000,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Global SHAP summary plot (boxplot-style) for a tree-based model.
     
+        - Uses build_shap_summary() to select the top_n most important features
+          by mean_abs_shap.
+        - Builds a long-form dataset with columns:
+            - Feature
+            - shap_value
+        - Plots a boxplot per Feature using QuickEcharts.BoxPlot, typically
+          with horizontal orientation (Feature on y-axis, SHAP value on x-axis).
+    
+        Parameters
+        ----------
+        split
+            One of 'train', 'validation', 'test', or None.
+            Used when shap_attached is not supplied. If provided, SHAP values
+            are computed internally via compute_shap_values().
+        df
+            External data (Polars or pandas). Used when split is None and
+            shap_attached is not supplied.
+        shap_attached
+            Optional DataFrame containing original columns + shap_* columns.
+            If provided, this is used directly (no SHAP recomputation).
+        ModelName
+            Optional name of a trained model in FitList. If None, uses self.Model.
+        prefix
+            Prefix for SHAP columns (e.g. "shap_").
+        top_n
+            Number of most important features (by mean_abs_shap) to include.
+        max_samples
+            Maximum number of rows to use when building the boxplot dataset.
+            If the SHAP-attached data has more rows, a random sample is taken.
+        plot_name
+            Optional HTML output name passed to QuickEcharts (RenderHTML).
+        Theme
+    
+        Returns
+        -------
+        dict
+            {
+              "summary": pl.DataFrame (SHAP summary table),
+              "plot":    QuickEcharts BoxPlot object
+            }
+        """
+    
+        # -------------------------
+        # 1) Resolve SHAP-attached data
+        # -------------------------
+        if shap_attached is None:
+            shap_attached = self.compute_shap_values(
+                split=split,
+                df=df,
+                ModelName=ModelName,
+                attach=True,
+                prefix=prefix,
+                include_base_term=True,
+            )
+    
+        # -------------------------
+        # 2) Build summary + select top_n features
+        # -------------------------
+        summary = self.build_shap_summary(
+            split=None,            # we are passing shap_attached directly
+            df=None,
+            shap_attached=shap_attached,
+            ModelName=None,
+            by_vars=None,
+            prefix=prefix,
+            top_n=top_n,
+        )
+    
+        top_features = summary["Feature"].to_list()
+        if not top_features:
+            raise ValueError("No features found in SHAP summary for plotting.")
+    
+        # -------------------------
+        # 3) Optional row sampling to keep the plot light
+        # -------------------------
+        n_rows = shap_attached.height
+        if n_rows > max_samples:
+            shap_sampled = shap_attached.sample(n=max_samples, shuffle=True, seed=42)
+        else:
+            shap_sampled = shap_attached
+    
+        # -------------------------
+        # 4) Build long-form data: Feature, shap_value
+        # -------------------------
+        shap_cols = [
+            f"{prefix}{f}" for f in top_features
+            if f"{prefix}{f}" in shap_sampled.columns
+        ]
+        if not shap_cols:
+            raise ValueError(
+                "None of the expected SHAP columns were found in shap_attached. "
+                f"Expected columns: {[prefix + f for f in top_features]}"
+            )
+    
+        dt_long = (
+            shap_sampled.melt(
+                id_vars=[],
+                value_vars=shap_cols,
+                variable_name="Feature",
+                value_name="shap_value",
+            )
+            .with_columns(
+                pl.col("Feature")
+                .str.replace(f"^{prefix}", "")
+                .alias("Feature")
+            )
+        )
+    
+        # -------------------------
+        # 5) Build title/subtitle
+        # -------------------------
+        data_label = (
+            split if shap_attached is None and split is not None
+            else (split or "data")
+        )
+        title = f"SHAP Summary · {data_label}"
+        subtitle = f"Top {top_n} features by mean(|SHAP|)"
+    
+        # -------------------------
+        # 6) Plot via QuickEcharts.BoxPlot
+        # -------------------------
+        chart = Charts.BoxPlot(
+            dt=dt_long,
+            YVar="shap_value",
+            GroupVar="Feature",
+            Orientation="horizontal",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Width="100%",
+            Height="360px",
+            Title=title,
+            SubTitle=subtitle,
+        )
+    
+        return {
+            "summary": summary,
+            "plot": chart,
+        }
+
+    # Shap dependence
+    def plot_shap_dependence(
+        self,
+        feature: str,
+        split: str | None = "train",
+        df=None,
+        shap_attached=None,
+        ModelName: str | None = None,
+        prefix: str = "shap_",
+        SampleSize: int = 15000,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        SHAP dependence plot for a single feature.
+    
+        x-axis: raw feature values
+        y-axis: SHAP contributions for that feature
+    
+        Parameters
+        ----------
+        feature
+            Name of the original feature column to plot on the x-axis.
+            Must exist in the underlying data.
+        split
+            One of 'train', 'validation', 'test', or None.
+            Used when shap_attached is not provided. If set, SHAP values
+            are computed from the internal split via compute_shap_values().
+        df
+            External data (Polars or pandas). Used when split is None and
+            shap_attached is not supplied.
+        shap_attached
+            Optional DataFrame containing original columns + shap_* columns.
+            If provided, this is used directly (no SHAP recomputation).
+        ModelName
+            Optional name of a trained model in FitList. If None, uses self.Model.
+        prefix
+            Prefix for SHAP columns (e.g. "shap_").
+        SampleSize
+            Subsample size for the scatter plot. Passed through to
+            QuickEcharts.Charts.Scatter.
+        plot_name
+            Optional HTML file name passed to QuickEcharts (RenderHTML).
+        Theme
+            QuickEcharts theme, e.g. "dark".
+    
+        Returns
+        -------
+        dict
+            {
+              "data": pl.DataFrame with columns [feature, "shap_value"],
+              "plot": QuickEcharts Scatter chart object
+            }
+        """
+        import polars as pl  # ensure available in this scope
+    
+        # ------------------------------------------------------------------
+        # 1) Resolve SHAP-attached data
+        # ------------------------------------------------------------------
+        if shap_attached is None:
+            shap_attached = self.compute_shap_values(
+                split=split,
+                df=df,
+                ModelName=ModelName,
+                attach=True,
+                prefix=prefix,
+                include_base_term=True,
+            )
+        else:
+            # best-effort: ensure Polars if helper exists
+            if hasattr(self, "_ensure_polars"):
+                shap_attached = self._ensure_polars(shap_attached)
+    
+        # ------------------------------------------------------------------
+        # 2) Validate columns
+        # ------------------------------------------------------------------
+        shap_col = f"{prefix}{feature}"
+    
+        cols = set(shap_attached.columns)
+        missing = [c for c in (feature, shap_col) if c not in cols]
+        if missing:
+            raise KeyError(
+                f"Missing columns in SHAP-attached data: {missing}. "
+                f"Required: original feature '{feature}' and SHAP column '{shap_col}'."
+            )
+    
+        # ------------------------------------------------------------------
+        # 3) Build plotting DataFrame: [feature, shap_value]
+        # ------------------------------------------------------------------
+        df_plot = shap_attached.select(
+            [
+                pl.col(feature),
+                pl.col(shap_col).alias("shap_value"),
+            ]
+        )
+    
+        # ------------------------------------------------------------------
+        # 4) Titles and labels
+        # ------------------------------------------------------------------
+        if split is not None:
+            source_label = split
+        else:
+            source_label = "data"
+    
+        title = f"SHAP Dependence · {feature} ({source_label})"
+        subtitle = f"y = SHAP({feature}), x = {feature}"
+    
+        # ------------------------------------------------------------------
+        # 5) QuickEcharts scatter
+        # ------------------------------------------------------------------
+        chart = Charts.Scatter(
+            dt=df_plot,
+            SampleSize=SampleSize,
+            XVar=feature,
+            YVar="shap_value",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Width="100%",
+            Height="360px",
+            Title=title,
+            SubTitle=subtitle,
+            XAxisTitle=feature,
+            YAxisTitle=f"SHAP({feature})",
+        )
+    
+        return {
+            "data": df_plot,
+            "plot": chart,
+        }
+
 
     #################################################
     # Function: Calibration Tables
@@ -3489,144 +4276,6 @@ class RetroFit:
         )
     
         return pr_df, pr_auc
-
-    # Confusion Matrix
-    def _build_confusion_matrix(
-        self,
-        DataName: str | None = "test",
-        df=None,
-        target: str | None = None,
-        prob_col: str = "p1",
-        threshold: float = 0.5,
-    ):
-        """
-        PRIVATE:
-          Build a confusion matrix for classification / multiclass.
-    
-        For TargetType='classification' (binary):
-          - uses prob_col (default 'p1') and threshold to derive predictions.
-    
-        For TargetType='multiclass':
-          - expects 'class_0', 'class_1', ... probability columns created by score()
-            and uses argmax to derive predictions.
-    
-        Works with either:
-          - internal scored data: self.ScoredData[DataName], or
-          - external df passed via df=..., with explicit target (and prob_col for binary).
-    
-        Returns
-        -------
-        pl.DataFrame in long format with columns:
-          - actual         (int)
-          - predicted      (int)
-          - count          (int)
-          - actual_name    (str, if LabelMappingInverse available, else str(actual))
-          - predicted_name (str, if LabelMappingInverse available, else str(predicted))
-        """
-        if self.TargetType not in ("classification", "multiclass"):
-            raise ValueError(
-                "_build_confusion_matrix is only implemented for TargetType "
-                "in {'classification','multiclass'}."
-            )
-    
-        # --- Resolve data ---
-        if df is not None:
-            df_pl = self._normalize_input_df(df)
-        else:
-            if DataName is None:
-                raise ValueError("Must supply DataName or df.")
-            df_pl = self.ScoredData.get(DataName)
-            if df_pl is None:
-                raise ValueError(
-                    f"self.ScoredData['{DataName}'] is None; run score(DataName='{DataName}') first, "
-                    "or pass an external df."
-                )
-    
-        # --- Resolve target column ---
-        if target is None:
-            if self.TargetColumnName is None:
-                raise RuntimeError(
-                    "self.TargetColumnName is None; supply target= for external df."
-                )
-            target = self.TargetColumnName
-    
-        if target not in df_pl.columns:
-            raise ValueError(f"Target column '{target}' not found in data.")
-    
-        # --- Resolve predictions depending on TargetType ---
-        # y_true is always integer-coded labels (you already encode labels in create_model_data)
-        y_true = (
-            df_pl
-            .select(pl.col(target).cast(pl.Int64))
-            .to_numpy()
-            .ravel()
-        )
-    
-        if y_true.size == 0:
-            raise ValueError("No rows available to build confusion matrix.")
-    
-        if self.TargetType == "classification":
-            # Binary: threshold on prob_col (usually 'p1')
-            if prob_col not in df_pl.columns:
-                raise ValueError(f"Probability column '{prob_col}' not found in data.")
-    
-            y_score = (
-                df_pl
-                .select(pl.col(prob_col).cast(pl.Float64))
-                .to_numpy()
-                .ravel()
-            )
-            y_pred = (y_score >= threshold).astype(int)
-    
-        else:  # multiclass
-            prob_cols = [c for c in df_pl.columns if c.startswith("class_")]
-            if not prob_cols:
-                raise ValueError(
-                    "No 'class_k' probability columns found for multiclass confusion matrix. "
-                    "Did you run score() with a multiclass model?"
-                )
-    
-            # Keep same order as in evaluate()
-            def _class_idx(col_name: str) -> int:
-                try:
-                    return int(col_name.split("_", 1)[1])
-                except Exception:
-                    return 0
-    
-            prob_cols = sorted(prob_cols, key=_class_idx)
-    
-            probs = df_pl[prob_cols].to_numpy()  # shape (N, K)
-            y_pred = probs.argmax(axis=1)
-    
-        # --- Build long-format confusion table ---
-        cm_df = pl.DataFrame(
-            {
-                "actual": y_true,
-                "predicted": y_pred,
-            }
-        ).group_by(["actual", "predicted"], maintain_order=True).agg(
-            pl.len().alias("count")
-        )
-    
-        # --- Attach human-readable labels if available ---
-        mapping_inv = getattr(self, "LabelMappingInverse", None)
-    
-        if isinstance(mapping_inv, dict) and mapping_inv:
-            cm_df = cm_df.with_columns(
-                pl.col("actual").apply(
-                    lambda x: str(mapping_inv.get(int(x), x))
-                ).alias("actual_name"),
-                pl.col("predicted").apply(
-                    lambda x: str(mapping_inv.get(int(x), x))
-                ).alias("predicted_name"),
-            )
-        else:
-            cm_df = cm_df.with_columns(
-                pl.col("actual").cast(pl.Utf8).alias("actual_name"),
-                pl.col("predicted").cast(pl.Utf8).alias("predicted_name"),
-            )
-    
-        return cm_df
 
     # Regression Calibration Plot
     def plot_regression_calibration(

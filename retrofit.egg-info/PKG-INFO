@@ -337,6 +337,15 @@ imp = model.compute_feature_importance()
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
+
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
     DataName="test",
@@ -484,6 +493,15 @@ imp = model.compute_feature_importance()
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
+
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -605,6 +623,15 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>
@@ -736,6 +763,15 @@ segment_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
@@ -929,6 +965,15 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
+
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -1079,6 +1124,15 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>
@@ -1208,6 +1262,15 @@ segment_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
@@ -1400,6 +1463,15 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
+
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -1550,6 +1622,15 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=False)
+shap_val = model.compute_shap_values(split="validation", attach=False)
+shap_test_attached = model.compute_shap_values(split="test", attach=True)
+
+# Get shap values on new data
+test_subset = model.DataFrames["test"].head(200)
+shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>Model Insights - {{ bundle.model_name }}</title>
+  <title>Model Insights: {{ bundle.model_name }}</title>
   <style>
     /* Base layout */
     body {
@@ -692,9 +692,15 @@
     /* Body area that hides/shows */
     .collapsible-body {
       overflow: hidden;
-      max-height: 2000px;  /* big enough for most sections */
-      transition: max-height 0.35s ease;
-      margin-top: 10px;
+      max-height: 0;
+      opacity: 0;
+      transform: translateY(-4px);
+      margin-top: 0;
+      transition:
+        max-height 0.45s cubic-bezier(0.22, 0.61, 0.36, 1),
+        opacity 0.35s ease-out,
+        transform 0.35s ease-out;
+      will-change: max-height, opacity, transform;
     }
 
     /* Closed state */
@@ -703,7 +709,21 @@
       margin-top: 0;
     }
 
-    /* Rotate arrow when closed */
+    /* When open, reveal with margin, fade + slide */
+    .collapsible.open .collapsible-body {
+      margin-top: 10px;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Extra glow when open in neon mode (optional but fun) */
+    body.theme-neon .collapsible.open .collapsible-header {
+      box-shadow:
+        0 0 18px rgba(56,189,248,0.75),
+        0 0 28px rgba(244,114,182,0.55);
+    }
+
+    /* Keep your icon rotation rule as-is */
     .collapsible.closed .collapse-icon {
       transform: rotate(-90deg);
       color: #64748b;
@@ -1011,14 +1031,52 @@
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {
-    const headers = document.querySelectorAll(".collapsible-header");
-    headers.forEach((header) => {
+
+    // Smooth, height-aware collapsible sections
+    const collapsibles = document.querySelectorAll(".collapsible");
+
+    collapsibles.forEach((collapsible) => {
+      const header = collapsible.querySelector(".collapsible-header");
+      const body   = collapsible.querySelector(".collapsible-body");
+      if (!header || !body) return;
+
+      // Initial state: everything starts "closed" in your HTML
+      if (collapsible.classList.contains("closed")) {
+        body.style.maxHeight = "0px";
+      } else {
+        collapsible.classList.add("open");
+        body.style.maxHeight = body.scrollHeight + "px";
+      }
+
       header.addEventListener("click", () => {
-        const parent = header.closest(".collapsible");
-        if (!parent) return;
-        parent.classList.toggle("closed");
+        const isClosed = collapsible.classList.contains("closed");
+
+        if (isClosed) {
+          // OPEN: fade + slide down to real content height
+          collapsible.classList.remove("closed");
+          collapsible.classList.add("open");
+          body.style.maxHeight = body.scrollHeight + "px";
+        } else {
+          // CLOSE: lock height, then animate to 0
+          body.style.maxHeight = body.scrollHeight + "px";
+
+          requestAnimationFrame(() => {
+            collapsible.classList.add("closed");
+            collapsible.classList.remove("open");
+            body.style.maxHeight = "0px";
+          });
+        }
+      });
+
+      // Keep height correct if charts resize / window resizes while open
+      window.addEventListener("resize", () => {
+        if (collapsible.classList.contains("open")) {
+          body.style.maxHeight = body.scrollHeight + "px";
+        }
       });
     });
+
+    // Add Rows-Per-Page option
     function paginateTable(table) {
       const tbody = table.querySelector("tbody");
       if (!tbody) return;

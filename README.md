@@ -337,6 +337,27 @@ model.plot_regression_residual_distribution(
     Theme="dark",
 )
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
+)
+
 # Actual vs Predicted Distribution Overlay
 resid_dist_ = model.plot_prediction_distribution(
     DataName="test",
@@ -464,6 +485,27 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Numeric Partial Dependence plot
@@ -713,6 +755,27 @@ model.plot_regression_calibration(
     plot_name=f"{os.getcwd()}/my_calibration_plot"
 )
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
+)
+
 # Actual vs Predicted Scatterplot
 model.plot_regression_scatter(
     DataName="test",
@@ -909,6 +972,27 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Numeric Partial Dependence plot
@@ -1184,6 +1268,27 @@ model.plot_regression_calibration(
     plot_name=f"{os.getcwd()}/my_calibration_plot"
 )
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
+)
+
 # Actual vs Predicted Scatterplot
 model.plot_regression_scatter(
     DataName="test",
@@ -1382,6 +1487,27 @@ model.plot_classification_pr(
     plot_name=f"{os.getcwd()}/my_pr_plot"
 )
 
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
+)
+
 # Numeric Partial Dependence plot
 model.plot_pdp_numeric(
     feature='XREGS1',
@@ -1561,6 +1687,16 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Predicted_Distribution_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Shap_Summary.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Shap_PDP.PNG' align='center' width='1000' />
 
 <br>
 <br>
