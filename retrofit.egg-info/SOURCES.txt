@@ -29,3 +29,5 @@ retrofit/images/Regression_Scatter_Plot.PNG
 retrofit/images/Residual_Distribution_Plot.PNG
 retrofit/images/Residuals_vs_Predicted_Plot.PNG
 retrofit/images/RetroFitLogo.png
+retrofit/images/Shap_PDP.PNG
+retrofit/images/Shap_Summary.PNG

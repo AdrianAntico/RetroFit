@@ -337,15 +337,6 @@ imp = model.compute_feature_importance()
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
     DataName="test",
@@ -382,6 +373,27 @@ model.plot_regression_residual_distribution(
     n_bins=40,
     plot_name=f"{os.getcwd()}/my_density_plot",
     Theme="dark",
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Actual vs Predicted Distribution Overlay
@@ -493,15 +505,6 @@ imp = model.compute_feature_importance()
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -520,6 +523,27 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Numeric Partial Dependence plot
@@ -623,15 +647,6 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
-
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>
@@ -764,15 +779,6 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
     DataName="test",
@@ -785,6 +791,27 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Actual vs Predicted Scatterplot
@@ -965,15 +992,6 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -992,6 +1010,27 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Numeric Partial Dependence plot
@@ -1124,15 +1163,6 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
-
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>
@@ -1263,15 +1293,6 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Model Calibration Tables
 cal = model.build_regression_calibration_table(
     DataName="test",
@@ -1283,6 +1304,27 @@ model.plot_regression_calibration(
     n_bins=20,
     binning="quantile",
     plot_name=f"{os.getcwd()}/my_calibration_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Actual vs Predicted Scatterplot
@@ -1463,15 +1505,6 @@ segment_eval = model.evaluate(
 # Get variable importance
 imp = model.compute_feature_importance()
 
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
-
 # Store plot in working directory
 model.plot_classification_calibration(
     DataName="test",
@@ -1490,6 +1523,27 @@ model.plot_classification_roc(
 model.plot_classification_pr(
     DataName="test",
     plot_name=f"{os.getcwd()}/my_pr_plot"
+)
+
+# Get shap values
+shap_train = model.compute_shap_values(split="train", attach=True)
+
+# Shap Boxplot
+shap_summary = model.plot_shap_summary(
+    split="train",
+    shap_attached=shap_train,
+    prefix="shap_",
+    top_n=20,
+    max_samples=10_000,
+    plot_name=f"{os.getcwd()}/my_shap_boxplot",
+    Theme="dark",
+)
+
+# Create shap dependence plot
+out = model.plot_shap_dependence(
+    feature="XREGS1",
+    split="train",
+    plot_name=f"{os.getcwd()}/my_shap_pdp",
 )
 
 # Numeric Partial Dependence plot
@@ -1622,15 +1676,6 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
-
-# Get shap values
-shap_train = model.compute_shap_values(split="train", attach=False)
-shap_val = model.compute_shap_values(split="validation", attach=False)
-shap_test_attached = model.compute_shap_values(split="test", attach=True)
-
-# Get shap values on new data
-test_subset = model.DataFrames["test"].head(200)
-shap_ext = model.compute_shap_values(df=test_subset, attach=True)
 ```
 
 </p>
@@ -1680,6 +1725,16 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Predicted_Distribution_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Shap_Summary.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Shap_PDP.PNG' align='center' width='1000' />
 
 <br>
 <br>

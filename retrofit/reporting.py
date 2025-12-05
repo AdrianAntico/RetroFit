@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 import polars as pl
 import importlib.resources as pkg_resources
@@ -40,7 +40,7 @@ class ModelInsightsBundle:
     For now: regression-only bundle.
     You can extend this later for binary / multiclass as needed.
     """
-    problem_type: str           # "regression" for now
+    problem_type: str
     model_name: str
     model_type: str
     target_col: str
@@ -63,11 +63,16 @@ class ModelInsightsBundle:
     # Feature insights
     feature_importance_table: TableSpec
     interaction_importance_table: Optional[TableSpec]
-    pdp_numeric_plots: List[PlotSpec]
-    pdp_categorical_plots: List[PlotSpec]
+    pdp_numeric_plots: List[Dict[str, Any]]
+    pdp_categorical_plots: List[Dict[str, Any]]
+
+    # SHAP / interpretability
+    shap_summary_table: Optional[TableSpec]
+    shap_summary_plot: Optional[str]
+    shap_dependence_plots: Optional[List[Dict[str, Any]]]
 
     # Extra hook if you want it later
-    extra: Dict[str, Any]
+    extra: Dict[str, Any] = Dict[str, Any]
 
 
 def df_to_table(df: pl.DataFrame) -> TableSpec:

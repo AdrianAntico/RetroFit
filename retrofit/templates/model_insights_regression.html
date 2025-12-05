@@ -355,6 +355,8 @@
     body.theme-neon .table-pager button,
     body.theme-neon .table-pager select {
       border-color: #38bdf8;
+      color: #38bdf8;
+      box-shadow: 0 0 6px rgba(56,189,248,0.6);
     }
 
     /* Force dropdown menu colors (Chrome/Firefox/Edge) */
@@ -759,12 +761,13 @@
   <a href="#core-metrics">Metrics</a>
   <a href="#feature-importance">Importance</a>
   <a href="#interaction-importance">Interaction Importance</a>
-  <a href="#calibration">Calibration Table</a>
-  <a href="#calibration-plot">Calibration Plot</a>
+  <a href="#calibration">Model Calibration</a>
   <a href="#actual-vs-predicted">Actual vs Predicted</a>
   <a href="#residuals-vs-predicted">Residuals vs Predicted</a>
   <a href="#residuals">Residual Distribution</a>
   <a href="#prediction-distribution-overlay">Prediction Distribution Overlay</a>
+  <a href="#shap-summary">SHAP Summary</a>
+  <a href="#shap-dependence">SHAP Dependence</a>
   <a href="#pdp-numeric">Partial Dependence: Numeric</a>
   <a href="#pdp-categorical">Partial Dependence: Categorical</a>
 </div>
@@ -881,41 +884,44 @@
 </div>
 {% endif %}
 
-<div class="section">
-  <h2 id="calibration">Calibration Table</h2>
-  <div class="table-scroll">
-    <table>
-      <thead>
-        <tr>
-          {% for c in bundle.calibration_table.columns %}
-          <th>{{ c }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody>
-        {% for row in bundle.calibration_table.rows %}
-        <tr>
-          {% for c in bundle.calibration_table.columns %}
-          <td>{{ row[c] }}</td>
-          {% endfor %}
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-
-{% if bundle.calibration_plot %}
+{% if bundle.calibration_table or bundle.calibration_plot %}
 <div class="collapsible closed">
   <div class="collapsible-header">
-    <h2 id="calibration-plot">Calibration Plot</h2>
+    <h2 id="calibration">Calibration</h2>
     <i class="fa-solid fa-chevron-down collapse-icon"></i>
   </div>
+
   <div class="collapsible-body">
     <div class="section">
-      <div class="chart-wrapper">
+
+      {% if bundle.calibration_plot %}
+      <div class="chart-wrapper" style="margin-bottom: 20px;">
         {{ bundle.calibration_plot | safe }}
       </div>
+      {% endif %}
+
+      {% if bundle.calibration_table %}
+      <h3>Calibration Table</h3>
+      <table class="paginated" data-page-size="25">
+        <thead>
+          <tr>
+            {% for c in bundle.calibration_table.columns %}
+            <th>{{ c }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in bundle.calibration_table.rows %}
+          <tr>
+            {% for c in bundle.calibration_table.columns %}
+            <td>{{ row[c] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+
     </div>
   </div>
 </div>
@@ -980,6 +986,63 @@
       <div class="chart-wrapper">
         {{ bundle.prediction_dist_plot | safe }}
       </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.shap_summary_table %}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="shap-summary">SHAP Summary</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      {% if bundle.shap_summary_plot %}
+      <div class="chart-wrapper" style="margin-bottom: 20px;">
+        {{ bundle.shap_summary_plot | safe }}
+      </div>
+      {% endif %}
+
+      <h3>Top Features by mean(|SHAP|)</h3>
+      <table class="paginated" data-page-size="10">
+        <thead>
+          <tr>
+            {% for c in bundle.shap_summary_table.columns %}
+            <th>{{ c }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in bundle.shap_summary_table.rows %}
+          <tr>
+            {% for c in bundle.shap_summary_table.columns %}
+            <td>{{ row[c] }}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.shap_dependence_plots %}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="shap-dependence">SHAP Dependence Plots</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      {% for dep in bundle.shap_dependence_plots %}
+        <div class="pdp-var-label">{{ dep.feature }}</div>
+        <div class="chart-wrapper">
+          {{ dep.html | safe }}
+        </div>
+      {% endfor %}
     </div>
   </div>
 </div>

@@ -3327,25 +3327,28 @@ class RetroFit:
         shap_attached=None,
         ModelName: str | None = None,
         prefix: str = "shap_",
-        SampleSize: int = 15000,
+        SampleSize: int = 15_000,
         plot_name: str | None = None,
         Theme: str = "dark",
     ):
         """
         SHAP dependence plot for a single feature.
     
-        x-axis: raw feature values
-        y-axis: SHAP contributions for that feature
+        Numeric feature:
+            x-axis: raw feature values
+            y-axis: SHAP contributions for that feature (scatter).
+    
+        Categorical feature:
+            x-axis: categories (GroupVar)
+            y-axis: SHAP distributions per category (boxplot).
     
         Parameters
         ----------
         feature
-            Name of the original feature column to plot on the x-axis.
-            Must exist in the underlying data.
+            Name of the original feature column to visualize.
         split
             One of 'train', 'validation', 'test', or None.
-            Used when shap_attached is not provided. If set, SHAP values
-            are computed from the internal split via compute_shap_values().
+            Used when shap_attached is not provided.
         df
             External data (Polars or pandas). Used when split is None and
             shap_attached is not supplied.
@@ -3357,8 +3360,8 @@ class RetroFit:
         prefix
             Prefix for SHAP columns (e.g. "shap_").
         SampleSize
-            Subsample size for the scatter plot. Passed through to
-            QuickEcharts.Charts.Scatter.
+            Subsample size for plotting. Applied to both numeric and categorical
+            cases to avoid overplotting.
         plot_name
             Optional HTML file name passed to QuickEcharts (RenderHTML).
         Theme
@@ -3368,11 +3371,11 @@ class RetroFit:
         -------
         dict
             {
-              "data": pl.DataFrame with columns [feature, "shap_value"],
-              "plot": QuickEcharts Scatter chart object
+              "data": pl.DataFrame,
+              "plot": QuickEcharts chart object
             }
         """
-        import polars as pl  # ensure available in this scope
+        import polars as pl  # local import to avoid surprises
     
         # ------------------------------------------------------------------
         # 1) Resolve SHAP-attached data
@@ -3387,7 +3390,6 @@ class RetroFit:
                 include_base_term=True,
             )
         else:
-            # best-effort: ensure Polars if helper exists
             if hasattr(self, "_ensure_polars"):
                 shap_attached = self._ensure_polars(shap_attached)
     
@@ -3395,7 +3397,6 @@ class RetroFit:
         # 2) Validate columns
         # ------------------------------------------------------------------
         shap_col = f"{prefix}{feature}"
-    
         cols = set(shap_attached.columns)
         missing = [c for c in (feature, shap_col) if c not in cols]
         if missing:
@@ -3405,7 +3406,7 @@ class RetroFit:
             )
     
         # ------------------------------------------------------------------
-        # 3) Build plotting DataFrame: [feature, shap_value]
+        # 3) Build base plotting DataFrame: [feature, shap_value]
         # ------------------------------------------------------------------
         df_plot = shap_attached.select(
             [
@@ -3414,34 +3415,79 @@ class RetroFit:
             ]
         )
     
+        # Subsample rows (to avoid plotting millions of points / boxes)
+        n_rows = df_plot.height
+        if SampleSize is not None and n_rows > SampleSize:
+            df_plot = df_plot.sample(n=SampleSize, shuffle=True, seed=42)
+    
         # ------------------------------------------------------------------
-        # 4) Titles and labels
+        # 4) Detect numeric vs categorical feature
+        # ------------------------------------------------------------------
+        dtype = shap_attached.schema[feature]
+    
+        numeric_dtypes = (
+            pl.Int8,
+            pl.Int16,
+            pl.Int32,
+            pl.Int64,
+            pl.UInt8,
+            pl.UInt16,
+            pl.UInt32,
+            pl.UInt64,
+            pl.Float32,
+            pl.Float64,
+        )
+    
+        is_numeric = dtype in numeric_dtypes
+    
+        # ------------------------------------------------------------------
+        # 5) Titles and labels
         # ------------------------------------------------------------------
         if split is not None:
             source_label = split
         else:
             source_label = "data"
     
-        title = f"SHAP Dependence · {feature} ({source_label})"
-        subtitle = f"y = SHAP({feature}), x = {feature}"
+        if is_numeric:
+            title = f"SHAP Dependence · {feature} ({source_label})"
+            subtitle = f"y = SHAP({feature}), x = {feature}"
+        else:
+            title = f"SHAP Dependence (Categorical) · {feature} ({source_label})"
+            subtitle = f"Distribution of SHAP({feature}) by {feature}"
     
         # ------------------------------------------------------------------
-        # 5) QuickEcharts scatter
+        # 6) Plot using QuickEcharts
         # ------------------------------------------------------------------
-        chart = Charts.Scatter(
-            dt=df_plot,
-            SampleSize=SampleSize,
-            XVar=feature,
-            YVar="shap_value",
-            RenderHTML=plot_name,
-            Theme=Theme,
-            Width="100%",
-            Height="360px",
-            Title=title,
-            SubTitle=subtitle,
-            XAxisTitle=feature,
-            YAxisTitle=f"SHAP({feature})",
-        )
+        if is_numeric:
+            # Numeric feature: scatter
+            chart = Charts.Scatter(
+                dt=df_plot,
+                SampleSize=None,  # we already subsampled above
+                XVar=feature,
+                YVar="shap_value",
+                RenderHTML=plot_name,
+                Theme=Theme,
+                Width="100%",
+                Height="360px",
+                Title=title,
+                SubTitle=subtitle,
+                XAxisTitle=feature,
+                YAxisTitle=f"SHAP({feature})",
+            )
+        else:
+            # Categorical feature: boxplot by category
+            chart = Charts.BoxPlot(
+                dt=df_plot,
+                YVar="shap_value",
+                GroupVar=feature,
+                Orientation="vertical",  # categories on x, SHAP on y
+                RenderHTML=plot_name,
+                Theme=Theme,
+                Width="100%",
+                Height="360px",
+                Title=title,
+                SubTitle=subtitle,
+            )
     
         return {
             "data": df_plot,
@@ -5793,6 +5839,85 @@ class RetroFit:
                 continue
 
         # -------------------------
+        # 7b) SHAP summary + dependence (tree models only; fail-soft)
+        # -------------------------
+        shap_summary_table = None
+        shap_summary_plot = None
+        shap_dependence_plots = []
+
+        if self.Algorithm in ("catboost", "xgboost", "lightgbm"):
+            try:
+                # Compute SHAP values for the same split we used for scoring/PDP
+                shap_attached = self.compute_shap_values(
+                    split=resolved,
+                    df=None,
+                    ModelName=None,
+                    attach=True,
+                    prefix="shap_",
+                    include_base_term=True,
+                )
+
+                # SHAP summary table (top_n_fi by default)
+                shap_summary_df = self.build_shap_summary(
+                    split=None,
+                    df=None,
+                    shap_attached=shap_attached,
+                    ModelName=None,
+                    by_vars=None,
+                    prefix="shap_",
+                    top_n=top_n_fi,
+                )
+
+                shap_summary_df = u._round_df(shap_summary_df)
+                shap_summary_table = df_to_table(shap_summary_df)
+
+                # SHAP summary plot (boxplot)
+                shap_summary_plot_res = self.plot_shap_summary(
+                    split=None,
+                    df=None,
+                    shap_attached=shap_attached,
+                    ModelName=None,
+                    prefix="shap_",
+                    top_n=top_n_fi,
+                    max_samples=10_000,
+                    plot_name=None,
+                    Theme=Theme,
+                )
+                shap_summary_plot = shap_summary_plot_res["plot"].render_embed()
+
+                # SHAP dependence plots for top few features
+                shap_dependence_plots = []
+                top_features = shap_summary_df["Feature"].to_list()
+                max_dep = min(len(top_features), 6)
+
+                for feat in top_features[:max_dep]:
+                    try:
+                        dep_res = self.plot_shap_dependence(
+                            feature=feat,
+                            shap_attached=shap_attached,
+                            ModelName=None,
+                            prefix="shap_",
+                            SampleSize=10_000,
+                            plot_name=None,
+                            Theme=Theme,
+                        )
+                        shap_dependence_plots.append(
+                            {
+                                "feature": feat,
+                                "html": dep_res["plot"].render_embed(),
+                            }
+                        )
+                    except Exception:
+                        # Don't let one feature kill the report
+                        continue
+
+            except Exception:
+                # Fail soft: if SHAP dies, just omit the SHAP section
+                shap_summary_table = None
+                shap_summary_plot = None
+                shap_dependence_plots = []
+
+        # -------------------------
         # 8) Assemble bundle
         # -------------------------
         model_name = self.FitListNames[-1] if self.FitListNames else "RetroFitModel"
@@ -5818,6 +5943,9 @@ class RetroFit:
             interaction_importance_table=interaction_importance_table,
             pdp_numeric_plots=pdp_numeric_plots,
             pdp_categorical_plots=pdp_categorical_plots,
+            shap_summary_table=shap_summary_table,
+            shap_summary_plot=shap_summary_plot,
+            shap_dependence_plots=shap_dependence_plots,
             extra={"split": resolved},
         )
 
