@@ -760,12 +760,21 @@
   <a href="#feature-summary">Features</a>
   <a href="#core-metrics">Metrics</a>
   <a href="#feature-importance">Importance</a>
-  <a href="#interaction-importance">Interaction Importance</a>
-  <a href="#calibration">Model Calibration</a>
-  <a href="#actual-vs-predicted">Actual vs Predicted</a>
-  <a href="#residuals-vs-predicted">Residuals vs Predicted</a>
-  <a href="#residuals">Residual Distribution</a>
-  <a href="#prediction-distribution-overlay">Prediction Distribution Overlay</a>
+
+  {% if bundle.problem_type == "regression" %}
+    <a href="#interaction-importance">Interaction Importance</a>
+    <a href="#calibration">Model Calibration</a>
+    <a href="#actual-vs-predicted">Actual vs Predicted</a>
+    <a href="#residuals-vs-predicted">Residuals vs Predicted</a>
+    <a href="#residuals">Residual Distribution</a>
+    <a href="#prediction-distribution-overlay">Prediction Distribution Overlay</a>
+  {% else %}
+    <a href="#calibration">Model Calibration</a>
+    <a href="#roc-curve">ROC Curve</a>
+    <a href="#pr-curve">Precision–Recall Curve</a>
+    <a href="#metrics-vs-threshold">Metrics vs Threshold</a>
+  {% endif %}
+
   <a href="#shap-summary">SHAP Summary</a>
   <a href="#shap-dependence">SHAP Dependence</a>
   <a href="#pdp-numeric">Partial Dependence: Numeric</a>
@@ -816,9 +825,9 @@
   </table>
 </div>
 
-<div class="section">
+<div class="section" id="core-metrics-section">
   <h2 id="core-metrics">Core Metrics</h2>
-  <table>
+  <table class="paginated sortable" data-page-size="10">
     <thead>
       <tr>
         {% for c in bundle.metrics.table.columns %}
@@ -881,6 +890,22 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+{% endif %}
+
+{% if bundle.problem_type == "classification" and bundle.threshold_metrics_plot %}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="threshold-metrics">Threshold Metrics (by threshold)</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="section">
+      <div class="chart-wrapper">
+        {{ bundle.threshold_metrics_plot | safe }}
+      </div>
+    </div>
+  </div>
 </div>
 {% endif %}
 
@@ -986,6 +1011,34 @@
       <div class="chart-wrapper">
         {{ bundle.prediction_dist_plot | safe }}
       </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.roc_plot %}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="roc-curve">ROC Curve</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="chart-wrapper">
+      {{ bundle.roc_plot | safe }}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% if bundle.pr_plot %}
+<div class="collapsible closed">
+  <div class="collapsible-header">
+    <h2 id="pr-curve">PR Curve</h2>
+    <i class="fa-solid fa-chevron-down collapse-icon"></i>
+  </div>
+  <div class="collapsible-body">
+    <div class="chart-wrapper">
+      {{ bundle.pr_plot | safe }}
     </div>
   </div>
 </div>
@@ -1103,7 +1156,7 @@
       const body   = collapsible.querySelector(".collapsible-body");
       if (!header || !body) return;
 
-      // Initial state: everything starts "closed" in your HTML
+      // Initial state
       if (collapsible.classList.contains("closed")) {
         body.style.maxHeight = "0px";
       } else {
@@ -1115,12 +1168,12 @@
         const isClosed = collapsible.classList.contains("closed");
 
         if (isClosed) {
-          // OPEN: fade + slide down to real content height
+          // OPEN
           collapsible.classList.remove("closed");
           collapsible.classList.add("open");
           body.style.maxHeight = body.scrollHeight + "px";
         } else {
-          // CLOSE: lock height, then animate to 0
+          // CLOSE
           body.style.maxHeight = body.scrollHeight + "px";
 
           requestAnimationFrame(() => {
@@ -1139,13 +1192,62 @@
       });
     });
 
-    // Add Rows-Per-Page option
+    // Add Rows-Per-Page option + sorting
     function paginateTable(table) {
       const tbody = table.querySelector("tbody");
       if (!tbody) return;
 
       const rows = Array.from(tbody.querySelectorAll("tr"));
       if (rows.length === 0) return;
+
+      // ---------- SORTING: header click ----------
+      const thead = table.querySelector("thead");
+      if (thead) {
+        const headerCells = Array.from(thead.querySelectorAll("th"));
+
+        headerCells.forEach((th, colIndex) => {
+          let sortDir = 1; // 1 = asc, -1 = desc
+          th.style.cursor = "pointer";
+
+          th.addEventListener("click", () => {
+            // Detect if column is numeric
+            const isNumericColumn = rows.every((tr) => {
+              const cell = tr.children[colIndex];
+              if (!cell) return true;
+              const txt = cell.textContent.trim();
+              if (txt === "") return true;
+              return !isNaN(parseFloat(txt));
+            });
+
+            rows.sort((a, b) => {
+              const aCell = a.children[colIndex]?.textContent.trim() ?? "";
+              const bCell = b.children[colIndex]?.textContent.trim() ?? "";
+
+              if (isNumericColumn) {
+                const aNum = parseFloat(aCell);
+                const bNum = parseFloat(bCell);
+
+                if (isNaN(aNum) && isNaN(bNum)) return 0;
+                if (isNaN(aNum)) return 1;
+                if (isNaN(bNum)) return -1;
+                return (aNum - bNum) * sortDir;
+              } else {
+                return aCell.localeCompare(bCell) * sortDir;
+              }
+            });
+
+            // Flip direction next click
+            sortDir *= -1;
+
+            // Re-attach rows in sorted order
+            rows.forEach((tr) => tbody.appendChild(tr));
+
+            // Reset to first page with new order
+            renderPage(1);
+          });
+        });
+      }
+      // ---------- END SORTING SETUP ----------
 
       // Default page size from attribute or fallback
       const sizeAttr = table.getAttribute("data-page-size");
@@ -1273,7 +1375,7 @@
       renderPage(1);
     }
 
-    // Apply pagination to all marked tables
+    // Apply pagination (and sorting) to all marked tables
     const paginatedTables = document.querySelectorAll("table.paginated");
     paginatedTables.forEach((tbl) => {
       paginateTable(tbl);

@@ -1,5 +1,5 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 import polars as pl
 import importlib.resources as pkg_resources
@@ -19,6 +19,9 @@ class TableSpec:
 class PlotSpec:
     """
     A single ECharts plot for the report.
+
+    (Currently not used directly by the bundle fields, which store HTML
+    strings, but kept here in case we later want to pass raw option dicts.)
     """
     title: str
     description: Optional[str]
@@ -37,8 +40,9 @@ class MetricsSection:
 @dataclass
 class ModelInsightsBundle:
     """
-    For now: regression-only bundle.
-    You can extend this later for binary / multiclass as needed.
+    Unified bundle for regression and classification model insights.
+
+    problem_type is typically "regression" or "classification".
     """
     problem_type: str
     model_name: str
@@ -51,15 +55,22 @@ class ModelInsightsBundle:
     data_summary: TableSpec
     feature_summary: TableSpec
 
-    # Performance
+    # Performance (shared)
     metrics: MetricsSection
     calibration_table: TableSpec
-    calibration_plot: Optional[PlotSpec]
-    residuals_plot: Optional[PlotSpec]
-    actual_vs_pred_plot: Optional[PlotSpec]
-    residual_dist_plot: Optional[PlotSpec]
-    prediction_dist_plot: Optional[PlotSpec]
 
+    # Plots are stored as rendered HTML snippets
+    calibration_plot: Optional[str]
+    residuals_plot: Optional[str]
+    actual_vs_pred_plot: Optional[str]
+    residual_dist_plot: Optional[str]
+    prediction_dist_plot: Optional[str]
+
+    # Classification-specific performance
+    roc_plot: Optional[str]
+    pr_plot: Optional[str]
+    threshold_metrics_plot: Optional[str]
+    
     # Feature insights
     feature_importance_table: TableSpec
     interaction_importance_table: Optional[TableSpec]
@@ -72,7 +83,7 @@ class ModelInsightsBundle:
     shap_dependence_plots: Optional[List[Dict[str, Any]]]
 
     # Extra hook if you want it later
-    extra: Dict[str, Any] = Dict[str, Any]
+    extra: Dict[str, Any]
 
 
 def df_to_table(df: pl.DataFrame) -> TableSpec:
@@ -84,4 +95,3 @@ def df_to_table(df: pl.DataFrame) -> TableSpec:
     cols = df.columns
     rows = [dict(zip(cols, row)) for row in df.rows()]
     return TableSpec(columns=cols, rows=rows)
-

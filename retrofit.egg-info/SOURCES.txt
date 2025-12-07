@@ -31,3 +31,4 @@ retrofit/images/Residuals_vs_Predicted_Plot.PNG
 retrofit/images/RetroFitLogo.png
 retrofit/images/Shap_PDP.PNG
 retrofit/images/Shap_Summary.PNG
+retrofit/images/Threshold_Plot.PNG

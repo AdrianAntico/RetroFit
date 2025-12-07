@@ -1,4 +1,4 @@
-![Version: 0.2.0](https://img.shields.io/static/v1?label=Version&message=0.2.0&color=blue&?style=plastic)
+![Version: 0.3.0](https://img.shields.io/static/v1?label=Version&message=0.3.0&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
@@ -13,7 +13,7 @@
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.2.0
+pip install retrofit==0.3.0
 ```
 
 <br>
@@ -159,14 +159,15 @@ Regression + Classification calibration:
 
 ---
 
-### 📈 7. ROC / PR / PR-ROC Curves
+### 📈 7. ROC / PR / PR-ROC Curves and Regression versions
 
 RetroFit generates:
 
 - ROC
 - Precision-Recall
 - AUC and Average Precision
-- QuickEcharts Area plots with gradient shading
+- Metrics vs Threshold curves (Accuracy, F1, TPR, FPR, Utility, etc.)
+- Interactive QuickEcharts plots with gradient fills
 
 ---
 
@@ -200,6 +201,30 @@ All plots are powered by QuickEcharts:
 - Works with internal or external data
 - Returns both table and plot object
 
+---
+
+### 📑 10. Model Insights Reports
+
+RetroFit can generate fully self-contained HTML Model Insights Reports for both regression and classification models.
+
+### Reports include:
+- Data summary and feature overview
+- Core metrics table (sortable & paginated)
+- Calibration tables and plots
+- Classification-specific diagnostics:
+- ROC curve
+- Precision–Recall curve
+- Metrics vs Threshold plot
+- Feature importance
+- Interaction importance (CatBoost)
+- Partial Dependence Plots
+- SHAP summary and dependence plots (tree-based models)
+
+### Reports are designed to be:
+- Analyst-friendly
+- Shareable (single HTML file)
+- Consistent with RetroFit’s evaluation engine
+- Safe for production diagnostics
 
 <br>
 
@@ -276,6 +301,12 @@ model.train()
 
 # Score train, validation, and test; store internally
 model.score()
+
+# Build regression report
+path = model.build_model_insights_report(
+    output_path="regression_report.html",
+    theme="light"
+)
 
 # Inspect scored data
 model.ScoredData["train"]
@@ -445,6 +476,12 @@ model.train()
 # Score train, validation, and test; store internally
 model.score()
 
+# Build classification report
+path = model.build_model_insights_report(
+    output_path="classification_report.html",
+    theme="neon",
+)
+
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
@@ -466,6 +503,14 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Evaluate scored data
+model.plot_classification_threshold_metrics(
+    DataName="test",
+    CostDict=dict(tpcost=1.0, fpcost=-1.0, fncost=-1.0, tncost=1.0),
+    plot_name=f"{os.getcwd()}/my_thresh_plot",
+    Theme="dark"
+)
 
 # Store plot in working directory
 model.plot_classification_calibration(
@@ -722,6 +767,12 @@ model.train()
 # Score train, validation, and test; store internally
 model.score()
 
+# Build regression report
+path = model.build_model_insights_report(
+    output_path="regression_report.html",
+    theme="light"
+)
+
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
@@ -935,6 +986,12 @@ model.train()
 # Score train, validation, and test; store internally
 model.score()
 
+# Build classification report
+path = model.build_model_insights_report(
+    output_path="classification_report.html",
+    theme="neon",
+)
+
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
@@ -953,6 +1010,14 @@ segment_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Evaluate scored data
+model.plot_classification_threshold_metrics(
+    DataName="test",
+    CostDict=dict(tpcost=1.0, fpcost=-1.0, fncost=-1.0, tncost=1.0),
+    plot_name=f"{os.getcwd()}/my_thresh_plot",
+    Theme="dark"
+)
 
 # Store plot in working directory
 model.plot_classification_calibration(
@@ -1236,6 +1301,12 @@ model.train()
 # Score train, validation, and test; store internally
 model.score()
 
+# Build regression report
+path = model.build_model_insights_report(
+    output_path="regression_report.html",
+    theme="light"
+)
+
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
@@ -1448,6 +1519,12 @@ model.train()
 # Score train, validation, and test; store internally
 model.score()
 
+# Build classification report
+path = model.build_model_insights_report(
+    output_path="classification_report.html",
+    theme="neon",
+)
+
 # Inspect scored data
 model.ScoredData["train"]
 model.ScoredData["validation"]
@@ -1466,6 +1543,14 @@ segment_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Evaluate scored data
+model.plot_classification_threshold_metrics(
+    DataName="test",
+    CostDict=dict(tpcost=1.0, fpcost=-1.0, fncost=-1.0, tncost=1.0),
+    plot_name=f"{os.getcwd()}/my_thresh_plot",
+    Theme="dark"
+)
 
 # Store plot in working directory
 model.plot_classification_calibration(
@@ -1707,6 +1792,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Categorical_PDP.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Threshold_Plot.PNG' align='center' width='1000' />
 
 
 </p>

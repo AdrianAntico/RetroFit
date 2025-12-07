@@ -1822,7 +1822,7 @@ class RetroFit:
         df=None,
         FitName: str | None = None,
         ByVariables=None,
-        CostDict: dict = dict(tpcost=0.0, fpcost=1.0, fncost=1.0, tncost=0.0),
+        CostDict: dict = None,
     ):
         """
         Evaluate model performance on scored data.
@@ -1869,6 +1869,9 @@ class RetroFit:
             by_cols = list(ByVariables)
         else:
             raise TypeError("ByVariables must be None, a string, or a list/tuple of strings.")
+
+        if CostDict is None:
+            CostDict = dict(tpcost=1.0, tncost=1.0, fpcost=-1.0, fncost=-1.0)
 
         # -------------------------------
         # 1) Resolve scored data (Polars)
@@ -3303,6 +3306,7 @@ class RetroFit:
         chart = Charts.BoxPlot(
             dt=dt_long,
             YVar="shap_value",
+            XAxisTitle = "Shap Value",
             GroupVar="Feature",
             Orientation="horizontal",
             RenderHTML=plot_name,
@@ -3576,9 +3580,6 @@ class RetroFit:
         if pred_col not in df_pl.columns:
             raise ValueError(f"Prediction column '{pred_col}' not found in scored data.")
 
-        if self.TargetType != "regression":
-            raise ValueError("build_regression_calibration_table() is only valid for regression.")
-
         if binning not in ("equal_width", "quantile"):
             raise ValueError("binning must be 'equal_width' or 'quantile'.")
 
@@ -3812,18 +3813,36 @@ class RetroFit:
                 pl.count().alias("n_obs"),
                 pl.col(prob_col).mean().alias("pred_mean"),
                 pl.col(target).mean().alias("actual_mean"),
-                pl.col(prob_col).min().alias("pred_min_bin"),
-                pl.col(prob_col).max().alias("pred_max_bin"),
             ])
+        )
+        
+        # ---- Error metrics per bin ----
+        agg_df = agg_df.with_columns(
+            [
+                # absolute difference
+                (pl.col("actual_mean") - pl.col("pred_mean"))
+                .abs()
+                .alias("error_abs"),
+
+                # percent error (handle actual_mean == 0)
+                pl.when(pl.col("actual_mean") != 0)
+                .then(
+                    (pl.col("actual_mean") - pl.col("pred_mean")) / pl.col("actual_mean")
+                )
+                .otherwise(None)
+                .alias("error_pct"),
+
+                # ratio predicted / actual
+                pl.when(pl.col("actual_mean") != 0)
+                .then(pl.col("pred_mean") / pl.col("actual_mean"))
+                .otherwise(None)
+                .alias("error_ratio"),
+            ]
         )
     
         # Fractions & bounds
         agg_df = agg_df.with_columns([
-            (pl.col("bin_id").cast(pl.Float64) / n_bins).alias("bin_frac_lower"),
-            ((pl.col("bin_id") + 1).cast(pl.Float64) / n_bins).alias("bin_frac_upper"),
-            ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center_frac"),
-            pl.col("pred_min_bin").alias("bin_lower"),
-            pl.col("pred_max_bin").alias("bin_upper"),
+            ((pl.col("bin_id").cast(pl.Float64) + 0.5) / n_bins).alias("bin_center_frac")
         ])
     
         # ---- Metadata ----
@@ -3847,13 +3866,26 @@ class RetroFit:
     
         # 2) Cast bin boundary fields to string (for nice categorical axes)
         bin_label_cols = [
-            "bin_frac_lower",
-            "bin_frac_upper",
-            "bin_center_frac",
-            "bin_lower",
-            "bin_upper",
+            "bin_center_frac"
         ]
         agg_df = agg_df.with_columns([pl.col(c).cast(pl.Utf8) for c in bin_label_cols])
+        
+        # ---- Select final columns ----
+        # We keep any ByVariables up front, then the calibration columns you care about.
+        final_cols = (
+            by_cols
+            + [
+                "bin_center_frac",
+                "n_obs",
+                "pred_mean",
+                "actual_mean",
+                "error_abs",
+                "error_pct",
+                "error_ratio",
+            ]
+        )
+
+        agg_df = agg_df.select(final_cols)
     
         # Optional store
         if store:
@@ -4163,6 +4195,155 @@ class RetroFit:
     
         return {"brier": brier, "mace": mace}
 
+    # Threshold metrics curve (with optional cost dictionary)
+    def plot_classification_threshold_metrics(
+        self,
+        DataName: str | None = None,
+        df=None,
+        ByVariables=None,
+        FitName: str | None = None,
+        CostDict: dict | None = None,
+        metrics_to_plot: list[str] | None = None,
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ):
+        """
+        Plot classification metrics vs. decision threshold using QuickEcharts.
+    
+        This uses `self.evaluate()` for binary classification and pulls out the
+        rows where EvalLevel == "threshold_curve". The x-axis is the threshold
+        (as a string), and the y-axis can include any subset of the metrics
+        computed by `evaluate()`.
+    
+        Parameters
+        ----------
+        DataName : str, optional
+            Which scored split to use (e.g., "train", "validation", "test").
+            If None, the internal default resolution is used.
+        df : polars.DataFrame, optional
+            Optional external dataframe to evaluate instead of self.ScoredData[DataName].
+        ByVariables : list[str], optional
+            Optional grouping variables for `evaluate()`.
+        FitName : str, optional
+            Optional model fit name passed through to `evaluate()`.
+        CostDict : dict, optional
+            Custom cost / utility dictionary for `evaluate()`.
+            Example keys: {"tpcost": 1.0, "fpcost": -1.0, "fncost": -5.0, "tncost": 0.0}
+        metrics_to_plot : list[str], optional
+            List of metric column names to plot on the y-axis. If None, a sensible
+            default subset of available metrics is used.
+        plot_name : str, optional
+            Name used for QuickEcharts RenderHTML argument. If None, an internal
+            name is generated.
+        Theme : str, default "neon"
+            QuickEcharts theme.
+    
+        Returns
+        -------
+        dict
+            {
+              "table": pl.DataFrame (threshold_curve rows),
+              "plot":  Charts.Line object,
+            }
+        """
+        if self.TargetType != "classification":
+            raise RuntimeError(
+                "plot_classification_threshold_metrics() is only valid for TargetType='classification'."
+            )
+    
+        # 1) Run evaluate() to get classification metrics, including threshold_curve
+        eval_df = self.evaluate(
+            DataName=DataName,
+            df=df,
+            ByVariables=ByVariables,
+            FitName=FitName,
+            CostDict=CostDict,
+        )
+    
+        if eval_df is None or eval_df.is_empty():
+            raise ValueError("evaluate() returned an empty DataFrame; cannot build threshold metrics plot.")
+    
+        # 2) Filter to threshold_curve rows
+        thr_df = eval_df.filter(pl.col("EvalLevel") == "threshold_curve")
+        if thr_df.is_empty():
+            raise ValueError("No rows with EvalLevel == 'threshold_curve' found in evaluate() output.")
+    
+        # 3) Threshold as string for x-axis, rounded for nicer labels
+        thr_df = thr_df.with_columns(
+            pl.col("Threshold")
+            .round(4)
+            .cast(pl.Utf8)
+            .alias("Threshold_str")
+        )
+    
+        # 4) Default metrics to plot = subset of what evaluate() actually returns
+        default_metrics = [
+            "Accuracy",
+            "TPR", "TNR", "FNR", "FPR",
+            "F1", "F2", "F0_5",
+            "PPV", "NPV",
+            "ThreatScore",
+            "MCC",
+            "Utility",
+        ]
+    
+        if metrics_to_plot is None:
+            metrics_to_plot = [m for m in default_metrics if m in thr_df.columns]
+        else:
+            # Only keep metrics that actually exist in the dataframe
+            metrics_to_plot = [m for m in metrics_to_plot if m in thr_df.columns]
+    
+        if not metrics_to_plot:
+            raise ValueError(
+                "No valid metrics_to_plot found in evaluate() output. "
+                f"Available columns include: {thr_df.columns}"
+            )
+    
+        # 5) Round numeric columns for tidier output
+        thr_df = u._round_df(thr_df)
+    
+        # 6) Build QuickEcharts Line chart
+        # Use only the x-axis and chosen metrics for the chart's data
+        dt_plot = thr_df.select(["Threshold_str"] + metrics_to_plot)
+    
+        source_label = DataName or "scored data"
+    
+        # CostDict info for subtitle (if provided)
+        if CostDict is not None:
+            tpc = CostDict.get("tpcost", 1.0)
+            fpc = CostDict.get("fpcost", -1.0)
+            fnc = CostDict.get("fncost", -1.0)
+            tnc = CostDict.get("tncost", 1.0)
+            subtitle = f"Costs: TP={tpc}, FP={fpc}, FN={fnc}, TN={tnc}"
+        else:
+            subtitle = "Costs: default CostDict in evaluate()"
+    
+        title = f"Classification Metrics vs Threshold ({source_label})"
+    
+        chart = Charts.Line(
+            dt=dt_plot,
+            PreAgg=True,
+            YVar=metrics_to_plot,
+            XVar="Threshold_str",
+            RenderHTML=plot_name,
+            Theme=Theme,
+            Width="100%",
+            Height="500px",
+            Symbol=None,
+            Legend="right",
+            LegendPosTop='16%',
+            LegendPosRight='1%',
+            Title=title,
+            SubTitle=subtitle,
+            YAxisTitle="Metric value",
+            XAxisTitle="Threshold",
+        )
+    
+        return {
+            "table": thr_df,
+            "plot": chart,
+        }
+
     # Classification ROC Table
     def _build_binary_roc_table(
         self,
@@ -4426,6 +4607,7 @@ class RetroFit:
             XVar="bin_center_frac",
             RenderHTML=plot_name,
             Theme=Theme,
+            Symbol=None,
             Width="100%",
             Height="360px",
             Title=f"Regression Calibration ({data_label or 'data'}, {binning})",
@@ -4493,11 +4675,11 @@ class RetroFit:
             target = self.TargetColumnName
     
         # 3) Build calibration table
-        cal = self.build_binary_calibration_table(
+        cal = self.build_regression_calibration_table(
             DataName=data_key if df is None else None,
             df=df_pl,
             target=target,
-            prob_col=prob_col,
+            pred_col=prob_col,
             ByVariables=None,
             n_bins=n_bins,
             binning=binning,
@@ -4515,9 +4697,6 @@ class RetroFit:
     
         subtitle = f"Brier = {metrics['brier']:.4f} · MACE = {metrics['mace']:.4f}"
     
-        # 5) Ensure sorted by bin_id for plotting
-        cal = cal.sort("bin_id")
-    
         # 6) Plot with QuickEcharts
         chart = Charts.Line(
             dt=cal,
@@ -4526,9 +4705,10 @@ class RetroFit:
             XVar="bin_center_frac",
             Title=f"Classification Calibration ({data_key})",
             SubTitle=subtitle,
+            Symbol=None,
             Width="100%",
             Height="360px",
-            YAxisTitle="Observed Positive Rate & Mean Predicted Probability",
+            YAxisTitle="Mean Observed & Mean Predicted",
             XAxisTitle=(
                 "Quantile Bins of Predicted Probabilities"
                 if binning == "quantile"
@@ -5505,6 +5685,7 @@ class RetroFit:
             XVar="feature_value",
             RenderHTML=plot_name,
             Theme=Theme,
+            Symbol=None,
             Width="100%",
             Height="360px",
             Title=title,
@@ -5557,6 +5738,7 @@ class RetroFit:
             XVar=feature,
             RenderHTML=plot_name,
             Theme=Theme,
+            Symbol=None,
             Width="100%",
             Height="360px",
             Title=title,
@@ -5572,11 +5754,12 @@ class RetroFit:
 
 
     #################################################
-    # PUBLIC: regression Model Insights Report
+    # PUBLIC: Model Insights Report
     #################################################
 
-    # Internal: build regression ModelInsightsBundle
-    def _build_regression_insights_bundle(
+    # Internal: build ModelInsightsBundle
+        # Internal: build ModelInsightsBundle
+    def _build_insights_bundle(
         self,
         data_name: str | None = None,
         split: str | None = None,
@@ -5585,21 +5768,18 @@ class RetroFit:
         top_n_fi: int = 10,
         top_n_ii: int = 10,
         theme: str = "neon",
+        CostDict: dict = None,
     ) -> ModelInsightsBundle:
         """
         Internal helper for build_regression_model_insights_report().
 
-        For now this is:
-          - regression only
-          - tables only (metrics, calibration, feature importance, etc.)
-          - no embedded QuickEcharts plots yet
+        Now supports both regression and classification via self.TargetType.
         """
-        if self.TargetType != "regression":
-            raise ValueError(
-                "ModelInsightsReport (regression) is only valid when TargetType='regression'."
-            )
+        is_classification = self.TargetType == "classification"
 
-        # Set theme
+        # -------------------------
+        # Theme mapping for QuickEcharts
+        # -------------------------
         if theme == "dark":
             Theme = "dark"
         elif theme == "neon":
@@ -5612,7 +5792,6 @@ class RetroFit:
         # -------------------------
         # Priority order:
         #   explicit data_name  -> explicit split  -> test -> validation -> train
-                # 1) Resolve which scored split to use
         candidates: list[str] = []
         if data_name:
             candidates.append(str(data_name).lower())
@@ -5627,8 +5806,11 @@ class RetroFit:
                 break
 
         if resolved is None:
-            raise RuntimeError(...)
-        
+            raise RuntimeError(
+                "No scored data found in self.ScoredData for any of "
+                f"{candidates}. Did you forget to call score_models()?"
+            )
+
         df_pl = self.ScoredData[resolved]
 
         # -------------------------
@@ -5671,16 +5853,48 @@ class RetroFit:
         feature_summary = df_to_table(feature_summary_df)
 
         # -------------------------
-        # 4) Core regression metrics for this split
+        # 4) Core metrics for this split
         # -------------------------
         target_col = self.TargetColumnName
         if target_col is None:
             raise RuntimeError(
-                "TargetColumnName is None; cannot build regression metrics for ModelInsightsReport."
+                "TargetColumnName is None; cannot build metrics for ModelInsightsReport."
             )
 
         pred_col = f"Predict_{target_col}"
-        metrics_df = self._compute_regression_core_metrics(df_pl, target_col, pred_col)
+
+        if not is_classification:
+            # Regression: keep existing lightweight helper
+            metrics_df = self._compute_regression_core_metrics(df_pl, target_col, pred_col)
+        else:
+            # Classification: use the main evaluate() output
+            thr_res = self.plot_classification_threshold_metrics(
+                DataName=resolved,
+                CostDict=None,          # or whatever was passed at the API level
+                plot_name=None,
+                Theme=Theme,
+            )
+
+            eval_df = thr_res['table']
+            calibration_plot = thr_res["plot"].render_embed()
+            
+            # Drop non-analytic / bookkeeping columns
+            cols_to_drop = [
+                c for c in [
+                  "ModelName",
+                  "CreateTime",
+                  "GroupingVars",
+                  "EvalLevel",
+                  "ClassIndex",
+                  "ClassName",
+                  "Threshold_str"
+                ]
+                if c in eval_df.columns
+            ]
+            
+            metrics_df = eval_df.drop(cols_to_drop)
+
+
         metrics_df = u._round_df(metrics_df)
         metrics_section = MetricsSection(
             table=df_to_table(metrics_df),
@@ -5688,63 +5902,147 @@ class RetroFit:
         )
 
         # --------------------------------------------
-        # 5) Calibration, density, scatter, residuals
+        # 5) Calibration + evaluation plots
         # --------------------------------------------
-        cal_ = self.plot_regression_calibration(
-            DataName=resolved,
-            n_bins=20,
-            binning="quantile",
-            plot_name=None,
-            Theme=Theme
-        )
-        
-        # Keep only the columns you care about (adjust names to match your actual output)
-        cal_df = cal_['table']
-        cols_to_keep = [
-            c for c in cal_df.columns
-            if c in ["bin_center_frac","n_obs","pred_mean","actual_mean","error_abs","error_pct","error_ratio"]
-        ]
-        cal_df_compact = cal_df.select(cols_to_keep)
-        cal_df_compact = u._round_df(cal_df_compact)
-        calibration_table = df_to_table(cal_df_compact)
-        calibration_plot = cal_['plot'].render_embed()
-        calibration_metrics = cal_['metrics']
+        if not is_classification:
+            # ----- Regression path -----
+            cal_ = self.plot_regression_calibration(
+                DataName=resolved,
+                n_bins=20,
+                binning="quantile",
+                plot_name=None,
+                Theme=Theme,
+            )
 
-        # Regression residuals
-        resid_ = self.plot_regression_residuals_vs_predicted(
-            DataName=resolved,
-            SampleSize=15000,
-            plot_name=None,
-            Theme=Theme,
-        )
-        residuals_plot_html = resid_["plot"].render_embed()
+            cal_df = cal_["table"]
+            cols_to_keep = [
+                c
+                for c in cal_df.columns
+                if c
+                in [
+                    "bin_center_frac",
+                    "n_obs",
+                    "pred_mean",
+                    "actual_mean",
+                    "error_abs",
+                    "error_pct",
+                    "error_ratio",
+                ]
+            ]
+            cal_df_compact = cal_df.select(cols_to_keep)
+            cal_df_compact = u._round_df(cal_df_compact)
+            calibration_table = df_to_table(cal_df_compact)
+            calibration_plot = cal_["plot"].render_embed()
 
-        # 5b) Regression Scatterplot
-        scatter_ = self.plot_regression_scatter(
-            DataName=resolved,
-            SampleSize=15000,
-            plot_name=None,
-            Theme=Theme,
-        )
-        actual_vs_pred_plot_html = scatter_["plot"].render_embed()
+            # Regression-only plots
+            resid_ = self.plot_regression_residuals_vs_predicted(
+                DataName=resolved,
+                SampleSize=15_000,
+                plot_name=None,
+                Theme=Theme,
+            )
+            residuals_plot_html = resid_["plot"].render_embed()
 
-        # 5c) Residual distribution
-        resid_dist_ = self.plot_regression_residual_distribution(
-            DataName=resolved,
-            n_bins=40,
-            plot_name=None,
-            Theme=Theme,
-        )
-        residual_dist_plot_html = resid_dist_["plot"].render_embed()
+            scatter_ = self.plot_regression_scatter(
+                DataName=resolved,
+                SampleSize=15_000,
+                plot_name=None,
+                Theme=Theme,
+            )
+            actual_vs_pred_plot_html = scatter_["plot"].render_embed()
 
-        # Pred & Act Distribution
-        pred_dist_ = self.plot_prediction_distribution(
-            DataName=resolved,
-            n_bins=40,
-            plot_name=None,
-            Theme=Theme,
-        )
-        prediction_dist_plot_html = pred_dist_["plot"].render_embed()
+            resid_dist_ = self.plot_regression_residual_distribution(
+                DataName=resolved,
+                n_bins=40,
+                plot_name=None,
+                Theme=Theme,
+            )
+            residual_dist_plot_html = resid_dist_["plot"].render_embed()
+
+            pred_dist_ = self.plot_prediction_distribution(
+                DataName=resolved,
+                n_bins=40,
+                plot_name=None,
+                Theme=Theme,
+            )
+            prediction_dist_plot_html = pred_dist_["plot"].render_embed()
+
+            # Classification-only slots
+            roc_plot_html = None
+            pr_plot_html = None
+            threshold_table_spec = None
+            threshold_plot_html = None
+
+        else:
+            
+            out = self.plot_classification_calibration(
+                DataName=resolved,
+                target=None,
+                plot_name=None,
+                Theme=Theme,
+            )
+            
+            cal_df = out["table"]
+            cols_to_keep = [
+                c
+                for c in cal_df.columns
+                if c
+                in [
+                    "bin_center_frac",
+                    "n_obs",
+                    "pred_mean",
+                    "actual_mean",
+                    "error_abs",
+                    "error_pct",
+                    "error_ratio",
+                ]
+            ]
+            cal_df_compact = cal_df.select(cols_to_keep)
+            cal_df_compact = u._round_df(cal_df_compact)
+            calibration_table = df_to_table(cal_df_compact)
+            calibration_plot = out['plot'].render_embed()
+            
+            # ROC curve
+            roc_ = self.plot_classification_roc(
+                DataName=resolved,
+                df=None,
+                target=None,      # let helper infer from TargetColumnName
+                prob_col="p1",    # standard binary prob column
+                plot_name=None,
+                Theme=Theme,
+            )
+            roc_plot_html = roc_["plot"].render_embed()
+
+            # Precision–Recall curve
+            pr_ = self.plot_classification_pr(
+                DataName=resolved,
+                df=None,
+                target=None,
+                prob_col="p1",
+                plot_name=None,
+                Theme=Theme,
+            )
+            pr_plot_html = pr_["plot"].render_embed()
+
+            # Metrics vs Threshold (uses public helper we just built)
+            thr_ = self.plot_classification_threshold_metrics(
+                DataName=resolved,
+                df=None,
+                FitName=None,
+                ByVariables=None,
+                CostDict=None,   # default cost dict; caller can override in public API
+                plot_name=None,
+                Theme=Theme,
+            )
+            thr_df = u._round_df(thr_["table"])
+            threshold_table_spec = df_to_table(thr_df)
+            threshold_plot_html = thr_["plot"].render_embed()
+
+            # Regression-only plots are not applicable for classification
+            residuals_plot_html = None
+            actual_vs_pred_plot_html = None
+            residual_dist_plot_html = None
+            prediction_dist_plot_html = None
 
         # -------------------------
         # 6) Feature importance (compute on the fly)
@@ -5755,10 +6053,10 @@ class RetroFit:
             sort=True,
             top_n=top_n_fi,
         )
-        
+
         df_imp = u._round_df(df_imp)
         feature_importance_table = df_to_table(df_imp)
-        
+
         # -------------------------
         # 6b) Interaction importance (CatBoost only)
         # -------------------------
@@ -5771,8 +6069,7 @@ class RetroFit:
                 )
                 df_int = u._round_df(df_int)
                 interaction_importance_table = df_to_table(df_int)
-            except Exception as e:
-                # Fail soft: don't kill the whole report if interaction importance breaks
+            except Exception:
                 interaction_importance_table = None
         else:
             interaction_importance_table = None
@@ -5780,25 +6077,19 @@ class RetroFit:
         # -------------------------
         # 7) PDP plots (numeric + categorical)
         # -------------------------
-        pdp_numeric_plots = []
-        pdp_categorical_plots = []
+        pdp_numeric_plots: list[dict[str, Any]] = []
+        pdp_categorical_plots: list[dict[str, Any]] = []
 
-        # How many features do you want PDPs for?
         top_n = top_n_pdp
 
-        # Choose numeric features that exist in the scored data
         numeric_features = [
-            f for f in (self.NumericColumnNames or [])
-            if f in df_pl.columns
+            f for f in (self.NumericColumnNames or []) if f in df_pl.columns
         ][:top_n]
 
-        # Choose categorical features that exist in the scored data
         categorical_features = [
-            f for f in (self.CategoricalColumnNames or [])
-            if f in df_pl.columns
+            f for f in (self.CategoricalColumnNames or []) if f in df_pl.columns
         ][:top_n]
 
-        # Numeric PDPs
         for feature in numeric_features:
             try:
                 res = self.plot_pdp_numeric(
@@ -5807,7 +6098,7 @@ class RetroFit:
                     n_bins=20,
                     binning="quantile",
                     plot_name=None,
-                    Theme=Theme
+                    Theme=Theme,
                 )
                 pdp_numeric_plots.append(
                     {
@@ -5816,10 +6107,8 @@ class RetroFit:
                     }
                 )
             except Exception:
-                # Don't let one feature kill the report
                 continue
 
-        # Categorical PDPs
         for feature in categorical_features:
             try:
                 res = self.plot_pdp_categorical(
@@ -5827,7 +6116,7 @@ class RetroFit:
                     DataName=resolved,
                     sort_by="feature",
                     plot_name=None,
-                    Theme=Theme
+                    Theme=Theme,
                 )
                 pdp_categorical_plots.append(
                     {
@@ -5843,11 +6132,10 @@ class RetroFit:
         # -------------------------
         shap_summary_table = None
         shap_summary_plot = None
-        shap_dependence_plots = []
+        shap_dependence_plots: list[dict[str, Any]] = []
 
         if self.Algorithm in ("catboost", "xgboost", "lightgbm"):
             try:
-                # Compute SHAP values for the same split we used for scoring/PDP
                 shap_attached = self.compute_shap_values(
                     split=resolved,
                     df=None,
@@ -5857,7 +6145,6 @@ class RetroFit:
                     include_base_term=True,
                 )
 
-                # SHAP summary table (top_n_fi by default)
                 shap_summary_df = self.build_shap_summary(
                     split=None,
                     df=None,
@@ -5870,7 +6157,6 @@ class RetroFit:
                 shap_summary_df = u._round_df(shap_summary_df)
                 shap_summary_table = df_to_table(shap_summary_df)
 
-                # SHAP summary plot (boxplot)
                 shap_summary_plot_res = self.plot_shap_summary(
                     split=None,
                     df=None,
@@ -5884,12 +6170,9 @@ class RetroFit:
                 )
                 shap_summary_plot = shap_summary_plot_res["plot"].render_embed()
 
-                # SHAP dependence plots for top few features
-                shap_dependence_plots = []
                 top_features = shap_summary_df["Feature"].to_list()
                 max_dep = min(len(top_features), 6)
 
-                # ---- default behavior: one plot per feature ----
                 for feat in top_features[:max_dep]:
                     try:
                         dep_res = self.plot_shap_dependence(
@@ -5908,11 +6191,9 @@ class RetroFit:
                             }
                         )
                     except Exception:
-                        # Don't let one feature kill the report
                         continue
 
             except Exception:
-                # Fail soft: if SHAP dies, just omit the SHAP section
                 shap_summary_table = None
                 shap_summary_plot = None
                 shap_dependence_plots = []
@@ -5924,7 +6205,7 @@ class RetroFit:
         model_type = self.Algorithm
 
         bundle = ModelInsightsBundle(
-            problem_type="regression",
+            problem_type=self.TargetType,
             model_name=model_name,
             model_type=model_type,
             target_col=target_col,
@@ -5939,6 +6220,9 @@ class RetroFit:
             actual_vs_pred_plot=actual_vs_pred_plot_html,
             residual_dist_plot=residual_dist_plot_html,
             prediction_dist_plot=prediction_dist_plot_html,
+            roc_plot=roc_plot_html,
+            pr_plot=pr_plot_html,
+            threshold_metrics_plot=threshold_plot_html,
             feature_importance_table=feature_importance_table,
             interaction_importance_table=interaction_importance_table,
             pdp_numeric_plots=pdp_numeric_plots,
@@ -5946,13 +6230,13 @@ class RetroFit:
             shap_summary_table=shap_summary_table,
             shap_summary_plot=shap_summary_plot,
             shap_dependence_plots=shap_dependence_plots,
-            extra={"split": resolved},
+            extra=None,
         )
 
         return bundle
 
-    # Regression report
-    def build_regression_model_insights_report(
+    # Insights report
+    def build_model_insights_report(
         self,
         output_path: str,
         data_name: str | None = None,
@@ -5961,6 +6245,7 @@ class RetroFit:
         top_n_fi: int = 10,
         top_n_ii: int = 10,
         theme: str = "neon",
+        CostDict: dict = None,
     ) -> str:
         """
         Build a standalone HTML Model Insights Report for a regression RetroFit model.
@@ -5980,13 +6265,14 @@ class RetroFit:
         str
             Path to the generated HTML file.
         """
-        bundle = self._build_regression_insights_bundle(
+        bundle = self._build_insights_bundle(
             data_name=data_name,
             split=split,
             top_n_pdp=top_n_pdp,
             top_n_fi=top_n_fi,
             top_n_ii=top_n_ii,
             theme=theme,
+            CostDict=CostDict,
         )
         html = _render_model_insights_html(
             bundle,
