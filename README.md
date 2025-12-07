@@ -305,7 +305,7 @@ model.score()
 # Build regression report
 path = model.build_model_insights_report(
     output_path="regression_report.html",
-    theme="light"
+    theme="neon",
 )
 
 # Inspect scored data
@@ -770,7 +770,7 @@ model.score()
 # Build regression report
 path = model.build_model_insights_report(
     output_path="regression_report.html",
-    theme="light"
+    theme="neon",
 )
 
 # Inspect scored data
@@ -1304,7 +1304,7 @@ model.score()
 # Build regression report
 path = model.build_model_insights_report(
     output_path="regression_report.html",
-    theme="light"
+    theme="neon",
 )
 
 # Inspect scored data
