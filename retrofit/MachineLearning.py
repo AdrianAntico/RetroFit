@@ -792,7 +792,7 @@ class RetroFit:
 
         # CatBoost
         if self.Algorithm == "catboost":
-        
+
             AlgoArgs: dict[str, t.Any] = {}
         
             ###############################
@@ -829,16 +829,20 @@ class RetroFit:
                 AlgoArgs["sampling_frequency"] = "PerTreeLevel"
                 AlgoArgs["rsm"] = 0.80
                 AlgoArgs["bootstrap_type"] = "MVS"
-                AlgoArgs["langevin"] = True
-                AlgoArgs["diffusion_temperature"] = 10000
-                AlgoArgs["subsample"] = 1.0
+        
+            # 🔍 Advanced / experimental knobs: explicit but OFF by default
+            # (so they show up in print_algo_args, but do nothing until the user sets them)
+            AlgoArgs["langevin"] = False
+            AlgoArgs["diffusion_temperature"] = None
+            AlgoArgs["subsample"] = None
+            AlgoArgs["posterior_sampling"] = False
         
             ###############################
             # Core Parameters
             ###############################
             AlgoArgs["allow_writing_files"] = False
-            AlgoArgs["learning_rate"] = None          # let grid/AutoTune handle
-            AlgoArgs["l2_leaf_reg"] = None            # gridable
+            AlgoArgs["learning_rate"] = None
+            AlgoArgs["l2_leaf_reg"] = None
             AlgoArgs["has_time"] = False
             AlgoArgs["best_model_min_trees"] = 10
             AlgoArgs["nan_mode"] = "Min"
@@ -859,23 +863,33 @@ class RetroFit:
             ###############################
             # Dependent Model Parameters
             ###############################
-        
-            # task_type dependent (kept same for now)
             AlgoArgs["random_strength"] = 1.0
-            AlgoArgs["posterior_sampling"] = False
             AlgoArgs["score_function"] = "L2"
             AlgoArgs["border_count"] = 254
         
-            # Langevin is typically paired with Bayesian bootstrap & posterior_sampling
+            # 🔐 If user turns Langevin ON, make params internally consistent
             if AlgoArgs.get("langevin", False):
+                # Langevin should pair with Bayesian + posterior_sampling
                 AlgoArgs["bootstrap_type"] = "Bayesian"
                 AlgoArgs["posterior_sampling"] = True
+        
+                # Provide a sensible default if user didn't set one
+                if AlgoArgs.get("diffusion_temperature") is None:
+                    AlgoArgs["diffusion_temperature"] = 10000
+        
+                # Bayesian bootstrap doesn't support subsample
+                AlgoArgs.pop("subsample", None)
+        
+            # Even if Langevin is off, still enforce: Bayesian + subsample is illegal
+            if AlgoArgs.get("bootstrap_type") == "Bayesian" and AlgoArgs.get("subsample") is not None:
+                AlgoArgs.pop("subsample")
         
             # boost_from_average
             if AlgoArgs["loss_function"] in ["RMSE", "Logloss", "CrossEntropy", "Quantile", "MAE", "MAPE"]:
                 AlgoArgs["boost_from_average"] = True
             else:
                 AlgoArgs["boost_from_average"] = False
+
 
         # XGBoost
         if self.Algorithm == "xgboost":
@@ -2947,38 +2961,13 @@ class RetroFit:
     ) -> pl.DataFrame:
         """
         Build a SHAP summary table with per-feature importance statistics.
-
+    
         This computes, for each feature (and optional grouping variables):
           - count
           - mean_shap
           - mean_abs_shap
           - std_shap
           - share_of_total_abs_shap (relative importance within each group)
-
-        Parameters
-        ----------
-        split
-            One of 'train', 'validation', 'test', or None.
-            If provided, SHAP is computed on the internal split using stored data.
-        df
-            External data (Polars / pandas). Used when split is None.
-        ModelName
-            Optional name of a trained model in FitList. If None, uses self.Model.
-        by_vars
-            Optional list of column names to group by before summarising SHAP values
-            (e.g. ["Month"], ["Channel"], ["Month", "Channel"]).
-        prefix
-            Prefix for SHAP columns (e.g., "shap_").
-        top_n
-            If provided, keep only the top N features per group by mean_abs_shap.
-
-        Returns
-        -------
-        pl.DataFrame
-            Summary table with columns:
-              [by_vars...] + ["Feature", "count", "mean_shap",
-                              "mean_abs_shap", "std_shap",
-                              "share_of_total_abs_shap"]
         """
         # 0) Resolve source: shap_attached vs split/df
         if shap_attached is None:
@@ -2990,7 +2979,7 @@ class RetroFit:
                 prefix=prefix,
                 include_base_term=True,
             )
-
+    
         # 2) Identify SHAP columns (excluding base_value)
         base_value_col = f"{prefix}base_value"
         shap_cols: list[str] = [
@@ -3002,12 +2991,10 @@ class RetroFit:
                 f"No SHAP columns found with prefix {prefix!r}. "
                 "Ensure compute_shap_values() was called correctly."
             )
-
+    
         # Map shap column -> feature name (remove prefix)
-        feature_basenames: list[str] = [
-            c[len(prefix):] for c in shap_cols
-        ]
-
+        feature_basenames: list[str] = [c[len(prefix):] for c in shap_cols]
+    
         # 3) Validate by-vars
         group_keys: list[str] = by_vars or []
         for col in group_keys:
@@ -3015,13 +3002,13 @@ class RetroFit:
                 raise KeyError(
                     f"Grouping column {col!r} not found in SHAP-attached data."
                 )
-
+    
         # 4) Wide aggregation: group_by(by_vars) and compute stats per shap_* column
         agg_exprs: list[pl.Expr] = []
-
+    
         # count per group
         agg_exprs.append(pl.len().alias("count"))
-
+    
         # stats for each shap column
         for shap_col, base in zip(shap_cols, feature_basenames):
             col_expr = pl.col(shap_col)
@@ -3036,10 +3023,10 @@ class RetroFit:
         else:
             # No grouping -> single global group
             wide = shap_attached.select(agg_exprs)
-
+    
         # 5) Compute share_of_total_abs_shap per row (per group)
         mean_abs_cols = [f"{base}__mean_abs_shap" for base in feature_basenames]
-
+    
         wide = wide.with_columns(
             pl.sum_horizontal([pl.col(c) for c in mean_abs_cols]).alias("__total_abs__")
         )
@@ -3053,7 +3040,7 @@ class RetroFit:
 
         wide = wide.with_columns(share_exprs).drop("__total_abs__")
 
-        # 6) Melt wide table into tidy long format:
+        # 6) Unpivot wide → long:
         #    [by_vars...] | Feature | count | mean_shap | mean_abs_shap | std_shap | share_of_total_abs_shap
 
         id_vars = group_keys + ["count"]
@@ -3061,64 +3048,69 @@ class RetroFit:
         # mean_shap
         mean_shap_cols = [f"{base}__mean_shap" for base in feature_basenames]
         mean_long = (
-            wide.melt(
-                id_vars=id_vars,
-                value_vars=mean_shap_cols,
-                variable_name="Feature",
-                value_name="mean_shap",
+            wide.unpivot(
+                index=id_vars,
+                on=mean_shap_cols,
             )
             .with_columns(
-                pl.col("Feature")
+                pl.col("variable")
+                .cast(pl.Utf8)
                 .str.replace(r"__mean_shap$", "")
-                .alias("Feature")
+                .alias("Feature"),
+                pl.col("value").alias("mean_shap"),
             )
+            .select(id_vars + ["Feature", "mean_shap"])
         )
 
         # mean_abs_shap
+        mean_abs_cols = [f"{base}__mean_abs_shap" for base in feature_basenames]
         mean_abs_long = (
-            wide.melt(
-                id_vars=id_vars,
-                value_vars=mean_abs_cols,
-                variable_name="Feature",
-                value_name="mean_abs_shap",
+            wide.unpivot(
+                index=id_vars,
+                on=mean_abs_cols,
             )
             .with_columns(
-                pl.col("Feature")
+                pl.col("variable")
+                .cast(pl.Utf8)
                 .str.replace(r"__mean_abs_shap$", "")
-                .alias("Feature")
+                .alias("Feature"),
+                pl.col("value").alias("mean_abs_shap"),
             )
+            .select(id_vars + ["Feature", "mean_abs_shap"])
         )
 
         # std_shap
         std_cols = [f"{base}__std_shap" for base in feature_basenames]
         std_long = (
-            wide.melt(
-                id_vars=id_vars,
-                value_vars=std_cols,
-                variable_name="Feature",
-                value_name="std_shap",
+            wide.unpivot(
+                index=id_vars,
+                on=std_cols,
             )
             .with_columns(
-                pl.col("Feature")
+                pl.col("variable")
+                .cast(pl.Utf8)
                 .str.replace(r"__std_shap$", "")
-                .alias("Feature")
+                .alias("Feature"),
+                pl.col("value").alias("std_shap"),
             )
+            .select(id_vars + ["Feature", "std_shap"])
         )
 
         # share_of_total_abs_shap
         share_cols = [f"{base}__share_abs_shap" for base in feature_basenames]
         share_long = (
-            wide.melt(
-                id_vars=id_vars,
-                value_vars=share_cols,
-                variable_name="Feature",
-                value_name="share_of_total_abs_shap",
+            wide.unpivot(
+                index=id_vars,
+                on=share_cols,
             )
             .with_columns(
-                pl.col("Feature")
+                pl.col("variable")
+                .cast(pl.Utf8)
                 .str.replace(r"__share_abs_shap$", "")
-                .alias("Feature")
+                .alias("Feature"),
+                pl.col("value").alias("share_of_total_abs_shap"),
             )
+            .select(id_vars + ["Feature", "share_of_total_abs_shap"])
         )
 
         # 7) Join all long tables on [group_keys + "count" + "Feature"]
@@ -3139,7 +3131,7 @@ class RetroFit:
             )
         else:
             summary = summary.sort("mean_abs_shap", descending=True)
-
+    
         # optionally apply top_n
         if top_n is not None:
             if group_keys:
@@ -3150,7 +3142,7 @@ class RetroFit:
                 )
             else:
                 summary = summary.head(top_n)
-
+    
         # Final tidy column order
         final_cols = group_keys + [
             "Feature",
@@ -3161,8 +3153,9 @@ class RetroFit:
             "share_of_total_abs_shap",
         ]
         summary = summary.select(final_cols)
-
+    
         return summary
+
 
     # Shap Box Plot
     def plot_shap_summary(
@@ -3239,7 +3232,7 @@ class RetroFit:
         # 2) Build summary + select top_n features
         # -------------------------
         summary = self.build_shap_summary(
-            split=None,            # we are passing shap_attached directly
+            split=None,
             df=None,
             shap_attached=shap_attached,
             ModelName=None,
@@ -3247,11 +3240,11 @@ class RetroFit:
             prefix=prefix,
             top_n=top_n,
         )
-    
+
         top_features = summary["Feature"].to_list()
         if not top_features:
             raise ValueError("No features found in SHAP summary for plotting.")
-    
+
         # -------------------------
         # 3) Optional row sampling to keep the plot light
         # -------------------------
@@ -3273,21 +3266,22 @@ class RetroFit:
                 "None of the expected SHAP columns were found in shap_attached. "
                 f"Expected columns: {[prefix + f for f in top_features]}"
             )
-    
+
         dt_long = (
-            shap_sampled.melt(
-                id_vars=[],
-                value_vars=shap_cols,
-                variable_name="Feature",
-                value_name="shap_value",
+            shap_sampled.unpivot(
+                index=[],
+                on=shap_cols,
             )
             .with_columns(
-                pl.col("Feature")
+                pl.col("variable")
+                .cast(pl.Utf8)
                 .str.replace(f"^{prefix}", "")
-                .alias("Feature")
+                .alias("Feature"),
+                pl.col("value").alias("shap_value"),
             )
+            .select(["Feature", "shap_value"])
         )
-    
+
         # -------------------------
         # 5) Build title/subtitle
         # -------------------------
@@ -3314,7 +3308,7 @@ class RetroFit:
             Title=title,
             SubTitle=subtitle,
         )
-    
+
         return {
             "summary": summary,
             "plot": chart,

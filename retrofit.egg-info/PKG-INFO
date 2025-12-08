@@ -1,6 +1,6 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: retrofit
-Version: 0.3.1
+Version: 0.3.2
 Summary: High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico, Sean Benner
@@ -34,9 +34,8 @@ Requires-Dist: PolarsFE
 Requires-Dist: pyarrow
 Requires-Dist: scikit-learn
 Requires-Dist: jinja2
-Dynamic: license-file
 
-![Version: 0.3.1](https://img.shields.io/static/v1?label=Version&message=0.3.1&color=blue&?style=plastic)
+![Version: 0.3.2](https://img.shields.io/static/v1?label=Version&message=0.3.2&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
@@ -51,7 +50,7 @@ Dynamic: license-file
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.3.0
+pip install retrofit==0.3.2
 ```
 
 <br>
