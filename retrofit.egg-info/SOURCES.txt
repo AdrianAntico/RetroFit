@@ -32,3 +32,5 @@ retrofit/images/RetroFitLogo.png
 retrofit/images/Shap_PDP.PNG
 retrofit/images/Shap_Summary.PNG
 retrofit/images/Threshold_Plot.PNG
+retrofit/templates/__init__.py
+retrofit/templates/model_insights_regression.html

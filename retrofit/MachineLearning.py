@@ -101,7 +101,6 @@ class RetroFit:
       update_model_parameters
 
       train
-
       score
 
       save_retrofit
@@ -121,7 +120,6 @@ class RetroFit:
       plot_classification_calibration
       plot_classification_roc
       plot_classification_pr
-      plot_confusion_matrix
       plot_pdp_categorical
 
     Attributes:
@@ -5754,11 +5752,10 @@ class RetroFit:
 
 
     #################################################
-    # PUBLIC: Model Insights Report
+    # Model Insights Report
     #################################################
 
     # Internal: build ModelInsightsBundle
-        # Internal: build ModelInsightsBundle
     def _build_insights_bundle(
         self,
         data_name: str | None = None,
