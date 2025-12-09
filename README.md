@@ -201,9 +201,73 @@ All plots are powered by QuickEcharts:
 - Works with internal or external data
 - Returns both table and plot object
 
+
 ---
 
-### 📑 10. Model Insights Reports
+### 🧠 10. SHAP Explainability (Tree Models)
+
+RetroFit includes **native SHAP support** for tree-based models:
+
+✅ CatBoost  
+✅ XGBoost  
+✅ LightGBM  
+
+SHAP values are computed directly from the trained model and returned in **Polars-native** structures for fast aggregation and visualization.
+
+---
+
+#### ✅ SHAP Summary Table
+
+RetroFit builds a **feature-level SHAP importance table**, including:
+
+- Mean SHAP value  
+- Mean absolute SHAP value (importance)
+- Standard deviation of SHAP values
+- Share of total absolute SHAP importance
+- Optional grouping (time, segment, channel, etc.)
+
+This table powers both:
+- Model diagnostics
+- Feature ranking
+- Report generation
+
+Example output columns:
+Feature | count | mean_shap | mean_abs_shap | std_shap | share_of_total_abs_shap
+
+
+---
+
+#### 📊 SHAP Summary Plot
+
+A SHAP **summary distribution plot** (box-style) is automatically generated:
+
+- One row per feature
+- Distribution of SHAP contributions
+- Sorted by importance
+- Powered by QuickEcharts
+- HTML-renderable and report-ready
+
+This gives a fast visual answer to:
+> *Which features matter most, and how variable is their impact?*
+
+---
+
+#### 🔍 SHAP Dependence Plots
+
+RetroFit also supports **SHAP dependence plots** for top features:
+
+- SHAP value vs feature value
+- Optional binning for stability
+- Clean, interactive QuickEcharts Line visuals
+- Works on internal scored data or external data
+
+These plots help explain:
+> *How does changing this feature actually move predictions?*
+
+
+---
+
+### 📑 11. Model Insights Reports
 
 RetroFit can generate fully self-contained HTML Model Insights Reports for both regression and classification models.
 
