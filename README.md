@@ -34,7 +34,7 @@ pip install retrofit==0.3.2
   - [ROC / PR / PR-ROC Curves](#-7-roc--pr--pr-roc-curves)
   - [QuickEcharts Visuals](#-8-quickecharts-visuals)
   - [Partial Dependence Plots (PDP)](#9--partial-dependence-plots-pdp)
-  - [SHAP Explainability](#shap-explainability-tree-models)
+  - [SHAP Explainability](#-10-shap-explainability-tree-models)
 - [Code Examples](#code-examples)
   - [CatBoost Examples](#catboost-examples)
   - [XGBoost Examples](#xgboost-examples)
