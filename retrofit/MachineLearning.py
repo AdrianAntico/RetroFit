@@ -1,8 +1,7 @@
 # Module: MachineLearning
 # Author: Adrian Antico <adrianantico@gmail.com>
 # License: MIT
-# Release: retrofit 0.2.0
-# Last modified : 2025-11-15
+# Last modified : 2025-12-08
 
 import pickle
 import math
@@ -1827,6 +1826,187 @@ class RetroFit:
     # Function: Evaluation
     #################################################
     
+    # classification metrics for business people
+    def compute_deciles_table(
+        self,
+        DataName: str | None = None,
+        prob_col: str | None = None,
+        target_col: str | None = None,
+        n_deciles: int = 10,
+    ) -> pl.DataFrame:
+        """
+        Build a deciles-style table for binary classification using
+        fixed probability bands on [0, 1], with descriptive range labels.
+        """
+        # -------------------------
+        # Resolve split
+        # -------------------------
+        candidates: list[str] = []
+        if DataName:
+            candidates.append(str(DataName).lower())
+        candidates.extend(["test", "validation", "train"])
+    
+        resolved: str | None = None
+        for key in candidates:
+            if key in getattr(self, "ScoredData", {}) and self.ScoredData[key] is not None:
+                resolved = key
+                break
+    
+        if resolved is None:
+            raise RuntimeError(
+                "No scored data found for deciles table. "
+                "Run .score() first or provide a valid DataName."
+            )
+    
+        df = self.ScoredData[resolved]
+    
+        # -------------------------
+        # Resolve columns
+        # -------------------------
+        if prob_col is None:
+            if "p1" in df.columns:
+                prob_col = "p1"
+            else:
+                raise KeyError(
+                    "Could not infer probability column for deciles table. "
+                    "Pass prob_col explicitly (e.g., 'p1')."
+                )
+    
+        if target_col is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError(
+                    "TargetColumnName is None; cannot build deciles table."
+                )
+            target_col = self.TargetColumnName
+    
+        df = df.select([prob_col, target_col]).drop_nulls([prob_col, target_col])
+        if df.is_empty():
+            raise ValueError("No non-null rows available to build deciles table.")
+    
+        df = df.with_columns(pl.col(prob_col).clip(0.0, 1.0).alias(prob_col))
+    
+        total_n = df.height
+        total_P = df.select(pl.col(target_col).sum()).item()
+    
+        # -------------------------
+        # Assign fixed-width probability bands
+        # -------------------------
+        n_dec = max(int(n_deciles), 1)
+        width = 1.0 / n_dec
+    
+        df = df.with_columns(
+            (
+                (pl.col(prob_col) * n_dec)
+                .floor()
+                .cast(pl.Int64)
+                .clip(0, n_dec - 1)
+            ).alias("bin_idx")
+        )
+    
+        # -------------------------
+        # Aggregate per band
+        # -------------------------
+        t = pl.col(target_col)
+    
+        grouped = (
+            df.group_by("bin_idx")
+            .agg(
+                pl.len().alias("n_obs"),
+                t.sum().alias("Actual_P"),
+            )
+            .with_columns(
+                (pl.col("n_obs") - pl.col("Actual_P")).alias("Actual_N")
+            )
+        )
+    
+        # -------------------------
+        # Build numeric bounds and decile index
+        # -------------------------
+        grouped = grouped.with_columns(
+            (pl.col("bin_idx") + 1).alias("decile_index"),
+            (pl.col("bin_idx").cast(pl.Float64) * width).alias("_lower"),
+            ((pl.col("bin_idx") + 1).cast(pl.Float64) * width).alias("_upper"),
+        )
+    
+        grouped = grouped.with_columns(
+            pl.when(pl.col("decile_index") == n_dec)
+            .then(1.0)
+            .otherwise(pl.col("_upper"))
+            .alias("_upper")
+        )
+    
+        # Build string labels for lower/upper like "0" / "0.1"
+        grouped = grouped.with_columns(
+            pl.col("_lower").round(1).cast(pl.Utf8).str.replace(r"\.0$", "").alias("_lower_str"),
+            pl.col("_upper").round(1).cast(pl.Utf8).str.replace(r"\.0$", "").alias("_upper_str"),
+        )
+    
+        # Closing bracket: ")" except last band uses "]"
+        grouped = grouped.with_columns(
+            pl.when(pl.col("decile_index") == n_dec)
+            .then(pl.lit("]"))
+            .otherwise(pl.lit(")"))
+            .alias("_close_bracket")
+        )
+    
+        # Final human-readable band label, e.g. "[0, 0.1)"
+        grouped = grouped.with_columns(
+            pl.concat_str(
+                [
+                    pl.lit("["),
+                    pl.col("_lower_str"),
+                    pl.lit(", "),
+                    pl.col("_upper_str"),
+                    pl.col("_close_bracket"),
+                ]
+            ).alias("score_band")
+        )
+    
+        # -------------------------
+        # Sort from lowest scores up and add rates / shares
+        # -------------------------
+        grouped = grouped.sort("decile_index", descending=False)
+    
+        grouped = grouped.with_columns(
+            # Band-level event rate (Actual P / n_obs)
+            (pl.col("Actual_P") / pl.col("n_obs")).alias("actual_pos_rate"),
+    
+            # Share of total population in this band
+            (pl.col("n_obs") / float(total_n)).alias("population_share"),
+    
+            # Share of all positives in this band
+            pl.when(total_P > 0)
+            .then(pl.col("Actual_P") / float(total_P))
+            .otherwise(0.0)
+            .alias("positive_share"),
+    
+            # Cumulative counts from lowest → highest band
+            pl.col("n_obs").cum_sum().alias("cum_n_obs"),
+            pl.col("Actual_P").cum_sum().alias("cum_Actual_P"),
+        ).with_columns(
+            # Cumulative shares from lowest → highest band
+            pl.col("population_share").cum_sum().alias("cum_population_share"),
+            pl.col("positive_share").cum_sum().alias("cum_positive_share"),
+        )
+    
+        grouped = grouped.select(
+            [
+                "score_band",
+                "n_obs",
+                "Actual_P",
+                "Actual_N",
+                "actual_pos_rate",
+                "population_share",
+                "positive_share",
+                "cum_n_obs",
+                "cum_Actual_P",
+                "cum_population_share",
+                "cum_positive_share",
+            ]
+        )
+    
+        return grouped
+
     # Main Evaluation Function
     def evaluate(
         self,
@@ -6029,6 +6209,18 @@ class RetroFit:
             threshold_table_spec = df_to_table(thr_df)
             threshold_plot_html = thr_["plot"].render_embed()
 
+            # --------------------------------
+            # Classification-only deciles table
+            # --------------------------------
+            deciles_table = None
+            try:
+                deciles_df = self.compute_deciles_table(DataName=resolved)
+                deciles_df = u._round_df(deciles_df)
+                deciles_table = df_to_table(deciles_df)
+            except Exception:
+                # Fail soft: don't kill the report if deciles break
+                deciles_table = None
+
             # Regression-only plots are not applicable for classification
             residuals_plot_html = None
             actual_vs_pred_plot_html = None
@@ -6221,6 +6413,7 @@ class RetroFit:
             shap_summary_table=shap_summary_table,
             shap_summary_plot=shap_summary_plot,
             shap_dependence_plots=shap_dependence_plots,
+            deciles_table=deciles_table,
             extra=None,
         )
 

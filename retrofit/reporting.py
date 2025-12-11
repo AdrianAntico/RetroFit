@@ -81,6 +81,9 @@ class ModelInsightsBundle:
     shap_summary_table: Optional[TableSpec]
     shap_summary_plot: Optional[str]
     shap_dependence_plots: Optional[List[Dict[str, Any]]]
+    
+    # Decile table for business people
+    deciles_table: Optional[TableSpec]
 
     # Extra hook if you want it later
     extra: Dict[str, Any]
