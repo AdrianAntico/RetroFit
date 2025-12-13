@@ -719,6 +719,12 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1255,6 +1261,12 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1788,6 +1800,12 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1862,6 +1880,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Threshold_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Confusion_Matrix.PNG' align='center' width='1000' />
 
 
 </p>

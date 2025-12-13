@@ -3,6 +3,7 @@
 # License: MIT
 # Last modified : 2025-12-08
 
+from typing import Any, Dict, List, Optional
 import pickle
 import math
 from pathlib import Path
@@ -866,7 +867,7 @@ class RetroFit:
             AlgoArgs["score_function"] = "L2"
             AlgoArgs["border_count"] = 254
         
-            # 🔐 If user turns Langevin ON, make params internally consistent
+            # If user turns Langevin ON, make params internally consistent
             if AlgoArgs.get("langevin", False):
                 # Langevin should pair with Bayesian + posterior_sampling
                 AlgoArgs["bootstrap_type"] = "Bayesian"
@@ -1573,117 +1574,128 @@ class RetroFit:
     ):
         """
         Decode encoded target labels and predicted labels back to original values.
-
-        Parameters
-        ----------
-        df : polars.DataFrame or pandas.DataFrame or None
-            Scored data to decode. If None, uses self.ScoredData[DataName].
-        DataName : {"train", "validation", "test"} or None
-            Name of internally scored dataset in self.ScoredData.
-            Ignored if `df` is provided.
-        threshold : float
-            Threshold for binary classification when converting probabilities
-            to predicted class (0 / 1).
-
-        Returns
-        -------
-        pl.DataFrame
-            DataFrame with:
-              - original numeric-encoded target still present (unchanged)
-              - 'TrueLabel' : original label values (decoded)
-              - 'PredictedLabel' : original label values for predictions
-                (for classification / multiclass).
+    
+        Returns a Polars DataFrame with:
+          - 'TrueLabel'
+          - '_PredictedClassIdx' (classification/multiclass)
+          - 'PredictedLabel'     (classification/multiclass)
         """
+        import polars as pl
+        import re
+    
         if self.TargetType not in ("classification", "multiclass"):
             raise ValueError(
                 "decode_predictions() is only relevant for classification / multiclass."
             )
-
-        if self.LabelMappingInverse is None:
+    
+        if getattr(self, "LabelMappingInverse", None) is None:
             raise RuntimeError(
                 "LabelMappingInverse is None. Target labels were not encoded or "
                 "create_model_data() was not called with string labels."
             )
-
+    
         # Resolve input DataFrame
         if df is not None:
             df_pl = self._normalize_input_df(df)
         else:
             if DataName is None:
                 raise ValueError("Must supply DataName or df to decode_predictions().")
-            df_pl = self.ScoredData.get(DataName)
+            df_pl = self.ScoredData.get(str(DataName).lower())
             if df_pl is None:
                 raise ValueError(
                     f"self.ScoredData['{DataName}'] is None — run score() first."
                 )
-
+    
         target = self.TargetColumnName
         if target is None:
             raise RuntimeError("TargetColumnName is None; cannot decode labels.")
-
         if target not in df_pl.columns:
-            raise ValueError(
-                f"Encoded target column '{target}' not found in data to decode."
+            raise ValueError(f"Target column '{target}' not found in data to decode.")
+    
+        # -------------------------
+        # Mapping (robust to swapped direction)
+        # Ensure mapping is: int_code -> original_label
+        # -------------------------
+        mapping = self.LabelMappingInverse
+        if isinstance(mapping, dict) and mapping:
+            k0 = next(iter(mapping.keys()))
+            v0 = mapping[k0]
+            # If keys are strings and values are ints -> it's forward mapping label->int; invert it
+            if isinstance(k0, str) and isinstance(v0, int):
+                mapping = {v: k for k, v in mapping.items()}
+    
+        # -------------------------
+        # Helpers
+        # -------------------------
+        numeric_dtypes = {
+            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+            pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
+            pl.Float32, pl.Float64,
+            pl.Boolean,
+        }
+    
+        def _decode_int_expr(expr: pl.Expr) -> pl.Expr:
+            # Decode encoded int -> label, returning Utf8
+            return (
+                expr.cast(pl.Int64)
+                .map_elements(lambda x: str(mapping.get(int(x), x)), return_dtype=pl.Utf8)
             )
-
-        mapping = self.LabelMappingInverse  # dict: int_code -> original_label
-
-        # Decode TRUE label
-        df_pl = df_pl.with_columns(
-            pl.col(target).replace(mapping).alias("TrueLabel")
-        )
-
-        # Decode PREDICTED label
+    
+        # -------------------------
+        # TrueLabel
+        # -------------------------
+        t_dtype = df_pl.schema.get(target)
+        if t_dtype in numeric_dtypes:
+            df_pl = df_pl.with_columns(_decode_int_expr(pl.col(target)).alias("TrueLabel"))
+        else:
+            # Already string labels
+            df_pl = df_pl.with_columns(pl.col(target).cast(pl.Utf8).alias("TrueLabel"))
+    
+        # -------------------------
+        # PredictedLabel
+        # -------------------------
         if self.TargetType == "classification":
-            # Expect probability column 'p1' from score()
             if "p1" not in df_pl.columns:
                 raise ValueError(
                     "Missing 'p1' column for binary classification predictions. "
                     "Did you run score() first?"
                 )
-
-            # Convert p1 -> {0,1} -> original labels
-            pred_int_col = (
-                (pl.col("p1") >= threshold)
+    
+            df_pl = df_pl.with_columns(
+                (pl.col("p1") >= float(threshold))
                 .cast(pl.Int64)
                 .alias("_PredictedClassIdx")
             )
-
-            df_pl = df_pl.with_columns(pred_int_col)
+    
             df_pl = df_pl.with_columns(
-                pl.col(target).replace(mapping).alias("TrueLabel")
+                _decode_int_expr(pl.col("_PredictedClassIdx")).alias("PredictedLabel")
             )
-
+    
         elif self.TargetType == "multiclass":
-            # Expect columns 'class_0', 'class_1', ..., 'class_{K-1}'
             prob_cols = [c for c in df_pl.columns if c.startswith("class_")]
             if not prob_cols:
                 raise ValueError(
                     "No 'class_k' probability columns found for multiclass decoding. "
                     "Did you run score() with a multiclass model?"
                 )
-
-            # Sort by index (class_0, class_1, ...)
+    
             def _class_idx(col_name: str) -> int:
-                try:
-                    return int(col_name.split("_", 1)[1])
-                except Exception:
-                    return 0
-
+                m = re.search(r"class_(\d+)$", col_name)
+                return int(m.group(1)) if m else 10**9
+    
             prob_cols = sorted(prob_cols, key=_class_idx)
-
-            # Argmax over class probabilities → predicted class index
+    
             df_pl = df_pl.with_columns(
                 pl.concat_list([pl.col(c) for c in prob_cols])
-                .arg_max()
+                .list.arg_max()
+                .cast(pl.Int64)
                 .alias("_PredictedClassIdx")
             )
-
-            # Map index to original label
+    
             df_pl = df_pl.with_columns(
-                pl.col(target).replace(mapping).alias("TrueLabel")
+                _decode_int_expr(pl.col("_PredictedClassIdx")).alias("PredictedLabel")
             )
-
+    
         return df_pl
 
     # Single instance score
@@ -2006,6 +2018,91 @@ class RetroFit:
         )
     
         return grouped
+
+    def compute_multiclass_confusion_matrix(
+        self,
+        DataName: str | None = None,
+        df=None,
+        true_col: str = "TrueLabel",
+        pred_col: str = "PredictedLabel",
+        normalize: str | None = None,  # None | "true" | "pred" | "all"
+    ) -> pl.DataFrame:
+        """
+        Multiclass confusion matrix as a tidy Polars DataFrame:
+          true_class, pred_class, value
+    
+        Uses decode_predictions() so labels are always original labels.
+        """
+    
+        # 1) Get a decoded frame (or normalize external df)
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            if DataName is None:
+                raise ValueError("Must supply DataName or df.")
+            df_pl = self.decode_predictions(DataName=DataName)
+    
+        # 2) Validate required cols
+        for c in (true_col, pred_col):
+            if c not in df_pl.columns:
+                raise KeyError(f"Missing {c!r} in decoded data.")
+    
+        # 3) Determine label universe (stable order)
+        # Prefer your stored mapping order if available; fallback to sorted uniques.
+        inv = getattr(self, "LabelMappingInverse", None)
+        if inv is not None and isinstance(inv, dict) and len(inv) > 0:
+            labels = [str(inv[i]) for i in range(len(inv))]
+        else:
+            labels = sorted(
+                set(df_pl[true_col].drop_nulls().unique().to_list())
+                | set(df_pl[pred_col].drop_nulls().unique().to_list())
+            )
+    
+        # 4) Count pairs
+        counts = (
+            df_pl
+            .select([pl.col(true_col).cast(pl.Utf8), pl.col(pred_col).cast(pl.Utf8)])
+            .drop_nulls()
+            .group_by([true_col, pred_col])
+            .agg(pl.len().alias("value"))
+            .rename({true_col: "true_class", pred_col: "pred_class"})
+        )
+    
+        # 5) Complete grid
+        grid = (
+            pl.DataFrame({"true_class": labels})
+            .join(pl.DataFrame({"pred_class": labels}), how="cross")
+        )
+    
+        out = (
+            grid.join(counts, on=["true_class", "pred_class"], how="left")
+            .with_columns(pl.col("value").fill_null(0))
+        )
+    
+        # 6) Optional normalization
+        if normalize is not None:
+            mode = str(normalize).lower()
+            if mode == "true":
+                out = out.with_columns(
+                    (pl.col("value") / pl.col("value").sum().over("true_class"))
+                    .fill_nan(0.0)
+                    .alias("value")
+                )
+            elif mode == "pred":
+                out = out.with_columns(
+                    (pl.col("value") / pl.col("value").sum().over("pred_class"))
+                    .fill_nan(0.0)
+                    .alias("value")
+                )
+            elif mode == "all":
+                tot = out.select(pl.col("value").sum()).item()
+                out = out.with_columns(
+                    (pl.col("value") / float(tot) if tot else pl.lit(0.0)).alias("value")
+                )
+            else:
+                raise ValueError("normalize must be one of: None, 'true', 'pred', 'all'.")
+    
+        return out
 
     # Main Evaluation Function
     def evaluate(
@@ -5570,6 +5667,250 @@ class RetroFit:
             "auc": pr_auc,
             "plot": chart,
         }
+
+    # Confusion matrix plot
+    def plot_multiclass_confusion_matrix_heatmap(
+        self,
+        df=None,
+        DataName: str | None = None,
+        target_col: str | None = None,
+        prob_col_prefix: str = "class_",
+        prob_cols: list[str] | None = None,
+        normalize: str | None = None,   # None | "true" | "pred" | "all"
+        plot_name: str | None = None,
+        Theme: str = "dark",
+    ) -> dict[str, Any]:
+        """
+        Multiclass confusion matrix heatmap using QuickEcharts.
+    
+        Parameters
+        ----------
+        df
+            Optional external *already-scored* dataset (Polars or pandas).
+            Must contain target_col and class probability columns.
+        DataName
+            Optional internal scored split name ("train"/"validation"/"test").
+            Used only when df is None.
+        target_col
+            Target column name (defaults to self.TargetColumnName).
+        prob_col_prefix
+            Prefix for multiclass probability columns (default: "class_").
+            Ignored if prob_cols is provided.
+        prob_cols
+            Optional explicit list of multiclass probability columns.
+            If None, inferred from prob_col_prefix.
+    
+        normalize
+            None | "true" | "pred" | "all"
+        plot_name
+            RenderHTML target file name (like your other plots).
+        Theme
+            QuickEcharts theme.
+    
+        Returns
+        -------
+        dict with keys:
+          - "table": pl.DataFrame (true_class, pred_class, value)
+          - "plot":  QuickEcharts chart object (supports .render_embed())
+        """
+        if self.TargetType != "multiclass":
+            raise ValueError(
+                "plot_multiclass_confusion_matrix_heatmap() is only valid for TargetType='multiclass'."
+            )
+    
+        # -------------------------
+        # Resolve data source
+        # -------------------------
+        if df is not None:
+            df_pl = self._normalize_input_df(df)
+        else:
+            # Resolve split like other functions
+            candidates: list[str] = []
+            if DataName:
+                candidates.append(str(DataName).lower())
+            candidates.extend(["test", "validation", "train"])
+    
+            resolved: str | None = None
+            for key in candidates:
+                if key in getattr(self, "ScoredData", {}) and self.ScoredData[key] is not None:
+                    resolved = key
+                    break
+    
+            if resolved is None:
+                raise RuntimeError(
+                    "No scored data found. Run .score() first, provide DataName, or pass df."
+                )
+    
+            df_pl = self.ScoredData[resolved]
+    
+        # -------------------------
+        # Resolve columns
+        # -------------------------
+        if target_col is None:
+            if self.TargetColumnName is None:
+                raise RuntimeError("TargetColumnName is None; cannot build confusion matrix.")
+            target_col = self.TargetColumnName
+    
+        if target_col not in df_pl.columns:
+            raise KeyError(f"target_col '{target_col}' not found in provided data.")
+    
+        if prob_cols is None:
+            prob_cols = [c for c in df_pl.columns if c.startswith(prob_col_prefix)]
+            if not prob_cols:
+                raise KeyError(
+                    f"No probability columns found with prefix '{prob_col_prefix}'. "
+                    "Pass prob_cols explicitly if your column names differ."
+                )
+    
+            # Sort by numeric suffix if possible: class_0, class_1, ...
+            def _idx(c: str) -> int:
+                try:
+                    return int(c.split("_", 1)[1])
+                except Exception:
+                    return 10**9
+    
+            prob_cols = sorted(prob_cols, key=_idx)
+    
+        # -------------------------
+        # Build PredictedLabel + TrueLabel (decoded, robust)
+        # -------------------------
+        if getattr(self, "LabelMappingInverse", None) is None:
+            raise RuntimeError(
+                "LabelMappingInverse is None. Multiclass decoding requires label encoding from create_model_data()."
+            )
+    
+        mapping = self.LabelMappingInverse  # should be int -> label; but we’ll robustly invert if swapped
+        if isinstance(mapping, dict) and mapping:
+            k0 = next(iter(mapping.keys()))
+            v0 = mapping[k0]
+            if isinstance(k0, str) and isinstance(v0, int):
+                mapping = {v: k for k, v in mapping.items()}
+    
+        # True label (if already string, keep it; if numeric, decode)
+        t_dtype = df_pl.schema.get(target_col)
+    
+        numeric_dtypes = {
+            pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+            pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64,
+            pl.Float32, pl.Float64,
+            pl.Boolean,
+        }
+    
+        if t_dtype in numeric_dtypes:
+            df_pl = df_pl.with_columns(
+                pl.col(target_col)
+                .cast(pl.Int64)
+                .map_elements(lambda x: str(mapping.get(int(x), x)), return_dtype=pl.Utf8)
+                .alias("TrueLabel")
+            )
+        else:
+            df_pl = df_pl.with_columns(pl.col(target_col).cast(pl.Utf8).alias("TrueLabel"))
+    
+        # Predicted class index (argmax), then decode
+        df_pl = df_pl.with_columns(
+            pl.concat_list([pl.col(c) for c in prob_cols])
+            .list.arg_max()
+            .cast(pl.Int64)
+            .alias("_PredictedClassIdx")
+        ).with_columns(
+            pl.col("_PredictedClassIdx")
+            .map_elements(lambda x: str(mapping.get(int(x), x)), return_dtype=pl.Utf8)
+            .alias("PredictedLabel")
+        )
+    
+        # -------------------------
+        # Confusion matrix (long form) + fill missing combos with 0
+        # -------------------------
+        cm = (
+            df_pl.group_by(["TrueLabel", "PredictedLabel"])
+            .agg(pl.len().alias("value"))
+            .rename({"TrueLabel": "true_class", "PredictedLabel": "pred_class"})
+        )
+    
+        # Ensure full grid so heatmap shows zeros too
+        classes = sorted(
+            set(df_pl["TrueLabel"].to_list()) | set(df_pl["PredictedLabel"].to_list())
+        )
+    
+        grid = (
+            pl.DataFrame({"true_class": classes})
+            .join(pl.DataFrame({"pred_class": classes}), how="cross")
+        )
+    
+        out = (
+            grid.join(cm, on=["true_class", "pred_class"], how="left")
+            .with_columns(pl.col("value").fill_null(0).cast(pl.Int64))
+        )
+    
+        # -------------------------
+        # Optional normalization
+        # -------------------------
+        if normalize is not None:
+            norm = str(normalize).lower().strip()
+            if norm not in ("true", "pred", "all"):
+                raise ValueError("normalize must be one of: None, 'true', 'pred', 'all'")
+    
+            if norm == "all":
+                total = out.select(pl.col("value").sum()).item()
+                denom = float(total) if total else 1.0
+                out = out.with_columns((pl.col("value") / denom).alias("value"))
+    
+            elif norm == "true":
+                sums = out.group_by("true_class").agg(pl.col("value").sum().alias("_row_sum"))
+                out = (
+                    out.join(sums, on="true_class", how="left")
+                    .with_columns(
+                        pl.when(pl.col("_row_sum") > 0)
+                        .then(pl.col("value") / pl.col("_row_sum"))
+                        .otherwise(0.0)
+                        .alias("value")
+                    )
+                    .drop("_row_sum")
+                )
+    
+            elif norm == "pred":
+                sums = out.group_by("pred_class").agg(pl.col("value").sum().alias("_col_sum"))
+                out = (
+                    out.join(sums, on="pred_class", how="left")
+                    .with_columns(
+                        pl.when(pl.col("_col_sum") > 0)
+                        .then(pl.col("value") / pl.col("_col_sum"))
+                        .otherwise(0.0)
+                        .alias("value")
+                    )
+                    .drop("_col_sum")
+                )
+    
+        # -------------------------
+        # QuickEcharts plot (fixed styling, no user options)
+        # -------------------------
+        title = "Confusion Matrix"
+        if normalize is not None:
+            title = f"{title} (normalize={normalize})"
+
+        n_classes = out.select("true_class").unique().height
+        height_px = max(360, int(120 * n_classes))
+        height_str = f"{height_px}px"
+
+        plot = Charts.Heatmap(
+            dt=out,
+            PreAgg=True,
+            YVar="true_class",
+            XVar="pred_class",
+            MeasureVar="value",
+            RenderHTML=plot_name,
+            ShowLabels=True,
+            LabelPosition="inside",
+            LabelColor="#e5e7eb",
+            Theme=Theme,
+            RangeColor=["#06121f", "#0b2740", "#123b63", "#195a8c", "#1f7fb8", "#38bdf8"],
+            Width="100%",
+            Height=height_str,
+            Title=title,
+        )
+    
+        return {"table": out, "plot": plot}
+
 
     #################################################
     # Function: Partial Dependence Plots
