@@ -1,6 +1,6 @@
-Metadata-Version: 2.4
+Metadata-Version: 2.1
 Name: retrofit
-Version: 0.3.2
+Version: 0.3.3
 Summary: High-Performance ML Training, Scoring & Evaluation (Polars + GPU-Ready)
 Home-page: https://github.com/AdrianAntico/retrofit
 Author: Adrian Antico, Sean Benner
@@ -34,9 +34,8 @@ Requires-Dist: PolarsFE
 Requires-Dist: pyarrow
 Requires-Dist: scikit-learn
 Requires-Dist: jinja2
-Dynamic: license-file
 
-![Version: 0.3.2](https://img.shields.io/static/v1?label=Version&message=0.3.2&color=blue&?style=plastic)
+![Version: 0.3.3](https://img.shields.io/static/v1?label=Version&message=0.3.3&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
@@ -51,7 +50,7 @@ Dynamic: license-file
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.3.2
+pip install retrofit==0.3.3
 ```
 
 <br>
@@ -757,6 +756,12 @@ imp = model.compute_feature_importance()
 
 # Get interaction importance
 interact = model.compute_catboost_interaction_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1293,6 +1298,12 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1826,6 +1837,12 @@ global_eval = model.evaluate(
 
 # Get variable importance
 imp = model.compute_feature_importance()
+
+# Confusion matrix heatmap
+model.plot_multiclass_confusion_matrix_heatmap(
+    DataName="test",
+    plot_name=f"{os.getcwd()}/my_cm_plot",
+)
 ```
 
 </p>
@@ -1900,6 +1917,11 @@ Below is a gallery of example evaluation plots produced by RetroFit.
 <br>
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Threshold_Plot.PNG' align='center' width='1000' />
+
+<br>
+<br>
+
+<img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/Confusion_Matrix.PNG' align='center' width='1000' />
 
 
 </p>

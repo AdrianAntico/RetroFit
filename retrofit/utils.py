@@ -148,6 +148,7 @@ def make_retrofit_demo_data(
 
     return df
 
+
 def _round_df(df: pl.DataFrame, decimals: int = 4) -> pl.DataFrame:
     """
     Round numeric columns in a Polars DataFrame for cleaner report output.
@@ -163,6 +164,34 @@ def _round_df(df: pl.DataFrame, decimals: int = 4) -> pl.DataFrame:
             rounded_cols.append(pl.col(col))
 
     return df.select(rounded_cols)
+
+
+def _as_list(x):
+    if x is None:
+        return []
+    if isinstance(x, str):
+        return [x]
+    return list(x)
+
+
+def normalize_target_name(value):
+    """
+    Normalize TargetVariableName to a string.
+
+    - Strings are returned unchanged
+    - Other objects are converted to string
+    - Lists/tuples/sets take the first element
+    """
+    if isinstance(value, str):
+        return value
+
+    # Common user mistake: ["target"]
+    if isinstance(value, (list, tuple, set)):
+        if not value:
+            raise ValueError("TargetVariableName cannot be empty.")
+        return str(next(iter(value)))
+
+    return str(value)
 
 
 def do_call(FUN, args=None, kwargs=None):

@@ -1,4 +1,4 @@
-![Version: 0.3.2](https://img.shields.io/static/v1?label=Version&message=0.3.2&color=blue&?style=plastic)
+![Version: 0.3.3](https://img.shields.io/static/v1?label=Version&message=0.3.3&color=blue&?style=plastic)
 ![Build: Passing](https://img.shields.io/static/v1?label=Build&message=passing&color=brightgreen)
 [![Maintenance](https://img.shields.io/badge/Maintained%3F-yes-green.svg)](https://GitHub.com/Naereen/StrapDown.js/graphs/commit-activity)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=default)](http://makeapullrequest.com)
@@ -13,7 +13,7 @@
 pip install git+https://github.com/AdrianAntico/RetroFit.git#egg=retrofit
 
 # From pypi
-pip install retrofit==0.3.2
+pip install retrofit==0.3.3
 ```
 
 <br>

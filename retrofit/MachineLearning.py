@@ -445,7 +445,7 @@ class RetroFit:
                 weight=weight,
                 thread_count=Threads
             ) if data is not None else None
-    
+
         lists = [NumericColumnNames, CategoricalColumnNames, TextColumnNames]
         cols = [c for group in lists if group for c in group]
     
@@ -525,7 +525,6 @@ class RetroFit:
         Build LightGBM Dataset objects from pandas DataFrames.
         Ensures that labels are numeric (int/float/bool).
         """
-        import pandas as pd
         from pandas.api.types import is_numeric_dtype
 
         if TrainData is None:
@@ -688,6 +687,9 @@ class RetroFit:
             - Stores algo-specific objects in self.ModelData
             - Initializes self.ModelArgs via create_model_parameters()
         """
+        
+        # Ensure parameters are proper
+        
 
         # 0) Optionally set / override target transform
         if TargetTransform is not None:
@@ -700,11 +702,11 @@ class RetroFit:
         TestData = self._normalize_input_df(TestData)
 
         # 2) Store metadata / column info
-        self.TargetColumnName = TargetColumnName
-        self.NumericColumnNames = NumericColumnNames or []
-        self.CategoricalColumnNames = CategoricalColumnNames or []
-        self.TextColumnNames = TextColumnNames or []
-        self.WeightColumnName = WeightColumnName
+        self.TargetColumnName = u.normalize_target_name(TargetColumnName)
+        self.NumericColumnNames = u._as_list(NumericColumnNames)
+        self.CategoricalColumnNames = u._as_list(CategoricalColumnNames)
+        self.TextColumnNames = u._as_list(TextColumnNames)
+        self.WeightColumnName = u._as_list(WeightColumnName)
 
         # 3) Store original POLARS frames for later scoring/evaluation
         self.DataFrames["train"] = TrainData
@@ -6484,6 +6486,7 @@ class RetroFit:
             pr_plot_html = None
             threshold_table_spec = None
             threshold_plot_html = None
+            deciles_table = None
 
         else:
             

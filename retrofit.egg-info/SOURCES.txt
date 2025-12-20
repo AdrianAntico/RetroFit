@@ -15,6 +15,7 @@ retrofit.egg-info/dependency_links.txt
 retrofit.egg-info/requires.txt
 retrofit.egg-info/top_level.txt
 retrofit/images/Categorical_PDP.PNG
+retrofit/images/Confusion_Matrix.PNG
 retrofit/images/Documentation.PNG
 retrofit/images/FeatureEngineeringAll.PNG
 retrofit/images/Numeric_PDP.PNG
