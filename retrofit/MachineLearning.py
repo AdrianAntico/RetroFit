@@ -3435,7 +3435,6 @@ class RetroFit:
     
         return summary
 
-
     # Shap Box Plot
     def plot_shap_summary(
         self,
