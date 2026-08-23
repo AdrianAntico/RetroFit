@@ -91,3 +91,37 @@ def test_qualified_path_is_polars_first_and_has_no_pandas_boundary():
     assert "import pandas" not in source
     assert ".to_pandas(" not in source
     assert subject.read_parquet.__annotations__["return"] == "pl.DataFrame"
+
+
+@pytest.mark.parametrize("engine", ["catboost", "lightgbm", "xgboost"])
+def test_weighted_fit_persists_weight_contract_and_scores(tmp_path, engine):
+    data = fixture("regression").with_columns(
+        pl.when(pl.col("numeric") > 0).then(10.0).otherwise(0.25).alias("exposure")
+    )
+    spec = request(engine, "regression")
+    spec.update({"weight": "exposure", "early_stopping_rounds": 0})
+
+    result = fit(spec, data, tmp_path / engine)
+    scored = predict(tmp_path / engine, data.drop("target", "exposure"))
+
+    assert result["manifest"]["weight_contract"]["enabled"] is True
+    assert result["manifest"]["weight_contract"]["column"] == "exposure"
+    assert result["manifest"]["weight_contract"]["positive_rows"] == data.height
+    assert len(scored["predictions"]) == data.height
+    assert scored["refit"] is False
+
+
+@pytest.mark.parametrize("values", [
+    [-1.0] * 100,
+    [0.0] * 100,
+    [float("nan")] * 100,
+])
+def test_invalid_observation_weights_fail_closed(tmp_path, values):
+    data = fixture("regression").with_columns(pl.Series("exposure", values))
+    spec = request("catboost", "regression")
+    spec["weight"] = "exposure"
+
+    with pytest.raises(SupervisedReferenceError) as error:
+        fit(spec, data, tmp_path / "invalid")
+
+    assert error.value.code == "weight_contract_mismatch"

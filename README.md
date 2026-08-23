@@ -6,6 +6,35 @@
 
 <img src='https://raw.githubusercontent.com/AdrianAntico/RetroFit/main/retrofit/images/RetroFitLogo.png' align='center' width='1000' />
 
+## Supervised reference runtime
+
+The scoring-safe `fit()` / `predict()` path preserves native CatBoost,
+LightGBM, and XGBoost fitted state. Requests may include an observation-weight
+column and explicit early-stopping authority without reducing the native
+engine parameter surface:
+
+```python
+import retrofit
+
+request = {
+    "engine": "catboost",
+    "task": "regression",
+    "target": "target",
+    "features": ["price", "channel", "season"],
+    "weight": "exposure",
+    "early_stopping_rounds": 50,
+    "engine_params": {"loss_function": "RMSEWithUncertainty"},
+}
+
+fit_result = retrofit.fit(request, training_data, "model_bundle")
+scores = retrofit.predict("model_bundle", scoring_data)
+```
+
+Weights are validated as finite, non-negative values and are used in both
+native fitting and validation metrics. Set `early_stopping_rounds` to `0` or
+`None` to disable it. Native engine payloads, not sklearn wrapper metadata,
+are the persistence authority.
+
 
 ## **Installation**
 ```python

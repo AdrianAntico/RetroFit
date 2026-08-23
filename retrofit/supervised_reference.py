@@ -112,6 +112,8 @@ def supervised_reference_contract() -> dict[str, Any]:
         "tasks": list(SUPPORTED_TASKS),
         "engines": list(SUPPORTED_ENGINES),
         "probability_semantics": "positive_class_probability_separate_from_decision_policy",
+        "observation_weight_semantics": "optional_nonnegative_frequency_or_importance_weight",
+        "early_stopping_authority": "explicit_request_with_zero_or_none_to_disable",
         "partition_authority": "explicit_seeded_row_partition",
         "feature_identity": "name_order_type_and_categorical_levels",
         "algorithm_dimensions": ["algorithm_family", "engine", "ensemble_regime"],
@@ -139,7 +141,11 @@ def tuning_space(engine: str, task: str) -> dict[str, Any]:
     }
     return {"schema_version": "retrofit_tuning_space_v1", "engine": engine,
             "task": task, "parameters": common,
-            "ensemble_regime": {"type": "enum", "values": regimes[engine]}}
+            "ensemble_regime": {"type": "enum", "values": regimes[engine]},
+            "fit_controls": {
+                "weight": {"type": "column", "required": False},
+                "early_stopping_rounds": {"type": "integer_or_null", "minimum": 0},
+            }}
 
 
 def read_parquet(path: str | os.PathLike[str]) -> pl.DataFrame:
@@ -163,15 +169,19 @@ def fit(request: Mapping[str, Any], data: pl.DataFrame,
     train_idx, valid_idx = _partition(len(data), spec["train_fraction"], spec["seed"])
     x = data.select(features)
     y, target_contract = _target(data.get_column(target), task, spec.get("positive_class"))
+    weights, weight_contract = _weights(data, spec.get("weight"))
     feature_contract = _feature_contract(x)
     x, prep = _prepare_features(x, feature_contract)
     prep["dataframe_authority"] = "polars"
     prep["algorithm_boundary"] = _algorithm_boundary(engine)
     prep["pandas_used"] = False
     model, history = _fit_engine(engine, task, x[train_idx], y[train_idx],
-        x[valid_idx], y[valid_idx], feature_contract, spec)
+        x[valid_idx], y[valid_idx], feature_contract, spec,
+        weights[train_idx] if weights is not None else None,
+        weights[valid_idx] if weights is not None else None)
     raw = _predict_engine(engine, task, model, x[valid_idx], feature_contract)
-    metrics = _metrics(task, y[valid_idx], raw, spec["threshold"])
+    metrics = _metrics(task, y[valid_idx], raw, spec["threshold"],
+                       weights[valid_idx] if weights is not None else None)
     evidence = _evidence_manifest(engine, task, spec["ensemble_regime"])
     output = Path(bundle_dir)
     output.mkdir(parents=True, exist_ok=True)
@@ -190,6 +200,7 @@ def fit(request: Mapping[str, Any], data: pl.DataFrame,
         "task": task, "engine": engine, "target": target,
         "features": features, "feature_contract": feature_contract,
         "target_contract": target_contract,
+        "weight_contract": weight_contract,
         "partition": {"method": "seeded_random", "seed": spec["seed"],
                       "train_fraction": spec["train_fraction"],
                       "train_rows": train_idx.tolist(), "validation_rows": valid_idx.tolist()},
@@ -273,11 +284,27 @@ def _validate_fit_request(request: Mapping[str, Any], data: pl.DataFrame) -> dic
     regime = normalize_ensemble_regime(engine, str(request.get("ensemble_regime", "boosting")))
     params = dict(request.get("engine_params", {}))
     threads = max(1, int(request.get("thread_count", params.get("thread_count", 1))))
+    weight = request.get("weight")
+    if weight is not None:
+        weight = str(weight)
+        if weight not in data.columns:
+            raise SupervisedReferenceError("weight_contract_mismatch",
+                "Requested observation-weight column is unavailable.", {"weight": weight})
+        if weight == target or weight in features:
+            raise SupervisedReferenceError("weight_contract_mismatch",
+                "Observation weights must be distinct from target and feature columns.")
+    early_stopping_rounds = request.get("early_stopping_rounds", 20)
+    if early_stopping_rounds is not None:
+        early_stopping_rounds = int(early_stopping_rounds)
+        if early_stopping_rounds < 0:
+            raise SupervisedReferenceError("invalid_parameter_combination",
+                "early_stopping_rounds must be non-negative or None.")
     return {"engine": engine, "task": task, "target": target, "features": features,
             "train_fraction": fraction, "seed": seed, "threshold": threshold,
             "positive_class": request.get("positive_class"),
             "ensemble_regime": regime, "engine_params": params,
-            "thread_count": threads}
+            "thread_count": threads, "weight": weight,
+            "early_stopping_rounds": early_stopping_rounds}
 
 
 def _partition(rows: int, fraction: float, seed: int) -> tuple[np.ndarray, np.ndarray]:
@@ -307,6 +334,23 @@ def _target(series: pl.Series, task: str, positive: Any) -> tuple[np.ndarray, di
     negative = next(value for value in levels if value != positive)
     return (series == positive).cast(pl.Int8).to_numpy(), {
         "type": "binary", "positive_class": str(positive), "negative_class": str(negative)}
+
+
+def _weights(data: pl.DataFrame, column: str | None) -> tuple[np.ndarray | None, dict[str, Any]]:
+    if column is None:
+        return None, {"enabled": False}
+    series = data.get_column(column).cast(pl.Float64, strict=False)
+    values = series.to_numpy()
+    if series.null_count() or not np.isfinite(values).all() or np.any(values < 0):
+        raise SupervisedReferenceError("weight_contract_mismatch",
+            "Observation weights must be finite, non-missing, and non-negative.",
+            {"weight": column})
+    if not np.any(values > 0):
+        raise SupervisedReferenceError("weight_contract_mismatch",
+            "At least one observation weight must be positive.", {"weight": column})
+    return values.astype(float, copy=False), {
+        "enabled": True, "column": column, "semantics": "frequency_or_importance_weight",
+        "sum": float(values.sum()), "positive_rows": int(np.count_nonzero(values > 0))}
 
 
 def _feature_contract(frame: pl.DataFrame) -> dict[str, Any]:
@@ -351,7 +395,9 @@ def _prepare_features(frame: pl.DataFrame, contract: Mapping[str, Any],
 
 def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarray,
                 x_valid: pl.DataFrame, y_valid: np.ndarray,
-                contract: Mapping[str, Any], spec: Mapping[str, Any]):
+                contract: Mapping[str, Any], spec: Mapping[str, Any],
+                train_weight: np.ndarray | None = None,
+                valid_weight: np.ndarray | None = None):
     params = dict(spec["engine_params"])
     # Runtime/governance parameters are carried beside engine parameters by
     # some hosts. They must never be forwarded twice to a native constructor.
@@ -364,6 +410,7 @@ def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarr
     lr = float(params.pop("learning_rate", 0.05))
     threads = int(spec["thread_count"])
     regime = spec["ensemble_regime"]
+    early_stopping_rounds = spec["early_stopping_rounds"]
     cat_indices = [index for index, field in enumerate(contract["fields"])
                    if field["logical_type"] == "categorical"]
     train_matrix = _engine_matrix(x_train, contract, engine)
@@ -378,9 +425,14 @@ def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarr
             base.update(bagging_temperature=float(params.pop("bagging_temperature", 1.0)),
                         rsm=float(params.pop("feature_sample", 0.8)))
         model = cls(**base, **params)
-        train_pool = Pool(train_matrix, y_train, cat_features=cat_indices)
-        valid_pool = Pool(valid_matrix, y_valid, cat_features=cat_indices)
-        model.fit(train_pool, eval_set=valid_pool, early_stopping_rounds=20, verbose=False)
+        train_pool = Pool(train_matrix, y_train, cat_features=cat_indices,
+                          weight=train_weight)
+        valid_pool = Pool(valid_matrix, y_valid, cat_features=cat_indices,
+                          weight=valid_weight)
+        fit_args = {"eval_set": valid_pool, "verbose": False}
+        if early_stopping_rounds:
+            fit_args["early_stopping_rounds"] = early_stopping_rounds
+        model.fit(train_pool, **fit_args)
         return model, model.get_evals_result()
     if engine == "lightgbm":
         from lightgbm import LGBMClassifier, LGBMRegressor, early_stopping, log_evaluation
@@ -395,8 +447,13 @@ def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarr
             base.update(subsample=float(params.pop("row_sample", 0.8)), subsample_freq=1,
                         colsample_bytree=float(params.pop("feature_sample", 0.8)))
         model = cls(**base, **params)
-        model.fit(train_matrix, y_train, categorical_feature=cat_indices,
-                  eval_set=[(valid_matrix, y_valid)], callbacks=[early_stopping(20), log_evaluation(0)])
+        callbacks = [log_evaluation(0)]
+        if early_stopping_rounds:
+            callbacks.insert(0, early_stopping(early_stopping_rounds))
+        model.fit(train_matrix, y_train, sample_weight=train_weight,
+                  categorical_feature=cat_indices, eval_set=[(valid_matrix, y_valid)],
+                  eval_sample_weight=[valid_weight] if valid_weight is not None else None,
+                  callbacks=callbacks)
         return model, model.evals_result_
     from xgboost import XGBClassifier, XGBRegressor
     cls = XGBClassifier if task == "binary" else XGBRegressor
@@ -405,6 +462,8 @@ def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarr
                 enable_categorical=True,
                 feature_types=["c" if field["logical_type"] == "categorical" else "q"
                                for field in contract["fields"]])
+    if early_stopping_rounds:
+        base["early_stopping_rounds"] = early_stopping_rounds
     if regime == "independent_tree":
         base.update(n_estimators=1, num_parallel_tree=iterations,
                     subsample=float(params.pop("row_sample", 0.8)),
@@ -413,7 +472,10 @@ def _fit_engine(engine: str, task: str, x_train: pl.DataFrame, y_train: np.ndarr
         base.update(subsample=float(params.pop("row_sample", 0.8)),
                     colsample_bytree=float(params.pop("feature_sample", 0.8)))
     model = cls(**base, **params)
-    model.fit(train_matrix, y_train, eval_set=[(valid_matrix, y_valid)], verbose=False)
+    model.fit(train_matrix, y_train, sample_weight=train_weight,
+              eval_set=[(valid_matrix, y_valid)],
+              sample_weight_eval_set=[valid_weight] if valid_weight is not None else None,
+              verbose=False)
     return model, model.evals_result()
 
 
@@ -464,14 +526,17 @@ def _algorithm_boundary(engine: str) -> dict[str, Any]:
             "columns": "features_only", "copy_scope": "partition_only"}
 
 
-def _metrics(task: str, truth: np.ndarray, raw: np.ndarray, threshold: float) -> dict[str, float]:
+def _metrics(task: str, truth: np.ndarray, raw: np.ndarray, threshold: float,
+             sample_weight: np.ndarray | None = None) -> dict[str, float]:
     if task == "regression":
-        return {"rmse": float(mean_squared_error(truth, raw) ** 0.5),
-                "mae": float(mean_absolute_error(truth, raw))}
-    values = {"log_loss": float(log_loss(truth, raw, labels=[0, 1])),
-              "accuracy": float(accuracy_score(truth, raw >= threshold))}
+        return {"rmse": float(mean_squared_error(truth, raw, sample_weight=sample_weight) ** 0.5),
+                "mae": float(mean_absolute_error(truth, raw, sample_weight=sample_weight))}
+    values = {"log_loss": float(log_loss(truth, raw, labels=[0, 1],
+                                          sample_weight=sample_weight)),
+              "accuracy": float(accuracy_score(truth, raw >= threshold,
+                                                 sample_weight=sample_weight))}
     try:
-        values["roc_auc"] = float(roc_auc_score(truth, raw))
+        values["roc_auc"] = float(roc_auc_score(truth, raw, sample_weight=sample_weight))
     except ValueError:
         values["roc_auc"] = None
     return values
@@ -512,7 +577,7 @@ def _save_model(engine: str, model: Any, root: Path) -> Path:
     elif engine == "lightgbm":
         model.booster_.save_model(str(path))
     else:
-        model.save_model(str(path))
+        model.get_booster().save_model(str(path))
     return path
 
 
@@ -532,10 +597,16 @@ def _load_model(engine: str, task: str, path: Path) -> Any:
                 p = np.asarray(booster.predict(frame))
                 return np.column_stack([1 - p, p])
         return Wrapper()
-    from xgboost import XGBClassifier, XGBRegressor
-    model = XGBClassifier() if task == "binary" else XGBRegressor()
-    model.load_model(str(path))
-    return model
+    import xgboost as xgb
+    booster = xgb.Booster()
+    booster.load_model(str(path))
+    class Wrapper:
+        def predict(self, frame):
+            return booster.predict(xgb.DMatrix(frame))
+        def predict_proba(self, frame):
+            p = np.asarray(booster.predict(xgb.DMatrix(frame)))
+            return np.column_stack([1 - p, p])
+    return Wrapper()
 
 
 def _fingerprint(value: Any) -> str:
